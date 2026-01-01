@@ -1,11 +1,11 @@
-import Header from "@/components/Header";
-import PasswordReset from "@/components/PasswordReset";
+import { Header } from "@/components/Header"
+import { RegisterCard } from "@/components/RegisterCard"
 
 export default function Register() {
   return (
-    <>
+    <div>
       <Header />
-      <PasswordReset />
-    </>
+      <RegisterCard />
+    </div>
   );
 }
