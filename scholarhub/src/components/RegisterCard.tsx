@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Trash2, Plus } from "lucide-react"
 
-export function RegisterCard() {
+export const RegisterCard = ()  =>{
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",

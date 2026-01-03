@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-export function SignInCard() {
+export const SignInCard = () => {
 	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
 
@@ -10,7 +10,7 @@ export function SignInCard() {
 		e.preventDefault()
 		console.log("Sign In submitted:", { email, password })
 	}
-
+	
 	return (
 		<div className="flex flex-col items-center pt-20 bg-gray-50 min-h-screen">
 			<div className="w-full max-w-lg rounded-2xl bg-[#f4f4c0] p-12 shadow-lg">

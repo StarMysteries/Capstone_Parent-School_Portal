@@ -1,7 +1,7 @@
 import { SignInCard } from "@/components/SignInCard";
 import { Header } from "@/components/Header";
 
-export default function Login() {
+export const Login = () => {
   return (
     <div>
       <Header />

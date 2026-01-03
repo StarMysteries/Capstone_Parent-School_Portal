@@ -1,4 +1,4 @@
-export function Header() {
+export const Header = () => {
   const currentDate = new Date().toLocaleString("en-US", {
     weekday: "long",
     year: "numeric",
