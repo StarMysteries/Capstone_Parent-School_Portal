@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Trash2, Plus } from "lucide-react"
+import { Trash2, Upload, Plus } from "lucide-react"
 
 export const RegisterCard = ()  =>{
   const [formData, setFormData] = useState({
@@ -14,7 +14,8 @@ export const RegisterCard = ()  =>{
     confirmPassword: ""
   })
   const [students, setStudents] = useState([{ id: 1, lrn: "" }])
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [uploadedFiles, setUploadedFiles] = useState<{ id: number; file: File }[]>([])
+  const [isDragging, setIsDragging] = useState(false)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -37,12 +38,43 @@ export const RegisterCard = ()  =>{
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
     if (files) {
-      setUploadedFiles(prev => [...prev, ...Array.from(files)])
+      const newFiles = Array.from(files).map((file, index) => ({
+        id: uploadedFiles.length + index + 1,
+        file
+      }))
+      setUploadedFiles(prev => [...prev, ...newFiles])
     }
   }
 
   const removeFile = (index: number) => {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const files = e.dataTransfer.files
+    if (files) {
+      const newFiles = Array.from(files).map((file, index) => ({
+        id: uploadedFiles.length + index + 1,
+        file
+      }))
+      setUploadedFiles(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileUpload(event)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -199,27 +231,40 @@ export const RegisterCard = ()  =>{
                 </Button>
               </div>
 
+              {/* File Upload Area */}
+              <div
+                className={`border-4 border-dashed ${
+                  isDragging ? "border-green-600 bg-green-50" : "border-gray-400"
+                } rounded-2xl p-8 text-center bg-white transition-colors`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input type="file" id="file-upload" multiple className="hidden" onChange={handleFileInput} />
+                <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-3">
+                  <Upload className="w-12 h-12 text-gray-600" />
+                  <p className="text-xl font-medium text-gray-800">Drag & Drop or Click to Upload Files</p>
+                </label>
+              </div>
+
               {/* Uploaded Files List */}
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-2">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between py-2">
-                      <span className="text-gray-900 font-medium">{file.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="space-y-3">
+                {uploadedFiles.map((fileObj, index) => (
+                  <div
+                    key={fileObj.id}
+                    className="flex items-center justify-between bg-white border-2 border-gray-300 rounded-xl px-6 py-3"
+                  >
+                    <span className="text-lg">{fileObj.file.name}</span>
+                    <button onClick={() => removeFile(index)} className="text-red-600 hover:text-red-700">
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end mt-8">
-                <Button type="submit" className="h-14 px-12 rounded-full bg-[#52a86a] hover:bg-[#449558] text-white font-semibold text-xl">
+              <div className="flex justify-end pt-4">
+                <Button className="h-14 px-12 bg-green-600 hover:bg-green-700 text-white rounded-full text-xl font-semibold">
                   Submit Registration
                 </Button>
               </div>

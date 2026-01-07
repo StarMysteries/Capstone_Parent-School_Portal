@@ -1,10 +1,10 @@
-import { Header } from "@/components/Header"
+import { Navbar } from "@/components/Navbar";
 import { RegisterCard } from "@/components/RegisterCard"
 
 export const Register = () => {
   return (
     <div>
-      <Header />
+      <Navbar />
       <RegisterCard />
     </div>
   );

@@ -1,10 +1,10 @@
 import { SignInCard } from "@/components/SignInCard";
-import { Header } from "@/components/Header";
+import { Navbar } from "@/components/Navbar";
 
 export const Login = () => {
   return (
     <div>
-      <Header />
+      <Navbar />
       <SignInCard />
     </div>
   );

@@ -1,10 +1,10 @@
-import { Header } from "@/components/Header";
+import { Navbar } from "@/components/Navbar";
 import { PasswordResetCard } from "@/components/PasswordResetCard";
 
 export const ForgotPassword = () => {
   return (
     <>
-      <Header />
+      <Navbar />
       <PasswordResetCard />
     </>
   );
