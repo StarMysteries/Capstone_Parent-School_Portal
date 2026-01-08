@@ -264,7 +264,7 @@ export const RegisterCard = ()  =>{
 
               {/* Submit Button */}
               <div className="flex justify-end pt-4">
-                <Button className="h-14 px-12 bg-green-600 hover:bg-green-700 text-white rounded-full text-xl font-semibold">
+                <Button className="h-14 px-12 bg-[#4a9d5f] hover:bg-[#3d8550] text-white rounded-full text-xl font-semibold">
                   Submit Registration
                 </Button>
               </div>

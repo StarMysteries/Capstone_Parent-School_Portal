@@ -2,22 +2,40 @@ export const AboutUsDropdown = () => {
   return (
     <div className="absolute mt-2 w-48 bg-[#d4d433] border border-gray-200 rounded-md shadow-lg z-10">
       <a
-        href="/about/history"
+        href="#"
         className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
       >
-        Our History
+        Contact Us
       </a>
       <a
-        href="/about/mission-vision"
+        href="#"
         className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
       >
-        Mission & Vision
+        History
       </a>
       <a
-        href="/about/team"
+        href="#"
         className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
       >
-        Our Team
+        Orginizational Chart
+      </a>
+      <a
+        href="#"
+        className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+      >
+        School Calendar
+      </a>
+      <a
+        href="#"
+        className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+      >
+        Transparency
+      </a>
+      <a
+        href="#"
+        className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+      >
+        Vision & Mission
       </a>
     </div>
   );
