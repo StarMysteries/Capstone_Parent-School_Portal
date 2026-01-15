@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react"
 import { AboutUsDropdown } from "./AboutUsDropdown";
-import { useLocation } from "react-router-dom";
-import { AnnouncementStaffDropdown } from "./AnnouncementStaffDropdown";
+import { useLocation, Link } from "react-router-dom";
 
 export const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -25,13 +24,13 @@ export const Navbar = () => {
     <header className="bg-(--navbar-bg) px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <div className="relative h-16 w-16">
+          <Link to="/" className="relative h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
             <img
               src="/Logo.png"
               alt="Bayog Elementary National School Logo"
               className="object-contain"
             />
-          </div>
+          </Link>
           <nav className="flex flex-col md:flex-row items-center gap-4 md:gap-20 text-center md:text-left">
             <div className="relative" ref={dropdownRef}>
               <a
@@ -49,7 +48,6 @@ export const Navbar = () => {
             >
               Announcements
             </a>
-            {isDropdownOpen && <AnnouncementStaffDropdown />} 
             </div>
             <a
               href="/partnership"
