@@ -61,8 +61,8 @@ export const History = () => {
             <tbody>
               {principals.map((principal, index) => (
                 <tr key={index}>
-                  <td className="py-2 px-2">{principal.years}</td>
-                  <td className="py-2 px-2">{principal.name}</td>
+                  <td className="py-2 px-2 w-1/4">{principal.years}</td>
+                  <td className="py-2 px-2 w-3/4">{principal.name}</td>
                 </tr>
               ))}
             </tbody>

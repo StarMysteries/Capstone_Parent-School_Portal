@@ -81,7 +81,7 @@ export const Navbar = () => {
             </a>
           </nav>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
           <a href="/login">
             <Button
               className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
