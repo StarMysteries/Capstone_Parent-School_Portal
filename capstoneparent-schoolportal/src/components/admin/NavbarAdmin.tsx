@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { useState, useRef, useEffect } from "react"
-import { AboutUsDropdown } from "./AboutUsDropdown";
+import { useState, useRef, useEffect } from "react";
+import { AboutUsDropdown } from "../AboutUsDropdown";
+import { RecordsDropdown } from "./RecordsDropdown";
 import { useLocation, Link } from "react-router-dom";
 
 export const Navbar = () => {
@@ -16,9 +16,9 @@ export const Navbar = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -26,7 +26,10 @@ export const Navbar = () => {
     <header className="bg-(--navbar-bg) px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link to="/" className="relative h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
+          <Link
+            to="/"
+            className="relative h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <img
               src="/logo.png"
               alt="Bayog Elementary National School Logo"
@@ -40,18 +43,20 @@ export const Navbar = () => {
             <div className="relative">
               <a
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname.startsWith("/") && !location.pathname.startsWith("/announcements") && !location.pathname.startsWith("/partnership") && !location.pathname.startsWith("/learn")
+                  openDropdown === "about"
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
-                onClick={() => setOpenDropdown(openDropdown === "about" ? null : "about")}
+                onClick={() =>
+                  setOpenDropdown(openDropdown === "about" ? null : "about")
+                }
               >
                 About Us
               </a>
               {openDropdown === "about" && <AboutUsDropdown />}
             </div>
             <div className="relative">
-              <a  
+              <a
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
                   location.pathname === "/announcements"
                     ? "text-xl font-bold"
@@ -72,43 +77,25 @@ export const Navbar = () => {
             >
               Partnership & Events
             </a>
-            <a
-              href="/login"
-              className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                location.pathname === "/learn"
-                  ? "text-xl font-bold"
-                  : "text-lg font-medium"
-              }`}
-            >
-              Learn about your child
-            </a>
+            <div className="relative">
+              <a
+                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
+                  openDropdown === "records"
+                    ? "text-xl font-bold"
+                    : "text-lg font-medium"
+                }`}
+                onClick={() =>
+                  setOpenDropdown(openDropdown === "records" ? null : "records")
+                }
+              >
+                Records
+              </a>
+              {openDropdown === "records" && <RecordsDropdown />}
+            </div>
           </nav>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-          <a href="/login">
-            <Button
-              className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
-                isRegisterPage
-                  ? "bg-(--button-white) text-(--button-green) hover:bg-(--button-gray)"
-                  : "bg-(--button-green) text-(--button-white) hover:bg-(--button-hover-green)"
-              }`}
-            >
-              Login
-            </Button>
-          </a>
 
-          <a href="/register">
-            <Button
-              className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
-                isRegisterPage
-                  ? "bg-(--button-green) text-(--button-white) hover:bg-(--button-hover-green)"
-                  : "bg-(--button-white) text-(--button-green) hover:bg-(--button-gray)"
-              }`}
-            >
-              Register
-            </Button>
-          </a>
-        </div>
+        <div>{/* Admin Profile*/}</div>
       </div>
     </header>
   );
