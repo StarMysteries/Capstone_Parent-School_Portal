@@ -3,34 +3,34 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 {/*General Pages */}
-import { Announcements } from "./pages/Announcements";
-import { ForgotPassword } from "./pages/ForgotPassword";
-import { HomePage } from "./pages/HomePage";
-import { Login } from "./pages/Login";
-import { PartnershipAndEvents } from "./pages/PartnershipAndEvents";
-import { Register } from "./pages/Register";
+import { Announcements } from "./Pages/Announcements";
+import { ForgotPassword } from "./Pages/ForgotPassword";
+import { HomePage } from "./Pages/HomePage";
+import { Login } from "./Pages/Login";
+import { PartnershipAndEvents } from "./Pages/PartnershipAndEvents";
+import { Register } from "./Pages/Register";
 
 {/*General Sub Pages */}
-import { ContactUs } from "./pages/sub-pages/ContactUs";
-import { History } from "./pages/sub-pages/History";
-import { OrginizationalChart } from "./pages/sub-pages/OrginizationalChart";
-import { SchoolCalendar } from "./pages/sub-pages/SchoolCalendar";
-import { Transparency } from "./pages/sub-pages/Transparency";
-import { VisionAndMission } from "./pages/sub-pages/VisionAndMission";
+import { ContactUs } from "./Pages/sub-pages/ContactUs";
+import { History } from "./Pages/sub-pages/History";
+import { OrginizationalChart } from "./Pages/sub-pages/OrginizationalChart";
+import { SchoolCalendar } from "./Pages/sub-pages/SchoolCalendar";
+import { Transparency } from "./Pages/sub-pages/Transparency";
+import { VisionAndMission } from "./Pages/sub-pages/VisionAndMission";
 
 {/*Admin Sub Pages */}
-import { AdminView } from "./pages/admin-pages/AdminView";
-import { ManageParentVerification } from "./pages/admin-pages/ManageParentVerification";
-import { ManageSection } from "./pages/admin-pages/ManageSection";
-import { ManageStaffAccounts } from "./pages/admin-pages/ManageStaffAccounts";
-import { ManageStudents } from "./pages/admin-pages/ManageStudents";
+import { AdminView } from "./Pages/admin-pages/AdminView";
+import { ManageParentVerification } from "./Pages/admin-pages/ManageParentVerification";
+import { ManageSection } from "./Pages/admin-pages/ManageSection";
+import { ManageStaffAccounts } from "./Pages/admin-pages/ManageStaffAccounts";
+import { ManageStudents } from "./Pages/admin-pages/ManageStudents";
 
 import { usePageTitle } from "./hooks/usePageTitle";
 import "./styles/index.css";
 
 const App = () => {
   usePageTitle();
-
+  
   return (
     <Routes>
       {/*General Pages */}
