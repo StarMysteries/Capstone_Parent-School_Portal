@@ -10,5 +10,8 @@
   --signin-bg: #f4f4c0;
   --text-gray: #gray-900;
   --text-gray-hover: #gray-700;
+  --status-pending: #f59e0b;
+  --status-denied: #dc2626;
+  --status-verified: #10b981;
 }
 
