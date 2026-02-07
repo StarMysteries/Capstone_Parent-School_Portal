@@ -1,5 +1,5 @@
 import { NavbarTeacher } from "@/components/teacher/NavbarTeacher";
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -12,33 +12,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface ClassItem {
-  id: number;
-  grade: string;
-  section: string;
-  start_year: number;
-  end_year: number;
-  students: number;
-}
-
-interface SubjectItem {
-  id: number;
-  name: string;
-  grade: string;
-  section: string;
-  students: number;
-  start_year: number;
-  end_year: number;
-}
-
-interface Student {
-  id: number;
-  name: string;
-  lrn: string;
-  finalAvgGrade: number | string;
-  remarks: string;
-}
+import { useClassData } from '@/Pages/teacher-pages/hooks/useClassData';
+import type { ClassItem, SubjectItem } from '@/Pages/teacher-pages/types';
 
 export const ClassList = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -61,158 +36,55 @@ export const ClassList = () => {
   const [studentSearchQuery, setStudentSearchQuery] = useState('');
   const [remarksFilter, setRemarksFilter] = useState('all');
 
-  
+  // Use custom hook for data management
+  const {
+    classes,
+    subjects,
+    allStudents,
+    isLoadingClasses,
+    isLoadingSubjects,
+    isLoadingStudents,
+    studentCountByClass,
+    filterClasses,
+    filterSubjects,
+    filterStudents,
+    getStudentsForClass,
+  } = useClassData();
 
-  // Sample data
-  const classes: ClassItem[] = [
-    {
-      id: 1,
-      grade: 'Grade 1',
-      section: 'Section A',
-      start_year: 2024,
-      end_year: 2025,
-      students: 36,
-    },
-    {
-      id: 2,
-      grade: 'Grade 1',
-      section: 'Section B',
-      start_year: 2023,
-      end_year: 2024,
-      students: 37,
-    },
-    {
-      id: 3,
-      grade: 'Grade 2',
-      section: 'Section A',
-      start_year: 2024,
-      end_year: 2025,
-      students: 40,
-    },
-  ];
+  // Apply filters
+  const filteredClasses = useMemo(
+    () => filterClasses(classes, classGradeLevel, classSection, classYear),
+    [classes, classGradeLevel, classSection, classYear]
+  );
 
-  const subjects: SubjectItem[] = [
-    {
-      id: 1,
-      name: 'Mathematics',
-      grade: 'Grade 1',
-      section: 'Section A',
-      students: 36,
-      start_year: 2024,
-      end_year: 2025,
-    },
-    {
-      id: 2,
-      name: 'Science',
-      grade: 'Grade 1',
-      section: 'Section A',
-      students: 37,
-      start_year: 2024,
-      end_year: 2025,
-    },
-    {
-      id: 3,
-      name: 'English',
-      grade: 'Grade 1',
-      section: 'Section B',
-      students: 35,
-      start_year: 2024,
-      end_year: 2025,
-    },
-  ];
+  const filteredSubjects = useMemo(
+    () => filterSubjects(subjects, subjectSearchQuery, subjectGradeLevel, subjectSection, subjectYear),
+    [subjects, subjectSearchQuery, subjectGradeLevel, subjectSection, subjectYear]
+  );
 
-  // Sample student data
-  const students: Student[] = [
-    {
-      id: 1,
-      name: 'Angela Reyes',
-      lrn: '501142400721',
-      finalAvgGrade: 90,
-      remarks: 'PASSED',
-    },
-    {
-      id: 2,
-      name: 'Angelo Moreno',
-      lrn: '501142400731',
-      finalAvgGrade: 74,
-      remarks: 'FAILED',
-    },
-    {
-      id: 3,
-      name: 'Sophia Dizon',
-      lrn: '501142400731',
-      finalAvgGrade: 'N/A',
-      remarks: 'N/A',
-    },
-    {
-      id: 4,
-      name: 'Juan Dela Cruz',
-      lrn: '501142400741',
-      finalAvgGrade: 85,
-      remarks: 'PASSED',
-    },
-    {
-      id: 5,
-      name: 'Maria Santos',
-      lrn: '501142400751',
-      finalAvgGrade: 92,
-      remarks: 'PASSED',
-    },
-  ];
+  const studentsForSelectedClass = useMemo(
+    () => selectedClass ? getStudentsForClass(allStudents, selectedClass.id) : [],
+    [selectedClass, allStudents]
+  );
 
-  // Filter classes based on filters
-  const filteredClasses = classes.filter((classItem) => {
-    const matchesGrade = classGradeLevel === 'allgrades' || classItem.grade.includes(classGradeLevel);
-    const matchesSection = classSection === 'all' || classItem.section.toLowerCase().includes(classSection);
-    const matchesYear = classYear === 'all' || `${classItem.start_year}-${classItem.end_year}` === classYear;
-    
-    return matchesGrade && matchesSection && matchesYear;
-  });
+  const filteredStudents = useMemo(
+    () => filterStudents(studentsForSelectedClass, studentSearchQuery, remarksFilter),
+    [studentsForSelectedClass, studentSearchQuery, remarksFilter]
+  );
 
-  // Filter subjects based on search and filters
-  const filteredSubjects = subjects.filter((subject) => {
-    const matchesSearch = subject.name.toLowerCase().includes(subjectSearchQuery.toLowerCase());
-    const matchesGrade = subjectGradeLevel === 'allgrades' || subject.grade.includes(subjectGradeLevel);
-    const matchesSection = subjectSection === 'all' || subject.section.toLowerCase().includes(subjectSection);
-    const matchesYear = subjectYear === 'all' || `${subject.start_year}-${subject.end_year}` === subjectYear;
-    
-    return matchesSearch && matchesGrade && matchesSection && matchesYear;
-  });
-
-  // Filter students
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch = 
-      student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
-      student.lrn.includes(studentSearchQuery);
-    const matchesRemarks = remarksFilter === 'all' || student.remarks === remarksFilter;
-    
-    return matchesSearch && matchesRemarks;
-  });
-
-  // Detail View Checker
   const isDetailView = selectedClass !== null || selectedSubject !== null;
 
   return (
     <div>
       <NavbarTeacher/>
 
-      {/* MAIN CONTAINER 
-          - Mobile: flex-col (vertical stack)
-          - Desktop: flex-row (side-by-side)
-          - Added overflow-hidden to prevent double scrollbars on mobile
-      */}
       <div className="flex flex-col md:flex-row h-[calc(100vh-80px)] mt-5 overflow-hidden">
-        {/* LEFT PANEL 
-            - Mobile: w-full (takes full screen)
-            - Desktop: w-[500px] (keeps your original fixed width)
-            - Logic: If we are in detail view, HIDE this panel on mobile (block on desktop)
-        */}
+        {/* LEFT PANEL */}
         <div className={`
             bg-(--div-bg) flex flex-col
             w-full md:w-[500px] 
             ${isDetailView ? 'hidden md:flex' : 'flex'}
         `}>
-          {/* Tabs */}
           <Tabs 
             defaultValue="class" 
             className="w-full h-full flex flex-col"
@@ -273,7 +145,9 @@ export const ClassList = () => {
 
                 {/* Class List */}
                 <div className="space-y-2 pb-20">
-                  {filteredClasses.length > 0 ? (
+                  {isLoadingClasses ? (
+                    <div className="text-center py-8 text-gray-500">Loading classes...</div>
+                  ) : filteredClasses.length > 0 ? (
                     filteredClasses.map((classItem) => (
                       <Card
                         key={classItem.id}
@@ -293,7 +167,10 @@ export const ClassList = () => {
                                 {classItem.start_year} - {classItem.end_year}
                               </p>
                             </div>
-                            <span className="font-medium">{classItem.students} Students</span>
+                            {/* DYNAMIC STUDENT COUNT */}
+                            <span className="font-medium">
+                              {studentCountByClass[classItem.id] || 0} Students
+                            </span>
                          </div>
                       </Card>
                     ))
@@ -305,9 +182,7 @@ export const ClassList = () => {
 
              {/* SUBJECT TAB CONTENT */}
              <TabsContent value="subject" className="flex-1 p-4 space-y-4 mt-0 overflow-y-auto">
-                {/* Subject Filters */}
                 <div className="space-y-2">
-                  {/* Search Field */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
@@ -319,7 +194,6 @@ export const ClassList = () => {
                     />
                   </div>
 
-                  {/* Dropdowns */}
                   <div className="flex gap-2">
                     <Select value={subjectGradeLevel} onValueChange={setSubjectGradeLevel}>
                       <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
@@ -361,9 +235,10 @@ export const ClassList = () => {
                   </div>
                 </div>
 
-                {/* Subject List */}
                 <div className="space-y-2">
-                  {filteredSubjects.length > 0 ? (
+                  {isLoadingSubjects ? (
+                    <div className="text-center py-8 text-gray-500">Loading subjects...</div>
+                  ) : filteredSubjects.length > 0 ? (
                     filteredSubjects.map((subjectItem) => (
                       <Card
                         key={subjectItem.id}
@@ -386,7 +261,6 @@ export const ClassList = () => {
                             </p>
                           </div>
                           <div className="text-right">
-                            <span className="font-medium">{subjectItem.students} Students</span>
                             <p className={`text-sm transition-colors ${
                               selectedSubject?.id === subjectItem.id 
                                 ? 'text-(--tab-subtext)' 
@@ -408,11 +282,7 @@ export const ClassList = () => {
           </Tabs>
         </div>
 
-        {/* RIGHT PANEL 
-            - Mobile: w-full (takes full screen)
-            - Desktop: flex-1 (takes remaining space)
-            - Logic: If NO item is selected, HIDE this panel on mobile (show empty state on desktop)
-        */}
+        {/* RIGHT PANEL */}
         <div className={`
             bg-(--div-bg) h-full overflow-hidden flex flex-col
             w-full md:flex-1
@@ -421,7 +291,6 @@ export const ClassList = () => {
           {activeTab === 'class' && (
             selectedClass ? (
               <div className="h-full flex flex-col w-full">
-                {/* Student List / Class Summary Tabs */}
                 <Tabs 
                   defaultValue="students" 
                   className="w-full h-full flex flex-col"
@@ -436,24 +305,11 @@ export const ClassList = () => {
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Student List Tab */}
                   <TabsContent value="students" className="flex-1 p-4 md:p-6 space-y-4 mt-0 overflow-y-auto">
                     
-                    {/* Action Buttons and Filters */}
                     <div className="flex gap-3 flex-wrap items-center justify-center md:justify-start">
                       <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white md:hidden"
-                        onClick={() => {
-                          setSelectedClass(null);
-                          setRemarksFilter('all');
-                          setStudentSearchQuery('');
-                        }}
-                      >
-                        &lt;-----
-                      </Button>
-
-                      <Button 
-                        className="hidden md:flex bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white"
                         onClick={() => {
                           setSelectedClass(null);
                           setRemarksFilter('all');
@@ -463,7 +319,6 @@ export const ClassList = () => {
                         &lt;-----
                       </Button>
                       
-                      {/* Search Bar - Changed to w-full on mobile for better centering */}
                       <div className="relative flex-1 md:flex-none w-full md:max-w-md min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                         <Input
@@ -488,7 +343,6 @@ export const ClassList = () => {
                       </Select>
                     </div>
 
-                    {/* Action Buttons Row 2 */}
                     <div className="flex gap-3 flex-wrap justify-center md:justify-start">
                       <Button className="bg-green-600 hover:bg-green-700 text-white">
                         <Upload className="mr-2 h-4 w-4" />
@@ -508,7 +362,6 @@ export const ClassList = () => {
                       </Button>
                     </div>
 
-                    {/* Student Table  */}
                     <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
                       <div className="overflow-x-auto">
                         <table className="w-full min-w-[600px]">
@@ -529,30 +382,44 @@ export const ClassList = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
-                            {filteredStudents.map((student) => (
-                              <tr key={student.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-gray-900">
-                                  {student.name}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                                  {student.lrn}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
-                                  {student.finalAvgGrade}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                  <span className={`font-semibold ${
-                                    student.remarks === 'PASSED' 
-                                      ? 'text-green-600' 
-                                      : student.remarks === 'FAILED' 
-                                      ? 'text-red-600' 
-                                      : 'text-gray-500'
-                                  }`}>
-                                    {student.remarks}
-                                  </span>
+                            {isLoadingStudents ? (
+                              <tr>
+                                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                  Loading students...
                                 </td>
                               </tr>
-                            ))}
+                            ) : filteredStudents.length > 0 ? (
+                              filteredStudents.map((student) => (
+                                <tr key={student.id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-left text-gray-900">
+                                    {student.name}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
+                                    {student.lrn}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
+                                    {student.finalAvgGrade}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                    <span className={`font-semibold ${
+                                      student.remarks === 'PASSED' 
+                                        ? 'text-green-600' 
+                                        : student.remarks === 'FAILED' 
+                                        ? 'text-red-600' 
+                                        : 'text-gray-500'
+                                    }`}>
+                                      {student.remarks}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                  No students found for this class
+                                </td>
+                              </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -578,7 +445,6 @@ export const ClassList = () => {
           {activeTab === 'subject' && (
             selectedSubject ? (
               <div className="p-8 w-full">
-                {/* Mobile Back Button for Subjects View */}
                 <Button 
                    className="md:hidden mb-4 bg-green-600 hover:bg-green-700 text-white"
                    onClick={() => setSelectedSubject(null)}
@@ -590,7 +456,6 @@ export const ClassList = () => {
                 <p className="text-gray-600 mb-2">
                   {selectedSubject.grade} - {selectedSubject.section}
                 </p>
-                <p className="text-gray-600 mb-4">Total Students: {selectedSubject.students}</p>
                 <div className="mt-6">
                   <p className="text-gray-500">Subject details will appear here...</p>
                 </div>
