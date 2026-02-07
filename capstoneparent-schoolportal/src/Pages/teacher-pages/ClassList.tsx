@@ -14,6 +14,7 @@ import { Search, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClassData } from '@/Pages/teacher-pages/hooks/useClassData';
 import type { ClassItem, SubjectItem } from '@/Pages/teacher-pages/types';
+import { ClassSummary } from "./ClassSummary";
 
 export const ClassList = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -75,14 +76,18 @@ export const ClassList = () => {
   const isDetailView = selectedClass !== null || selectedSubject !== null;
 
   return (
-    <div>
+    // ROOT CONTAINER
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50"> 
       <NavbarTeacher/>
 
-      <div className="flex flex-col md:flex-row h-[calc(100vh-80px)] mt-5 overflow-hidden">
+      {/* CONTAINER: */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-5 gap-5">
+        
         {/* LEFT PANEL */}
         <div className={`
             bg-(--div-bg) flex flex-col
             w-full md:w-[500px] 
+            h-full rounded-xl border border-gray-200 shadow-sm
             ${isDetailView ? 'hidden md:flex' : 'flex'}
         `}>
           <Tabs 
@@ -90,7 +95,7 @@ export const ClassList = () => {
             className="w-full h-full flex flex-col"
             onValueChange={(value) => setActiveTab(value)}
           >
-             <TabsList className="w-full rounded-none bg-white p-0">
+             <TabsList className="w-full rounded-none rounded-t-xl bg-white p-0 border-b border-gray-200">
                <TabsTrigger value="class" className="flex-1 rounded-none data-[state=active]:bg-(--div-bg)">
                  Class List
                </TabsTrigger>
@@ -103,48 +108,48 @@ export const ClassList = () => {
              <TabsContent value="class" className="flex-1 p-4 space-y-4 mt-0 overflow-y-auto">
                 <div className="flex flex-col md:flex-row gap-2">
                   <div className="flex gap-2">
-                     <Select value={classGradeLevel} onValueChange={setClassGradeLevel}>
-                      <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
-                        <SelectValue placeholder="Grade Level" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
-                        <SelectItem value="allgrades">All Grade Levels</SelectItem>
-                        <SelectItem value="Kindergarten">Kindergarten</SelectItem>
-                        <SelectItem value="Grade 1">Grade 1</SelectItem>
-                        <SelectItem value="Grade 2">Grade 2</SelectItem>
-                        <SelectItem value="Grade 3">Grade 3</SelectItem>
-                        <SelectItem value="Grade 4">Grade 4</SelectItem>
-                        <SelectItem value="Grade 5">Grade 5</SelectItem>
-                        <SelectItem value="Grade 6">Grade 6</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Select value={classGradeLevel} onValueChange={setClassGradeLevel}>
+                       <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                         <SelectValue placeholder="Grade Level" />
+                       </SelectTrigger>
+                       <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
+                         <SelectItem value="allgrades">All Grade Levels</SelectItem>
+                         <SelectItem value="Kindergarten">Kindergarten</SelectItem>
+                         <SelectItem value="Grade 1">Grade 1</SelectItem>
+                         <SelectItem value="Grade 2">Grade 2</SelectItem>
+                         <SelectItem value="Grade 3">Grade 3</SelectItem>
+                         <SelectItem value="Grade 4">Grade 4</SelectItem>
+                         <SelectItem value="Grade 5">Grade 5</SelectItem>
+                         <SelectItem value="Grade 6">Grade 6</SelectItem>
+                       </SelectContent>
+                     </Select>
 
-                    <Select value={classSection} onValueChange={setClassSection}>
-                      <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
-                        <SelectValue placeholder="Section" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
-                        <SelectItem value="all">All Sections</SelectItem>
-                        <SelectItem value="a">Section A</SelectItem>
-                        <SelectItem value="b">Section B</SelectItem>
-                      </SelectContent>
-                    </Select>
+                     <Select value={classSection} onValueChange={setClassSection}>
+                       <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                         <SelectValue placeholder="Section" />
+                       </SelectTrigger>
+                       <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
+                         <SelectItem value="all">All Sections</SelectItem>
+                         <SelectItem value="a">Section A</SelectItem>
+                         <SelectItem value="b">Section B</SelectItem>
+                       </SelectContent>
+                     </Select>
 
-                    <Select value={classYear} onValueChange={setClassYear}>
-                      <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
-                        <SelectValue placeholder="Year" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
-                        <SelectItem value="all">All Years</SelectItem>
-                        <SelectItem value="2024-2025">2024 - 2025</SelectItem>
-                        <SelectItem value="2023-2024">2023 - 2024</SelectItem>
-                      </SelectContent>
-                    </Select>
+                     <Select value={classYear} onValueChange={setClassYear}>
+                       <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                         <SelectValue placeholder="Year" />
+                       </SelectTrigger>
+                       <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
+                         <SelectItem value="all">All Years</SelectItem>
+                         <SelectItem value="2024-2025">2024 - 2025</SelectItem>
+                         <SelectItem value="2023-2024">2023 - 2024</SelectItem>
+                       </SelectContent>
+                     </Select>
                   </div>
                 </div>
 
                 {/* Class List */}
-                <div className="space-y-2 pb-20">
+                <div className="space-y-2 pb-4">
                   {isLoadingClasses ? (
                     <div className="text-center py-8 text-gray-500">Loading classes...</div>
                   ) : filteredClasses.length > 0 ? (
@@ -160,7 +165,7 @@ export const ClassList = () => {
                           setStudentSearchQuery('');
                         }}
                       >
-                         <div className="flex justify-between items-start">
+                          <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-semibold text-base">{classItem.grade} - {classItem.section}</h3>
                               <p className={`text-sm transition-colors ${selectedClass?.id === classItem.id ? 'text-(--tab-subtext)' : 'text-gray-500 group-hover:text-(--tab-subtext)'}`}>
@@ -193,7 +198,7 @@ export const ClassList = () => {
                       className="pl-10 bg-white border-gray-300"
                     />
                   </div>
-
+                  
                   <div className="flex gap-2">
                     <Select value={subjectGradeLevel} onValueChange={setSubjectGradeLevel}>
                       <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
@@ -235,7 +240,7 @@ export const ClassList = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 pb-4">
                   {isLoadingSubjects ? (
                     <div className="text-center py-8 text-gray-500">Loading subjects...</div>
                   ) : filteredSubjects.length > 0 ? (
@@ -286,6 +291,7 @@ export const ClassList = () => {
         <div className={`
             bg-(--div-bg) h-full overflow-hidden flex flex-col
             w-full md:flex-1
+            rounded-xl border border-gray-200 shadow-sm
             ${isDetailView ? 'flex' : 'hidden md:flex'}
         `}>
           {activeTab === 'class' && (
@@ -296,7 +302,7 @@ export const ClassList = () => {
                   className="w-full h-full flex flex-col"
                   onValueChange={(value) => setStudentListTab(value)}
                 >
-                  <TabsList className="w-full rounded-none bg-white p-0">
+                  <TabsList className="w-full rounded-none rounded-t-xl bg-white p-0 border-b border-gray-200">
                     <TabsTrigger value="students" className="flex-1 rounded-none data-[state=active]:bg-(--div-bg)">
                       Student List
                     </TabsTrigger>
@@ -306,10 +312,9 @@ export const ClassList = () => {
                   </TabsList>
 
                   <TabsContent value="students" className="flex-1 p-4 md:p-6 space-y-4 mt-0 overflow-y-auto">
-                    
                     <div className="flex gap-3 flex-wrap items-center justify-center md:justify-start">
                       <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-(--button-green) hover:bg-green-700 text-white"
                         onClick={() => {
                           setSelectedClass(null);
                           setRemarksFilter('all');
@@ -344,19 +349,19 @@ export const ClassList = () => {
                     </div>
 
                     <div className="flex gap-3 flex-wrap justify-center md:justify-start">
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button className="bg-(--button-green) hover:bg-green-700 text-white">
                         <Upload className="mr-2 h-4 w-4" />
                         Import Grade Sheet (.xlsx)
                       </Button>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button className="bg-(--button-green) hover:bg-green-700 text-white">
                         <Download className="mr-2 h-4 w-4" />
                         Export Quarterly Grade Sheet (.xlsx)
                       </Button>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button className="bg-(--button-green) hover:bg-green-700 text-white">
                         <Download className="mr-2 h-4 w-4" />
                         Download Grade Sheet Template (.xlsx)
                       </Button>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button className="bg-(--button-green) hover:bg-green-700 text-white">
                         <Upload className="mr-2 h-4 w-4" />
                         Upload Class Schedule Picture
                       </Button>
@@ -426,10 +431,8 @@ export const ClassList = () => {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="summary" className="flex-1 p-6">
-                    <div className="text-center text-gray-500">
-                      <p>Class summary content will be displayed here</p>
-                    </div>
+                  <TabsContent value="summary" className="flex-1 overflow-y-auto">
+                    <ClassSummary students={studentsForSelectedClass} />
                   </TabsContent>
                 </Tabs>
               </div>
@@ -445,26 +448,14 @@ export const ClassList = () => {
           {activeTab === 'subject' && (
             selectedSubject ? (
               <div className="p-8 w-full">
-                <Button 
-                   className="md:hidden mb-4 bg-green-600 hover:bg-green-700 text-white"
-                   onClick={() => setSelectedSubject(null)}
-                >
-                   &lt;----- Back
-                </Button>
-
+                <Button className="md:hidden mb-4 bg-(--button-green)" onClick={() => setSelectedSubject(null)}>&lt;----- Back</Button>
                 <h2 className="text-2xl font-bold mb-4">{selectedSubject.name}</h2>
-                <p className="text-gray-600 mb-2">
-                  {selectedSubject.grade} - {selectedSubject.section}
-                </p>
-                <div className="mt-6">
-                  <p className="text-gray-500">Subject details will appear here...</p>
-                </div>
+                <p className="text-gray-600 mb-2">{selectedSubject.grade} - {selectedSubject.section}</p>
+                <div className="mt-6"><p className="text-gray-500">Subject details will appear here...</p></div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500 text-lg text-center px-4">
-                  Please select a subject from the left panel to view details
-                </p>
+                <p className="text-gray-500 text-lg text-center px-4">Please select a subject to view details</p>
               </div>
             )
           )}

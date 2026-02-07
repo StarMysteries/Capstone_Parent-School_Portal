@@ -15,8 +15,8 @@ const SAMPLE_CLASSES: ClassItem[] = [
     id: 2,
     grade: 'Grade 1',
     section: 'Section B',
-    start_year: 2023,
-    end_year: 2024,
+    start_year: 2024,
+    end_year: 2025,
   },
   {
     id: 3,
@@ -30,7 +30,7 @@ const SAMPLE_CLASSES: ClassItem[] = [
 const SAMPLE_SUBJECTS: SubjectItem[] = [
   {
     id: 1,
-    name: 'Mathematics',
+    name: 'Filipino',
     grade: 'Grade 1',
     section: 'Section A',
     start_year: 2024,
@@ -38,6 +38,22 @@ const SAMPLE_SUBJECTS: SubjectItem[] = [
   },
   {
     id: 2,
+    name: 'English',
+    grade: 'Grade 1',
+    section: 'Section A',
+    start_year: 2024,
+    end_year: 2025,
+  },
+  {
+    id: 3,
+    name: 'Mathematics',
+    grade: 'Grade 1',
+    section: 'Section A',
+    start_year: 2024,
+    end_year: 2025,
+  },
+  {
+    id: 4,
     name: 'Science',
     grade: 'Grade 1',
     section: 'Section A',
@@ -54,6 +70,28 @@ const SAMPLE_STUDENTS: Student[] = [
     lrn: '501142400721',
     finalAvgGrade: 90,
     remarks: 'PASSED',
+    quarters: {
+      q1: {
+        subjects: {
+          Filipino: 92,
+          English: 89,
+          Math: 91,
+          Science: 88,
+        },
+        average: 90,
+        passed: true,
+      },
+      q2: {
+        subjects: {
+          Filipino: 93,
+          English: 90,
+          Math: 92,
+          Science: 89,
+        },
+        average: 91,
+        passed: true,
+      },
+    },
   },
   {
     id: 2,
@@ -62,6 +100,28 @@ const SAMPLE_STUDENTS: Student[] = [
     lrn: '501142400731',
     finalAvgGrade: 74,
     remarks: 'FAILED',
+    quarters: {
+      q1: {
+        subjects: {
+          Filipino: 75,
+          English: 72,
+          Math: 70,
+          Science: 73,
+        },
+        average: 73,
+        passed: false,
+      },
+      q2: {
+        subjects: {
+          Filipino: 76,
+          English: 74,
+          Math: 71,
+          Science: 75,
+        },
+        average: 74,
+        passed: false,
+      },
+    },
   },
   {
     id: 3,
@@ -78,6 +138,18 @@ const SAMPLE_STUDENTS: Student[] = [
     lrn: '501142400751',
     finalAvgGrade: 85,
     remarks: 'PASSED',
+    quarters: {
+      q1: {
+        subjects: {
+          Filipino: 84,
+          English: 86,
+          Math: 85,
+          Science: 83,
+        },
+        average: 85,
+        passed: true,
+      },
+    },
   },
   {
     id: 5,
@@ -86,8 +158,31 @@ const SAMPLE_STUDENTS: Student[] = [
     lrn: '501142400761',
     finalAvgGrade: 92,
     remarks: 'PASSED',
+    quarters: {
+      q1: {
+        subjects: {
+          Filipino: 94,
+          English: 93,
+          Math: 91,
+          Science: 90,
+        },
+        average: 92,
+        passed: true,
+      },
+      q2: {
+        subjects: {
+          Filipino: 95,
+          English: 94,
+          Math: 92,
+          Science: 91,
+        },
+        average: 93,
+        passed: true,
+      },
+    },
   },
 ];
+
 
 export const fetchClasses = async (): Promise<ClassItem[]> => {
   try {
@@ -96,7 +191,7 @@ export const fetchClasses = async (): Promise<ClassItem[]> => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching classes:', error);
-    return SAMPLE_CLASSES; // Fallback to sample data
+    return SAMPLE_CLASSES; // Fallback to sample data (need to change later)
   }
 };
 
@@ -107,7 +202,7 @@ export const fetchSubjects = async (): Promise<SubjectItem[]> => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching subjects:', error);
-    return SAMPLE_SUBJECTS;
+    return SAMPLE_SUBJECTS; // Fallback to sample data (need to change later)
   }
 };
 
@@ -118,6 +213,6 @@ export const fetchStudents = async (): Promise<Student[]> => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching students:', error);
-    return SAMPLE_STUDENTS;
+    return SAMPLE_STUDENTS; // Fallback to sample data (need to change later)
   }
 };
