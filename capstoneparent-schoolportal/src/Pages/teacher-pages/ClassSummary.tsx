@@ -7,33 +7,57 @@ import {
   Radar, 
   ResponsiveContainer 
 } from 'recharts';
-import type { ClassSummaryProps, QuarterGrades } from '@/Pages/teacher-pages/types';
+import type { ClassSummaryProps } from '@/Pages/teacher-pages/types';
 
 export const ClassSummary = ({ students = [] }: ClassSummaryProps) => {
   
+  // Calculate passing rate per quarter
   const quarterlyStats = useMemo(() => {
-    // 1. Define the keys as a const array to help TypeScript inference
     const quarterKeys = ['q1', 'q2', 'q3', 'q4'] as const;
     
     return quarterKeys.map((qKey) => {
-      // 2. Filter students who have data for this specific quarter
-      const gradedStudents = students.filter(s => s.quarters?.[qKey]);
-      const totalGraded = gradedStudents.length;
+      // Count students who have grades for this quarter
+      let totalGraded = 0;
+      let passedCount = 0;
 
-      // 3. Access 'passed' safely by telling TS the shape of the data
-      const passedCount = gradedStudents.filter((s) => {
-        const quarterData = s.quarters?.[qKey] as QuarterGrades;
-        return quarterData.passed === true;
-      }).length;
+      students.forEach((student) => {
+        if (!student.subjectGrades || student.subjectGrades.length === 0) return;
+
+        // Check if student has any subject with this quarter's grade
+        const hasQuarterGrade = student.subjectGrades.some(
+          (sg) => sg[qKey] !== undefined && sg[qKey] !== null
+        );
+
+        if (hasQuarterGrade) {
+          totalGraded++;
+
+          // Count passed subjects for this quarter
+          const quarterSubjects = student.subjectGrades.filter(
+            (sg) => sg[qKey] !== undefined && sg[qKey] !== null
+          );
+
+          const quarterPassedSubjects = quarterSubjects.filter(
+            (sg) => {
+              const grade = sg[qKey];
+              return typeof grade === 'number' && grade >= 75;
+            }
+          );
+
+          // Student passes the quarter if they passed all subjects
+          if (quarterPassedSubjects.length === quarterSubjects.length && quarterSubjects.length > 0) {
+            passedCount++;
+          }
+        }
+      });
 
       const rate = totalGraded > 0 ? Math.round((passedCount / totalGraded) * 100) : 0;
 
       // Determine color based on data presence and rate
       let color = '#9CA3AF'; // Gray for N/A
       if (totalGraded > 0) {
-        if (rate >= 75) color = '#4DA660';      
-        else if (rate >= 50) color = '#F59E0B'; 
-        else color = '#dc2626';                
+        if (rate >= 75) color = '#4DA660';      // Green
+        else if (rate >= 50) color = '#F59E0B'; // Orange
+        else color = '#dc2626';                 // Red
       }
 
       return {
@@ -46,26 +70,35 @@ export const ClassSummary = ({ students = [] }: ClassSummaryProps) => {
     });
   }, [students]);
 
+  // Calculate average grades per subject across all students
   const subjectAverages = useMemo(() => {
     const subjectTotals: Record<string, { sum: number; count: number }> = {};
 
     students.forEach((student) => {
-      if (!student.quarters) return;
+      if (!student.subjectGrades) return;
 
-      // Iterate through each quarter (q1, q2, etc.)
-      Object.values(student.quarters).forEach((quarterData) => {
-        if (!quarterData?.subjects) return;
+      student.subjectGrades.forEach((subjectGrade) => {
+        const { subject } = subjectGrade;
+        
+        // Collect all quarter grades for this subject
+        const quarterGrades = [
+          subjectGrade.q1,
+          subjectGrade.q2,
+          subjectGrade.q3,
+          subjectGrade.q4,
+        ].filter((grade): grade is number => typeof grade === 'number');
 
-        // Iterate through subjects defined in your QuarterGrades interface
-        Object.entries(quarterData.subjects).forEach(([subject, grade]) => {
-          if (typeof grade === 'number') {
-            if (!subjectTotals[subject]) {
-              subjectTotals[subject] = { sum: 0, count: 0 };
-            }
+        if (quarterGrades.length > 0) {
+          if (!subjectTotals[subject]) {
+            subjectTotals[subject] = { sum: 0, count: 0 };
+          }
+          
+          // Add all quarter grades
+          quarterGrades.forEach((grade) => {
             subjectTotals[subject].sum += grade;
             subjectTotals[subject].count += 1;
-          }
-        });
+          });
+        }
       });
     });
 
@@ -136,27 +169,46 @@ export const ClassSummary = ({ students = [] }: ClassSummaryProps) => {
       </div>
 
       {/* Average Grades per Subject */}
-      <div>
-        <h2 className="text-2xl font-bold text-center mb-8">Average Grades per Subject</h2>
-        <div className="flex justify-center h-[400px] w-full">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-800 text-center mb-6">
+          Average Grades per Subject
+        </h2>
+        
+        <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={subjectAverages}>
-              <PolarGrid stroke="#E5E7EB" />
+            <RadarChart 
+              cx="50%" 
+              cy="50%" 
+              outerRadius="80%" // Reduced from 80% to prevent text overlapping container edges
+              data={subjectAverages}
+            >
+              {/* Lighter grid lines for a cleaner look */}
+              <PolarGrid stroke="#e2e8f0" /> 
+              
               <PolarAngleAxis 
                 dataKey="subject" 
-                tick={{ fill: '#6B7280', fontSize: 12 }}
+                tick={{ 
+                  fill: '#64748b', 
+                  fontSize: 15, 
+                  fontWeight: 500 
+                }}
               />
+              
               <PolarRadiusAxis 
-                angle={90} 
+                angle={70}
                 domain={[0, 100]}
-                tick={{ fill: '#6B7280', fontSize: 10 }}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                axisLine={false}
               />
+              
               <Radar
                 name="Average Grade"
                 dataKey="average"
-                stroke="#3B82F6"
-                fill="#3B82F6"
-                fillOpacity={0.6}
+                stroke="#4DA660"
+                strokeWidth={2}
+                fill="#4DA660"
+                fillOpacity={0.3}
+                dot={{ r: 2, fill: '#4DA660' }}
               />
             </RadarChart>
           </ResponsiveContainer>

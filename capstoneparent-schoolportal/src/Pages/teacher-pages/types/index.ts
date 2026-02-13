@@ -15,23 +15,60 @@ export interface SubjectItem {
   end_year: number;
 }
 
+// Student interface
 export interface Student {
   id: number;
   classId: number;
   name: string;
   lrn: string;
+  sex: string;
+  schoolYear: string;     // Need to change: must be based on subject school year
+  gradeSection: string;
   finalAvgGrade: number | string;
   remarks: string;
   
-  // Add quarterly data
-  quarters?: {
-    q1?: QuarterGrades;
-    q2?: QuarterGrades;
-    q3?: QuarterGrades;
-    q4?: QuarterGrades;
+  // Subject grades with all quarters
+  subjectGrades?: SubjectGrade[];
+  
+  // Attendance records
+  attendance?: AttendanceRecord;
+}
+
+// Student subjects grades interface
+export interface SubjectGrade {
+  subject: string;
+  q1?: number;
+  q2?: number;
+  q3?: number;
+  q4?: number;
+  finalGrade: number | string; // Stored in DB
+  remarks: string; // Stored in DB (PASSED/FAILED)
+}
+
+// Attendance data structure
+export interface AttendanceRecord {
+  months: {
+    Jun: MonthAttendance;
+    Jul: MonthAttendance;
+    Aug: MonthAttendance;
+    Sept: MonthAttendance;
+    Oct: MonthAttendance;
+    Nov: MonthAttendance;
+    Dec: MonthAttendance;
+    Jan: MonthAttendance;
+    Feb: MonthAttendance;
+    Mar: MonthAttendance;
+    Apr: MonthAttendance;
   };
 }
 
+export interface MonthAttendance {
+  schoolDays: number;
+  present: number;
+  absent: number;
+}
+
+// For backward compatibility with ClassSummary
 export interface QuarterGrades {
   subjects: {
     Filipino?: number;
@@ -63,4 +100,10 @@ export interface SubjectAverage {
   subject: string;
   average: number;
   fullMark: number;
+}
+
+// Props for StudentGrades component
+export interface StudentGradesProps {
+  student: Student;
+  onBack: () => void;
 }
