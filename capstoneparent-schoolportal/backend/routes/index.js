@@ -1,1 +1,0 @@
-console.log("Routes index file loaded");
