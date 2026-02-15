@@ -35,11 +35,8 @@ import { GeneralAnnouncement } from "./Pages/staff-pages/announcement-pages/Gene
 import { StaffAnnouncement } from "./Pages/staff-pages/announcement-pages/StaffAnnouncement";
 import { MemorandumAnnouncement } from "./Pages/staff-pages/announcement-pages/MemorandumAnnouncemnt";
 
-
 import { usePageTitle } from "./hooks/usePageTitle";
 import "./styles/index.css";
-
-
 
 const App = () => {
   usePageTitle();
