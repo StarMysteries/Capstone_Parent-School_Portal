@@ -57,16 +57,16 @@ export const NavbarStaff = () => {
               {openDropdown === "about" && <AboutUsDropdown />}
             </div>
             <div className="relative">
-              <a
+              <Link
+                to="/generalannouncement"
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname === "/announcements"
+                  location.pathname === "/generalannouncement"
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
-                href="/announcements"
               >
                 Announcements
-              </a>
+              </Link>
             </div>
             <a
               href="/partnership&events"
