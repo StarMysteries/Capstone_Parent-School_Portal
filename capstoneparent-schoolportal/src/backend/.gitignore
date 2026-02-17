@@ -29,3 +29,11 @@ prisma/migrations/
 # Uploads
 uploads/
 /generated/prisma
+
+CUSTOMIZE_SEED_DATA.MD
+QUICK_START.MD
+SEEDING_GUIDE.MD
+seed.js
+POSTMAN_GUIDE.MD
+POSTMAN_QUICK_SETUP.MD
+Scholar_Hub_API_Collection.postman_collection.json
