@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { User } from "lucide-react";
 import { AboutUsDropdown } from "../AboutUsDropdown";
-// include records dropdown for staff (don't kow what to include yet)
-import { useLocation, Link } from "react-router-dom";
 import { RecordsDropdown } from "./RecordsDropdown";
+import { useLocation, Link } from "react-router-dom";
 
-export const NavbarStaff = () => {  
+export const NavbarLibrarian = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
   const isRegisterPage = location.pathname === "/register";
@@ -58,16 +57,16 @@ export const NavbarStaff = () => {
               {openDropdown === "about" && <AboutUsDropdown />}
             </div>
             <div className="relative">
-              <Link
-                to="/generalannouncement"
+              <a
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname === "/generalannouncement"
+                  location.pathname === "/announcements"
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
+                href="/announcements"
               >
                 Announcements
-              </Link>
+              </a>
             </div>
             <a
               href="/partnership&events"
@@ -92,7 +91,7 @@ export const NavbarStaff = () => {
               >
                 Records
               </a>
-              {openDropdown === "records" && <RecordsDropdown/>}
+              {openDropdown === "records" && <RecordsDropdown />}
             </div>
           </nav>
         </div>
