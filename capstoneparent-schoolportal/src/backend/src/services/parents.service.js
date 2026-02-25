@@ -1,33 +1,53 @@
-const prisma = require('../config/database');
+const prisma = require("../config/database");
 
 const parentsService = {
+  async createFiles(files, uploaded_by) {
+    // files: array from multer
+    const created = [];
+    for (const f of files) {
+      const file = await prisma.file.create({
+        data: {
+          file_name: f.originalname,
+          file_path: f.path,
+          file_type: f.mimetype,
+          file_size: f.size,
+          uploaded_by,
+        },
+      });
+      created.push(file);
+    }
+    return created;
+  },
+
   async submitRegistration({ parent_id, student_ids, file_ids }) {
     const registration = await prisma.parentRegistration.create({
       data: {
         parent_id,
         students: {
-          create: student_ids.map(studentId => ({
-            student_id: studentId
-          }))
+          create: student_ids.map((studentId) => ({
+            student_id: studentId,
+          })),
         },
-        files: file_ids ? {
-          create: file_ids.map(fileId => ({
-            file_id: fileId
-          }))
-        } : undefined
+        files: file_ids
+          ? {
+              create: file_ids.map((fileId) => ({
+                file_id: fileId,
+              })),
+            }
+          : undefined,
       },
       include: {
         students: {
           include: {
-            student: true
-          }
+            student: true,
+          },
         },
         files: {
           include: {
-            file: true
-          }
-        }
-      }
+            file: true,
+          },
+        },
+      },
     });
 
     return registration;
@@ -54,36 +74,36 @@ const parentsService = {
               fname: true,
               lname: true,
               email: true,
-              contact_num: true
-            }
+              contact_num: true,
+            },
           },
           students: {
             include: {
               student: {
                 include: {
-                  grade_level: true
-                }
-              }
-            }
+                  grade_level: true,
+                },
+              },
+            },
           },
           files: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           verifier: {
             select: {
               user_id: true,
               fname: true,
-              lname: true
-            }
-          }
+              lname: true,
+            },
+          },
         },
         orderBy: {
-          submitted_at: 'desc'
-        }
+          submitted_at: "desc",
+        },
       }),
-      prisma.parentRegistration.count({ where })
+      prisma.parentRegistration.count({ where }),
     ]);
 
     return {
@@ -92,8 +112,8 @@ const parentsService = {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(total / parseInt(limit))
-      }
+        totalPages: Math.ceil(total / parseInt(limit)),
+      },
     };
   },
 
@@ -107,35 +127,35 @@ const parentsService = {
             fname: true,
             lname: true,
             email: true,
-            contact_num: true
-          }
+            contact_num: true,
+          },
         },
         students: {
           include: {
             student: {
               include: {
-                grade_level: true
-              }
-            }
-          }
+                grade_level: true,
+              },
+            },
+          },
         },
         files: {
           include: {
-            file: true
-          }
+            file: true,
+          },
         },
         verifier: {
           select: {
             user_id: true,
             fname: true,
-            lname: true
-          }
-        }
-      }
+            lname: true,
+          },
+        },
+      },
     });
 
     if (!registration) {
-      throw new Error('Registration not found');
+      throw new Error("Registration not found");
     }
 
     return registration;
@@ -148,7 +168,7 @@ const parentsService = {
         status,
         remarks,
         verified_by,
-        verified_at: new Date()
+        verified_at: new Date(),
       },
       include: {
         parent: {
@@ -156,15 +176,15 @@ const parentsService = {
             user_id: true,
             fname: true,
             lname: true,
-            email: true
-          }
+            email: true,
+          },
         },
         students: {
           include: {
-            student: true
-          }
-        }
-      }
+            student: true,
+          },
+        },
+      },
     });
 
     return registration;
@@ -174,24 +194,24 @@ const parentsService = {
     const verifiedRegistrations = await prisma.parentRegistration.findMany({
       where: {
         parent_id: parentId,
-        status: 'VERIFIED'
+        status: "VERIFIED",
       },
       include: {
         students: {
           include: {
             student: {
               include: {
-                grade_level: true
-              }
-            }
-          }
-        }
-      }
+                grade_level: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // Flatten the students array
-    const children = verifiedRegistrations.flatMap(reg => 
-      reg.students.map(s => s.student)
+    const children = verifiedRegistrations.flatMap((reg) =>
+      reg.students.map((s) => s.student),
     );
 
     return children;
@@ -202,17 +222,17 @@ const parentsService = {
     const hasAccess = await prisma.parentRegistration.findFirst({
       where: {
         parent_id,
-        status: 'VERIFIED',
+        status: "VERIFIED",
         students: {
           some: {
-            student_id
-          }
-        }
-      }
+            student_id,
+          },
+        },
+      },
     });
 
     if (!hasAccess) {
-      throw new Error('Access denied to this student record');
+      throw new Error("Access denied to this student record");
     }
 
     const grades = await prisma.subjectRecordStudent.findMany({
@@ -224,12 +244,12 @@ const parentsService = {
               select: {
                 user_id: true,
                 fname: true,
-                lname: true
-              }
-            }
-          }
-        }
-      }
+                lname: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return grades;
@@ -240,28 +260,28 @@ const parentsService = {
     const hasAccess = await prisma.parentRegistration.findFirst({
       where: {
         parent_id,
-        status: 'VERIFIED',
+        status: "VERIFIED",
         students: {
           some: {
-            student_id
-          }
-        }
-      }
+            student_id,
+          },
+        },
+      },
     });
 
     if (!hasAccess) {
-      throw new Error('Access denied to this student record');
+      throw new Error("Access denied to this student record");
     }
 
     const attendance = await prisma.attendanceRecord.findMany({
       where: { student_id },
       orderBy: {
-        month: 'asc'
-      }
+        month: "asc",
+      },
     });
 
     return attendance;
-  }
+  },
 };
 
 module.exports = parentsService;

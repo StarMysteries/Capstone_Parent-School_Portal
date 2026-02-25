@@ -4,21 +4,22 @@ const parentsController = require("../controllers/parents.controller");
 const validate = require("../middlewares/validation");
 const { authenticate, authorize } = require("../middlewares/auth");
 
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
 
-// Submit parent registration
+// Submit parent registration (accept file uploads)
 router.post(
   "/register",
+  upload.array("files", 10),
   [
     body("student_ids").isArray({ min: 1 }),
     body("student_ids.*").isInt(),
-    body("file_ids")
-      .isArray({ min: 1 })
-      .withMessage("At least one file is required"),
-    body("file_ids.*").isInt(),
+    // files are handled via multipart form-data (req.files)
   ],
   validate,
   parentsController.submitRegistration,
