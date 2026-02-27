@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/Navbar";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 
 export const History = () => {
   const principals = [
@@ -20,7 +20,7 @@ export const History = () => {
 
   return (
     <div>
-      <Navbar />
+      <RoleAwareNavbar />
       <div className="max-w-7xl mx-auto py-12 px-4">
         <h1 className="text-3xl font-bold mb-8 text-center">BRIEF HISTORY OF PAGSABUNGAN ELEMENTARY SCHOOL</h1>
         

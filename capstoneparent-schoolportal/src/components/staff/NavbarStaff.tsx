@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { User } from "lucide-react";
-import { AboutUsDropdown } from "../AboutUsDropdown";
+import { AboutUsDropdown } from "../general/AboutUsDropdown";
+import { ProfileDropdown } from "../general/ProfileDropdown";
 // include records dropdown for staff (don't kow what to include yet)
 import { useLocation, Link } from "react-router-dom";
 import { RecordsDropdown } from "./RecordsDropdown";
@@ -8,7 +8,10 @@ import { RecordsDropdown } from "./RecordsDropdown";
 export const NavbarStaff = () => {  
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
-  const isRegisterPage = location.pathname === "/register";
+  const isStaffAnnouncementPage =
+    location.pathname === "/generalannouncement" ||
+    location.pathname === "/staffannouncement" ||
+    location.pathname === "/memorandumannouncement";
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -61,7 +64,7 @@ export const NavbarStaff = () => {
               <Link
                 to="/generalannouncement"
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname === "/generalannouncement"
+                  isStaffAnnouncementPage
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
@@ -69,8 +72,8 @@ export const NavbarStaff = () => {
                 Announcements
               </Link>
             </div>
-            <a
-              href="/partnership&events"
+            <Link
+              to="/partnership&events"
               className={`text-gray-900 hover:text-gray-700 transition-colors ${
                 location.pathname === "/partnership&events"
                   ? "text-xl font-bold"
@@ -78,7 +81,7 @@ export const NavbarStaff = () => {
               }`}
             >
               Partnership & Events
-            </a>
+            </Link>
             <div className="relative">
               <a
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
@@ -98,9 +101,7 @@ export const NavbarStaff = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-400 transition-colors">
-            <User className="h-6 w-6 text-gray-700" />
-          </div>
+          <ProfileDropdown />
         </div>
       </div>
     </header>

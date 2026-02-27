@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
 
 export const AnnouncementNavbar = () => {
@@ -37,7 +37,7 @@ const NavItem = ({ to, label, active }: { to: string; label: string; active: boo
     {label}
     {/* The Active Indicator Line */}
     {active && (
-      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gray-900 rounded-t-md" />
+      <div className="absolute bottom-0 left-0 right-0 h-0.75 bg-gray-900 rounded-t-md" />
     )}
   </Link>
 );

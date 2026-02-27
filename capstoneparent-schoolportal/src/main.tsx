@@ -3,12 +3,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 {/*General Pages */}
-import { Announcements } from "./Pages/Announcements";
-import { ForgotPassword } from "./Pages/ForgotPassword";
-import { HomePage } from "./Pages/HomePage";
-import { Login } from "./Pages/Login";
-import { PartnershipAndEvents } from "./Pages/PartnershipAndEvents";
-import { Register } from "./Pages/Register";
+import { Announcements } from "./Pages/general-pages/Announcements";
+import { ForgotPassword } from "./Pages/general-pages/ForgotPassword";
+import { HomePage } from "./Pages/general-pages/HomePage";
+import { Login } from "./Pages/general-pages/Login";
+import { PartnershipAndEvents } from "./Pages/general-pages/PartnershipAndEvents";
+import { Register } from "./Pages/general-pages/Register";
 
 {/*General Sub Pages */}
 import { ContactUs } from "./Pages/sub-pages/ContactUs";
@@ -41,7 +41,11 @@ import { GeneralAnnouncement } from "./Pages/staff-pages/announcement-pages/Gene
 import { StaffAnnouncement } from "./Pages/staff-pages/announcement-pages/StaffAnnouncement";
 import { MemorandumAnnouncement } from "./Pages/staff-pages/announcement-pages/MemorandumAnnouncemnt";
 
+{/*Librarian Sub Pages */}
+import { LibrarianView } from "./Pages/librarian-pages/LibrarianView";
+
 import { usePageTitle } from "./hooks/usePageTitle";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import "./styles/index.css";
 
 const App = () => {
@@ -66,27 +70,142 @@ const App = () => {
       <Route path="/visionandmission" element={<VisionAndMission />} />
 
       {/*Parent Pages */}
-      <Route path="/parentview" element={<ParentView />} />
-      <Route path="/classschedule" element={<ClassSchedule />} />
-      <Route path="/quarterlygrades" element={<QuarterlyGrades />} />
-      <Route path="/libraryrecords" element={<LibraryRecords />} />
+      <Route
+        path="/parentview"
+        element={
+          <ProtectedRoute allowedRoles={["parent"]}>
+            <ParentView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/classschedule"
+        element={
+          <ProtectedRoute allowedRoles={["parent"]}>
+            <ClassSchedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/quarterlygrades"
+        element={
+          <ProtectedRoute allowedRoles={["parent"]}>
+            <QuarterlyGrades />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/libraryrecords"
+        element={
+          <ProtectedRoute allowedRoles={["parent"]}>
+            <LibraryRecords />
+          </ProtectedRoute>
+        }
+      />
 
       {/*Admin Sub Pages */}
-      <Route path="/adminview" element={<AdminView />} />
-      <Route path="/manageparentverification" element={<ManageParentVerification />} />
-      <Route path="/managestudents" element={<ManageStudents />} />
-      <Route path="/managesections" element={<ManageSection />} />
-      <Route path="/managestaffaccounts" element={<ManageStaffAccounts />} />
+      <Route
+        path="/adminview"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/manageparentverification"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ManageParentVerification />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managestudents"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ManageStudents />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managesections"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ManageSection />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managestaffaccounts"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <ManageStaffAccounts />
+          </ProtectedRoute>
+        }
+      />
 
       {/*Teacher Sub Pages (Some routes are in admin)*/}
-      <Route path="/teacherview" element={<TeacherView/>}/>
-      <Route path="/classlist" element={<ClassList/>}/>
+      <Route
+        path="/teacherview"
+        element={
+          <ProtectedRoute allowedRoles={["teacher"]}>
+            <TeacherView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/classlist"
+        element={
+          <ProtectedRoute allowedRoles={["teacher"]}>
+            <ClassList />
+          </ProtectedRoute>
+        }
+      />
 
       {/*Staff Sub Pages */}
-      <Route path="/staffview" element={<StaffView/>}/>
-      <Route path="/generalannouncement" element={<GeneralAnnouncement/>}/>
-      <Route path="/staffannouncement" element={<StaffAnnouncement/>}/>
-      <Route path="/memorandumannouncement" element={<MemorandumAnnouncement/>}/>
+      <Route
+        path="/staffview"
+        element={
+          <ProtectedRoute allowedRoles={["staff"]}>
+            <StaffView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/generalannouncement"
+        element={
+          <ProtectedRoute allowedRoles={["staff"]}>
+            <GeneralAnnouncement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staffannouncement"
+        element={
+          <ProtectedRoute allowedRoles={["staff"]}>
+            <StaffAnnouncement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/memorandumannouncement"
+        element={
+          <ProtectedRoute allowedRoles={["staff"]}>
+            <MemorandumAnnouncement />
+          </ProtectedRoute>
+        }
+      />
+
+      {/*Librarian Sub Pages */}
+      <Route
+        path="/librarianview"
+        element={
+          <ProtectedRoute allowedRoles={["librarian"]}>
+            <LibrarianView />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

@@ -51,19 +51,19 @@ export const Navbar = () => {
               {openDropdown === "about" && <AboutUsDropdown />}
             </div>
             <div className="relative">
-              <a  
+              <Link
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
                   location.pathname === "/announcements"
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
-                href="/announcements"
+                to="/announcements"
               >
                 Announcements
-              </a>
+              </Link>
             </div>
-            <a
-              href="/partnership&events"
+            <Link
+              to="/partnership&events"
               className={`text-gray-900 hover:text-gray-700 transition-colors ${
                 location.pathname === "/partnership&events"
                   ? "text-xl font-bold"
@@ -71,7 +71,7 @@ export const Navbar = () => {
               }`}
             >
               Partnership & Events
-            </a>
+            </Link>
             <a
               href="/login"
               className={`text-gray-900 hover:text-gray-700 transition-colors ${

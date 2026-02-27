@@ -1,22 +1,36 @@
 import { NavbarParent } from "@/components/parent/NavbarParent";
+import { ApplyRegistrationModal } from "@/components/parent/RegistrationModal";
+import { PendingDetailsModal } from "@/components/parent/PendingDetailsModal";
+import { DeniedDetailsModal } from "@/components/parent/DeniedDetailsModal";
+import type { Child, DeniedUploads, PendingUploads, UploadedDoc } from "@/components/parent/parentModalTypes";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-interface Child {
-  id: string;
-  name: string;
-  status: "VERIFIED" | "PENDING" | "DENIED";
-  lrn?: string;
-  gradeLevel?: string;
-  section?: string;
-  schoolYear?: string;
-  classAdviser?: string;
-  dateSubmitted?: string;
-  remarks?: string;
-}
+import { useNavigate } from "react-router-dom";
 
 export const ParentView = () => {
+  const navigate = useNavigate();
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
+  const [activeChild, setActiveChild] = useState<Child | null>(null);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
+  const [isDeniedModalOpen, setIsDeniedModalOpen] = useState(false);
+
+  const [pendingUploadTarget, setPendingUploadTarget] = useState<keyof PendingUploads>("parentBirthCertificate");
+  const [pendingUploads, setPendingUploads] = useState<PendingUploads>({
+    parentBirthCertificate: null,
+    governmentId: null,
+    childBirthCertificate: null,
+  });
+
+  const [deniedUploadTarget, setDeniedUploadTarget] = useState<keyof PendingUploads>("parentBirthCertificate");
+  const [deniedUploads, setDeniedUploads] = useState<DeniedUploads>({
+    parentBirthCertificate: null,
+    governmentId: null,
+    childBirthCertificate: null,
+  });
+
+  const [selectedPreviewName, setSelectedPreviewName] = useState("");
+  const [selectedPreviewUrl, setSelectedPreviewUrl] = useState("");
 
   // Sample data - replace with actual data from API
   const children: Child[] = [
@@ -35,7 +49,11 @@ export const ParentView = () => {
       name: "Miguel Fernandez",
       status: "PENDING",
       dateSubmitted: "03/12/2025",
-      remarks: "",
+      remarks: "Under review by registrar.",
+      uploadedFiles: [
+        { name: "Parent Birth Certificate.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
+        { name: "Child Birth Certificate.pdf", url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
+      ],
     },
     {
       id: "3",
@@ -45,19 +63,6 @@ export const ParentView = () => {
       remarks: "Please provide a valid Parent Birth Certificate.",
     },
   ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "VERIFIED":
-        return "border-2 rounded-lg" as any;
-      case "PENDING":
-        return "border-2 rounded-lg" as any;
-      case "DENIED":
-        return "border-2 rounded-lg" as any;
-      default:
-        return "bg-white";
-    }
-  };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -72,17 +77,80 @@ export const ParentView = () => {
     }
   };
 
-  const getCardStyle = (status: string) => {
-    const baseStyle = "p-6 rounded-lg shadow-md cursor-pointer transition-transform hover:shadow-lg border-2";
-    switch (status) {
-      case "VERIFIED":
-        return baseStyle + " bg-white" as any;
-      case "PENDING":
-        return baseStyle + " bg-white" as any;
-      case "DENIED":
-        return baseStyle + " bg-white" as any;
-      default:
-        return baseStyle + " bg-white";
+
+  const isPendingFormValid = Boolean(
+    pendingUploads.childBirthCertificate &&
+      (pendingUploads.parentBirthCertificate || pendingUploads.governmentId)
+  );
+
+  const isDeniedFormValid = Boolean(
+    deniedUploads.childBirthCertificate &&
+      (deniedUploads.parentBirthCertificate || deniedUploads.governmentId)
+  );
+
+  const resetPreview = () => {
+    setSelectedPreviewName("");
+    setSelectedPreviewUrl("");
+  };
+
+  const openApplyModal = () => {
+    const child = children.find((item) => item.id === selectedChild) ?? children[0] ?? null;
+    setActiveChild(child);
+    setIsApplyModalOpen(true);
+  };
+
+  const handlePendingFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) return;
+    setPendingUploads((prev) => ({ ...prev, [pendingUploadTarget]: file }));
+  };
+
+  const handleDeniedFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) return;
+    setDeniedUploads((prev) => ({ ...prev, [deniedUploadTarget]: file.name }));
+  };
+
+  const handlePendingPreview = (doc: UploadedDoc) => {
+    const previewUrl = doc.url || (doc.file ? URL.createObjectURL(doc.file) : "");
+    setSelectedPreviewName(doc.name);
+    setSelectedPreviewUrl(previewUrl);
+  };
+
+  const handleOpenPdf = (doc: UploadedDoc) => {
+    const pdfUrl = doc.url || (doc.file ? URL.createObjectURL(doc.file) : "");
+    if (pdfUrl) {
+      window.open(pdfUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleSubmitRegistration = () => {
+    if (!isPendingFormValid) return;
+    setIsApplyModalOpen(false);
+  };
+
+  const handleResubmitDenied = () => {
+    if (!isDeniedFormValid) return;
+    setIsDeniedModalOpen(false);
+  };
+
+  const handleChildCardClick = (child: Child) => {
+    setSelectedChild(child.id);
+    setActiveChild(child);
+
+    if (child.status === "VERIFIED") {
+      navigate("/classschedule");
+      return;
+    }
+
+    if (child.status === "PENDING") {
+      resetPreview();
+      setIsPendingModalOpen(true);
+      return;
+    }
+
+    if (child.status === "DENIED") {
+      setIsDeniedModalOpen(true);
     }
   };
 
@@ -120,7 +188,11 @@ export const ParentView = () => {
       <main className="px-6 py-12">
         {/* Apply for Registration Button */}
         <div className="flex justify-center mb-12">
-          <Button className="text-white px-8 py-6 rounded-lg text-lg font-bold uppercase" style={{ backgroundColor: "var(--button-green)", ...{ ":hover": { backgroundColor: "var(--button-hover-green)" } } }}>
+          <Button
+            className="text-white px-8 py-6 rounded-lg text-lg font-bold uppercase"
+            style={{ backgroundColor: "var(--button-green)" }}
+            onClick={openApplyModal}
+          >
             Apply for Registration
           </Button>
         </div>
@@ -146,7 +218,7 @@ export const ParentView = () => {
                 key={child.id}
                 className="p-6 rounded-lg shadow-md cursor-pointer transition-transform hover:shadow-lg border-2"
                 style={getCardBorderColor(child.status)}
-                onClick={() => setSelectedChild(child.id)}
+                onClick={() => handleChildCardClick(child)}
               >
                 {/* Child Name and Status Badge */}
                 <div className="flex justify-between items-start mb-4">
@@ -218,6 +290,46 @@ export const ParentView = () => {
           </div>
         </div>
       </main>
+
+      <ApplyRegistrationModal
+        isOpen={isApplyModalOpen}
+        child={activeChild}
+        pendingUploadTarget={pendingUploadTarget}
+        pendingUploads={pendingUploads}
+        isFormValid={isPendingFormValid}
+        onSetUploadTarget={setPendingUploadTarget}
+        onPendingFileChange={handlePendingFileChange}
+        onRemovePendingFile={(key) => setPendingUploads((prev) => ({ ...prev, [key]: null }))}
+        onClose={() => setIsApplyModalOpen(false)}
+        onSubmit={handleSubmitRegistration}
+      />
+
+      <PendingDetailsModal
+        isOpen={isPendingModalOpen}
+        child={activeChild?.status === "PENDING" ? activeChild : null}
+        files={(activeChild?.uploadedFiles ?? []).map((doc) => ({ name: doc.name, url: doc.url }))}
+        selectedPreviewName={selectedPreviewName}
+        selectedPreviewUrl={selectedPreviewUrl}
+        onPreview={handlePendingPreview}
+        onOpenPdf={handleOpenPdf}
+        onClose={() => {
+          setIsPendingModalOpen(false);
+          resetPreview();
+        }}
+      />
+
+      <DeniedDetailsModal
+        isOpen={isDeniedModalOpen}
+        child={activeChild?.status === "DENIED" ? activeChild : null}
+        deniedUploadTarget={deniedUploadTarget}
+        deniedUploads={deniedUploads}
+        isFormValid={isDeniedFormValid}
+        onSetUploadTarget={setDeniedUploadTarget}
+        onDeniedFileChange={handleDeniedFileChange}
+        onRemoveDeniedFile={(key) => setDeniedUploads((prev) => ({ ...prev, [key]: null }))}
+        onResubmit={handleResubmitDenied}
+        onClose={() => setIsDeniedModalOpen(false)}
+      />
     </div>
   );
 }

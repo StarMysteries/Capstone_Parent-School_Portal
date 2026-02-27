@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
 import { Button } from "../../components/ui/button";
-import { StatusDropdown } from "../../components/StatusDropdown";
+import { StatusDropdown } from "../../components/general/StatusDropdown";
 import { Modal } from "../../components/ui/modal";
 
 interface Staff {

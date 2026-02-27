@@ -1,9 +1,9 @@
-import { Navbar } from "@/components/Navbar";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 
 export const Transparency = () => {
   return (
     <div>
-      <Navbar />
+      <RoleAwareNavbar />
       <div className="max-w-7xl mx-auto py-12 px-4">
         <h1 className="text-4xl font-bold mb-8">Transparency & Monthly Budget Proposal</h1>
         {/* Placeholder for Transparency & Monthly Budget Proposal content */}

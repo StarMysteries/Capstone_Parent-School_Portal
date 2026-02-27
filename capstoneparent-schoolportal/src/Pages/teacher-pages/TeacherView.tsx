@@ -1,5 +1,5 @@
 import { NavbarTeacher } from "@/components/teacher/NavbarTeacher";
-import EventCard  from "@/components/EventCard";
+import EventCard  from "@/components/general/EventCard";
 
 interface Event {
   id: number;

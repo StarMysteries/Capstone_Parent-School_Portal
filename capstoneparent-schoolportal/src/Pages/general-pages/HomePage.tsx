@@ -1,5 +1,5 @@
-import { Navbar } from "@/components/Navbar";
-import EventCard  from "@/components/EventCard";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
+import EventCard  from "@/components/general/EventCard";
 
 interface Event {
   id: number;
@@ -41,7 +41,7 @@ const events: Event[] = [
 export const HomePage = () => {
   return (
     <div>
-      <Navbar />
+      <RoleAwareNavbar />
       <div className="max-w-7xl mx-auto py-12 px-4">
         <h1 className="text-[24px] font-bold mb-2 text-center">Welcome to</h1>
         <h1 className="text-4xl font-bold mb-12 text-center">Pagsabungan Elementary School</h1>

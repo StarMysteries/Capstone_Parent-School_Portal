@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { User } from "lucide-react";
-import { AboutUsDropdown } from "../AboutUsDropdown";
+import { AboutUsDropdown } from "../general/AboutUsDropdown";
+import { ProfileDropdown } from "../general/ProfileDropdown";
 import { RecordsDropdown } from "./RecordsDropdown";
 import { useLocation, Link } from "react-router-dom";
 
 export const NavbarAdmin = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
-  const isRegisterPage = location.pathname === "/register";
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -57,19 +56,19 @@ export const NavbarAdmin = () => {
               {openDropdown === "about" && <AboutUsDropdown />}
             </div>
             <div className="relative">
-              <a
+              <Link
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
                   location.pathname === "/announcements"
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
-                href="/announcements"
+                to="/announcements"
               >
                 Announcements
-              </a>
+              </Link>
             </div>
-            <a
-              href="/partnership&events"
+            <Link
+              to="/partnership&events"
               className={`text-gray-900 hover:text-gray-700 transition-colors ${
                 location.pathname === "/partnership&events"
                   ? "text-xl font-bold"
@@ -77,7 +76,7 @@ export const NavbarAdmin = () => {
               }`}
             >
               Partnership & Events
-            </a>
+            </Link>
             <div className="relative">
               <a
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
@@ -97,9 +96,7 @@ export const NavbarAdmin = () => {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-400 transition-colors">
-            <User className="h-6 w-6 text-gray-700" />
-          </div>
+          <ProfileDropdown />
         </div>
       </div>
     </header>

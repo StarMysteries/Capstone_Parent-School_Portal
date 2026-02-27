@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
-import { StatusDropdown } from "../../components/StatusDropdown";
+import { StatusDropdown } from "../../components/general/StatusDropdown";
 
 interface ParentVerification {
   id: number;

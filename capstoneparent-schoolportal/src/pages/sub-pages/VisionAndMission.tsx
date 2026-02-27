@@ -1,9 +1,9 @@
-import { Navbar } from "@/components/Navbar";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 
 export const VisionAndMission = () => {
   return (
     <div>
-      <Navbar />
+      <RoleAwareNavbar />
       <div className="max-w-7xl mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-12 text-center">Vision And Mission</h1>
         

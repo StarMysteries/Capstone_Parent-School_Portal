@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react"
-import { AboutUsDropdown } from "../AboutUsDropdown";
+import { AboutUsDropdown } from "../general/AboutUsDropdown";
+import { ProfileDropdown } from "../general/ProfileDropdown";
 import { useLocation, Link } from "react-router-dom";
-import { User } from "lucide-react";
+import { getAuthUser } from "@/lib/auth";
 
 export const NavbarParent = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
-  const isRegisterPage = location.pathname === "/register";
+  const isParentLoggedIn = getAuthUser()?.role === "parent";
   const aboutRoutes = [
     "/",
     "/contactus",
@@ -17,6 +18,13 @@ export const NavbarParent = () => {
     "/visionandmission",
   ];
   const isAboutSelected = aboutRoutes.includes(location.pathname);
+  const learnChildRoutes = [
+    "/parentview",
+    "/classschedule",
+    "/quarterlygrades",
+    "/libraryrecords",
+  ];
+  const isLearnAboutChildSelected = learnChildRoutes.includes(location.pathname);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -61,19 +69,19 @@ export const NavbarParent = () => {
               {openDropdown === "about" && <AboutUsDropdown />}
             </div>
             <div className="relative">
-              <a  
+              <Link
                 className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
                   location.pathname === "/announcements"
                     ? "text-xl font-bold"
                     : "text-lg font-medium"
                 }`}
-                href="/announcements"
+                to="/announcements"
               >
                 Announcements
-              </a>
+              </Link>
             </div>
-            <a
-              href="/partnership&events"
+            <Link
+              to="/partnership&events"
               className={`text-gray-900 hover:text-gray-700 transition-colors ${
                 location.pathname === "/partnership&events"
                   ? "text-xl font-bold"
@@ -81,11 +89,11 @@ export const NavbarParent = () => {
               }`}
             >
               Partnership & Events
-            </a>
+            </Link>
             <a
-              href="/login"
+              href={isParentLoggedIn ? "/parentview" : "/login"}
               className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                location.pathname === "/learn" || location.pathname.includes("/parent")
+                isLearnAboutChildSelected
                   ? "text-xl font-bold"
                   : "text-lg font-medium"
               }`}
@@ -95,9 +103,7 @@ export const NavbarParent = () => {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-400 transition-colors">
-            <User className="h-6 w-6 text-gray-700" />
-          </div>
+          <ProfileDropdown />
         </div>
       </div>
     </header>

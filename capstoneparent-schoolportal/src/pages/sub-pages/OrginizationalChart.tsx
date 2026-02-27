@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/Navbar";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { useState } from "react";
 
 export const OrginizationalChart = () => {
@@ -16,7 +16,7 @@ export const OrginizationalChart = () => {
 
   return (
     <div>
-      <Navbar />
+      <RoleAwareNavbar />
       <div className="max-w-7xl mx-auto py-12 px-4">
         <h1 className="text-4xl font-bold mb-8">Organizational Chart</h1>
         
