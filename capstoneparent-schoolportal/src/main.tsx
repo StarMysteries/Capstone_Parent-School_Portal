@@ -43,6 +43,10 @@ import { MemorandumAnnouncement } from "./Pages/staff-pages/announcement-pages/M
 
 {/*Librarian Sub Pages */}
 import { LibrarianView } from "./Pages/librarian-pages/LibrarianView";
+import { ManageBooks } from "./Pages/librarian-pages/ManageBooks";
+import { ManageLearningResources } from "./Pages/librarian-pages/ManageLearningResources";
+import { BorrowedResources } from "./Pages/librarian-pages/BorrowedResources";
+import { ManageCategories } from "./Pages/librarian-pages/ManageCategories";
 
 import { usePageTitle } from "./hooks/usePageTitle";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -203,6 +207,38 @@ const App = () => {
         element={
           <ProtectedRoute allowedRoles={["librarian"]}>
             <LibrarianView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managebooks"
+        element={
+          <ProtectedRoute allowedRoles={["librarian"]}>
+            <ManageBooks />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managelearningresources"
+        element={
+          <ProtectedRoute allowedRoles={["librarian"]}>
+            <ManageLearningResources />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/borrowedresources"
+        element={
+          <ProtectedRoute allowedRoles={["librarian"]}>
+            <BorrowedResources />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managecategories"
+        element={
+          <ProtectedRoute allowedRoles={["librarian"]}>
+            <ManageCategories />
           </ProtectedRoute>
         }
       />
