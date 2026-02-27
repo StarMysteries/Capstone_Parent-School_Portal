@@ -6,11 +6,14 @@ import { AnnouncementNavbar } from "@/components/staff/AnnouncementNavbar"
 
 export const GeneralAnnouncement = () => {
   return (
-    <div>
+    <div className="text-center">
+      <NavbarStaff />
+      <AnnouncementNavbar />
 
-        <NavbarStaff />
-        <AnnouncementNavbar />
-
-        </div>
+      <div className="max-w-4xl mx-auto py-6 px-4">
+        <h1 className="text-3xl font-bold mb-4">General Announcements</h1>
+        <p>This is the General announcement page.</p>
+      </div>
+    </div>
   )
 }

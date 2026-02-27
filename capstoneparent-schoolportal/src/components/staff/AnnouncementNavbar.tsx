@@ -15,7 +15,11 @@ export const AnnouncementNavbar = () => {
           ref={navRef}
           className="flex flex-row justify-center items-center gap-12"
         >
-          <NavItem to="/generalannouncement" label="General" active={isActive("/generalannouncement")} />
+          <NavItem
+            to="/announcements"
+            label="General"
+            active={isActive("/announcements") || isActive("/generalannouncement")}
+          />
           <NavItem to="/staffannouncement" label="Staffs" active={isActive("/staffannouncement")} />
           <NavItem to="/memorandumannouncement" label="Memorandum" active={isActive("/memorandumannouncement")} />
         </nav>

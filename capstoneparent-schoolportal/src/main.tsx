@@ -11,12 +11,12 @@ import { PartnershipAndEvents } from "./Pages/general-pages/PartnershipAndEvents
 import { Register } from "./Pages/general-pages/Register";
 
 {/*General Sub Pages */}
-import { ContactUs } from "./Pages/sub-pages/ContactUs";
-import { History } from "./Pages/sub-pages/History";
-import { OrginizationalChart } from "./Pages/sub-pages/OrginizationalChart";
-import { SchoolCalendar } from "./Pages/sub-pages/SchoolCalendar";
-import { Transparency } from "./Pages/sub-pages/Transparency";
-import { VisionAndMission } from "./Pages/sub-pages/VisionAndMission";
+import { ContactUs } from "./Pages/general-pages/sub-pages/ContactUs";
+import { History } from "./Pages/general-pages/sub-pages/History";
+import { OrginizationalChart } from "./Pages/general-pages/sub-pages/OrginizationalChart";
+import { SchoolCalendar } from "./Pages/general-pages/sub-pages/SchoolCalendar";
+import { Transparency } from "./Pages/general-pages/sub-pages/Transparency";
+import { VisionAndMission } from "./Pages/general-pages/sub-pages/VisionAndMission";
 
 {/*Parent Pages */}
 import { ParentView } from "./Pages/parent-pages/ParentView";
@@ -175,7 +175,7 @@ const App = () => {
       <Route
         path="/generalannouncement"
         element={
-          <ProtectedRoute allowedRoles={["staff"]}>
+          <ProtectedRoute allowedRoles={["admin", "teacher", "librarian", "staff"]}>
             <GeneralAnnouncement />
           </ProtectedRoute>
         }
@@ -183,7 +183,7 @@ const App = () => {
       <Route
         path="/staffannouncement"
         element={
-          <ProtectedRoute allowedRoles={["staff"]}>
+          <ProtectedRoute allowedRoles={["admin", "teacher", "librarian", "staff"]}>
             <StaffAnnouncement />
           </ProtectedRoute>
         }
@@ -191,7 +191,7 @@ const App = () => {
       <Route
         path="/memorandumannouncement"
         element={
-          <ProtectedRoute allowedRoles={["staff"]}>
+          <ProtectedRoute allowedRoles={["admin", "teacher", "librarian", "staff"]}>
             <MemorandumAnnouncement />
           </ProtectedRoute>
         }
