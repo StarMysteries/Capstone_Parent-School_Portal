@@ -47,46 +47,45 @@ export const BorrowedResources = () => {
   });
 
   const statusColor = (status: string) => {
-    return status === "AVAILABLE" ? "bg-green-500" : "bg-yellow-400";
+    return status === "AVAILABLE"
+      ? "text-(--status-active)"
+      : "text-(--status-pending)";
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <NavbarLibrarian />
-      <main className="mx-auto max-w-7xl px-6 pb-12 pt-6">
-        <div className="rounded-xl bg-gray-100 p-6">
-          {/* controls */}
-          <section className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Input
-                placeholder="Search Item"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-12 rounded-full"
-              />
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-green-500 p-2 text-white hover:bg-green-600"
-              >
-                <Search className="size-4" />
-              </button>
-            </div>
-
+      <main className="max-w-6xl mx-auto py-12 px-4">
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+            <h1 className="text-3xl font-bold">Borrowed Resources</h1>
             <Button
-              className="bg-green-500 hover:bg-green-600 text-white rounded-full px-6"
+              className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-6 py-2"
               onClick={() => {
                 // TODO: add new material
               }}
             >
               Add Item
             </Button>
+          </div>
+
+          <section className="flex flex-col gap-4 md:flex-row md:items-center mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Search item..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500"
+              />
+            </div>
 
             <div className="flex gap-2">
               <Select
                 value={categoryFilter}
                 onValueChange={(v) => setCategoryFilter(v)}
               >
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-40 bg-white">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -98,8 +97,11 @@ export const BorrowedResources = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={gradeFilter} onValueChange={(v) => setGradeFilter(v)}>
-                <SelectTrigger className="w-40">
+              <Select
+                value={gradeFilter}
+                onValueChange={(v) => setGradeFilter(v)}
+              >
+                <SelectTrigger className="w-40 bg-white">
                   <SelectValue placeholder="Grade Level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -113,12 +115,11 @@ export const BorrowedResources = () => {
             </div>
           </section>
 
-          {/* item list */}
-          <section className="space-y-2">
+          <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             {filteredItems.map((res) => (
               <div
                 key={res.id}
-                className="flex items-center justify-between rounded-lg bg-white p-4 shadow"
+                className="flex items-center justify-between px-4 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50"
               >
                 <div className="flex flex-col">
                   <span className="text-lg font-medium">{res.title}</span>
@@ -129,26 +130,26 @@ export const BorrowedResources = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
                     {res.category}
                   </span>
-                  <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
                     {res.gradeLevel}
                   </span>
                   <span
-                    className={`${statusColor(res.status)} rounded-full px-2 py-1 text-xs font-semibold text-white`}
+                    className={`${statusColor(res.status)} rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold`}
                   >
                     {res.status}
                   </span>
                   <Pencil
-                    className="cursor-pointer text-gray-600 hover:text-gray-800"
+                    className="cursor-pointer text-(--button-green) hover:text-(--button-hover-green)"
                     size={18}
                   />
                 </div>
               </div>
             ))}
             {filteredItems.length === 0 && (
-              <p className="text-center text-gray-500">No items found.</p>
+              <p className="text-center text-gray-500 py-8">No items found.</p>
             )}
           </section>
         </div>

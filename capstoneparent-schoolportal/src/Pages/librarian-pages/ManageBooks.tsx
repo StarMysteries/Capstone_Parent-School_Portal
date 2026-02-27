@@ -45,94 +45,93 @@ export const ManageBooks = () => {
   });
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <NavbarLibrarian />
-      <main className="mx-auto max-w-7xl px-6 pb-12 pt-6">
-        <div className="rounded-xl bg-gray-100 p-6">
-          {/* controls */}
-          <section className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="relative flex-1">
-            <Input
-              placeholder="Search Book"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-12 rounded-full"
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-green-500 p-2 text-white hover:bg-green-600"
+      <main className="max-w-6xl mx-auto py-12 px-4">
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+            <h1 className="text-3xl font-bold">Manage Books</h1>
+            <Button
+              className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-6 py-2"
+              onClick={() => {
+                // TODO: open add book modal or navigate
+              }}
             >
-              <Search className="size-4" />
-            </button>
+              Add Book
+            </Button>
           </div>
 
-          <Button
-            className="bg-green-500 hover:bg-green-600 text-white rounded-full px-6"
-            onClick={() => {
-              // TODO: open add book modal or navigate
-            }}
-          >
-            Add Book
-          </Button>
-
-          <div className="flex gap-2">
-            <Select
-              value={subjectFilter}
-              onValueChange={(v) => setSubjectFilter(v)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s === "all" ? "All" : s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={gradeFilter} onValueChange={(v) => setGradeFilter(v)}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Grade Level" />
-              </SelectTrigger>
-              <SelectContent>
-                {grades.map((g) => (
-                  <SelectItem key={g} value={g}>
-                    {g === "all" ? "All" : g}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </section>
-
-        {/* book list */}
-        <section className="space-y-2">
-          {filteredBooks.map((book) => (
-            <div
-              key={book.id}
-              className="flex items-center justify-between rounded-lg bg-white p-4 shadow"
-            >
-              <span className="text-lg font-medium">{book.title}</span>
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-semibold text-white">
-                  {book.subject}
-                </span>
-                <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
-                  {book.gradeLevel}
-                </span>
-                <Pencil
-                  className="cursor-pointer text-gray-600 hover:text-gray-800"
-                  size={18}
-                />
-              </div>
+          <section className="flex flex-col gap-4 md:flex-row md:items-center mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Search book..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500"
+              />
             </div>
-          ))}
-          {filteredBooks.length === 0 && (
-            <p className="text-center text-gray-500">No books found.</p>
-          )}
-        </section>
+
+            <div className="flex gap-2">
+              <Select
+                value={subjectFilter}
+                onValueChange={(v) => setSubjectFilter(v)}
+              >
+                <SelectTrigger className="w-40 bg-white">
+                  <SelectValue placeholder="Subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s === "all" ? "All" : s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={gradeFilter}
+                onValueChange={(v) => setGradeFilter(v)}
+              >
+                <SelectTrigger className="w-40 bg-white">
+                  <SelectValue placeholder="Grade Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {grades.map((g) => (
+                    <SelectItem key={g} value={g}>
+                      {g === "all" ? "All" : g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            {filteredBooks.map((book) => (
+              <div
+                key={book.id}
+                className="flex items-center justify-between px-4 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50"
+              >
+                <span className="text-lg font-medium">{book.title}</span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                    {book.subject}
+                  </span>
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                    {book.gradeLevel}
+                  </span>
+                  <Pencil
+                    className="cursor-pointer text-(--button-green) hover:text-(--button-hover-green)"
+                    size={18}
+                  />
+                </div>
+              </div>
+            ))}
+            {filteredBooks.length === 0 && (
+              <p className="text-center text-gray-500 py-8">No books found.</p>
+            )}
+          </section>
         </div>
       </main>
     </div>
