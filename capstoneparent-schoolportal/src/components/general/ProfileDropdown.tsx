@@ -10,12 +10,14 @@ import {
 import { MyProfileModal } from "./MyProfileModal";
 import { ManageAccountModal } from "./ManageAccountModal";
 import { ChangePasswordModal } from "./ChangePasswordModal";
+import { LogoutConfirmationModal } from "./LogoutConfirmationModal";
 
 type ActiveProfileModal = "my-profile" | "manage-account" | "change-password" | null;
 
 export const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<ActiveProfileModal>(null);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [authUser, setAuthUserState] = useState<AuthUser | null>(() => getAuthUser());
   const [profileData, setProfileData] = useState<ProfileModalData>(() =>
     loadProfileModalData(getAuthUser())
@@ -105,8 +107,14 @@ export const ProfileDropdown = () => {
 
   const handleLogout = () => {
     clearAuthUser();
+    setIsLogoutConfirmOpen(false);
     setIsOpen(false);
     navigate("/login");
+  };
+
+  const openLogoutConfirmation = () => {
+    setIsOpen(false);
+    setIsLogoutConfirmOpen(true);
   };
 
   return (
@@ -156,7 +164,7 @@ export const ProfileDropdown = () => {
             <div className="mx-3 my-1 border-t border-white/30" />
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={openLogoutConfirmation}
               className="block w-full px-4 py-2 text-left text-base font-semibold text-white transition-all duration-200 hover:bg-(--button-hover-green) hover:pl-5 hover:tracking-wide"
             >
               Logout
@@ -182,6 +190,12 @@ export const ProfileDropdown = () => {
         isOpen={activeModal === "change-password"}
         onClose={closeModal}
         onChangePassword={handleChangePassword}
+      />
+
+      <LogoutConfirmationModal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirmLogout={handleLogout}
       />
     </div>
   );
