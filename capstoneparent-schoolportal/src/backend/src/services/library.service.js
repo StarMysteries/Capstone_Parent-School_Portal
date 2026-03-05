@@ -94,8 +94,31 @@ const libraryService = {
   },
 
   async createMaterial(materialData) {
-    const { item_name, author, item_type, category_id, gl_id, uploaded_by } =
-      materialData;
+    const { item_name, author, item_type, category_id, gl_id, uploaded_by } = materialData;
+
+    // Check if uploader exists
+    const uploader = await prisma.user.findUnique({
+      where: { user_id: uploaded_by },
+    });
+    if (!uploader) {
+      throw new Error("Uploader not found");
+    }
+
+    // Check if category exists
+    const category = await prisma.category.findUnique({
+      where: { category_id },
+    });
+    if (!category) {
+      throw new Error("Category not found");
+    }
+
+    // Check if grade level exists
+    const gradeLevel = await prisma.gradeLevel.findUnique({
+      where: { gl_id },
+    });
+    if (!gradeLevel) {
+      throw new Error("Grade level not found");
+    }
 
     const material = await prisma.learningMaterial.create({
       data: {
@@ -123,6 +146,14 @@ const libraryService = {
   },
 
   async updateMaterial(materialId, updateData) {
+    // Check if material exists
+    const existingMaterial = await prisma.learningMaterial.findUnique({
+      where: { item_id: materialId },
+    });
+    if (!existingMaterial) {
+      throw new Error("Material not found");
+    }
+
     const material = await prisma.learningMaterial.update({
       where: { item_id: materialId },
       data: updateData,
@@ -143,6 +174,14 @@ const libraryService = {
   },
 
   async deleteMaterial(materialId) {
+    // Check if material exists
+    const existingMaterial = await prisma.learningMaterial.findUnique({
+      where: { item_id: materialId },
+    });
+    if (!existingMaterial) {
+      throw new Error("Material not found");
+    }
+
     await prisma.learningMaterial.delete({
       where: { item_id: materialId },
     });
@@ -152,6 +191,22 @@ const libraryService = {
 
   async addCopy(copyData) {
     const { item_id, copy_code, condition } = copyData;
+
+    // Check if material exists
+    const material = await prisma.learningMaterial.findUnique({
+      where: { item_id },
+    });
+    if (!material) {
+      throw new Error("Material not found");
+    }
+
+    // Check if copy code is already in use
+    const existingCopy = await prisma.materialCopy.findFirst({
+      where: { copy_code },
+    });
+    if (existingCopy) {
+      throw new Error("Copy code already exists");
+    }
 
     const copy = await prisma.materialCopy.create({
       data: {
@@ -167,12 +222,17 @@ const libraryService = {
   async updateCopyStatus(copyId, updateData) {
     const { status, condition } = updateData;
 
+    // Check if copy exists
+    const existingCopy = await prisma.materialCopy.findUnique({
+      where: { copy_id: copyId },
+    });
+    if (!existingCopy) {
+      throw new Error("Material copy not found");
+    }
+
     const copy = await prisma.materialCopy.update({
       where: { copy_id: copyId },
-      data: {
-        status,
-        condition,
-      },
+      data: { status, condition },
     });
 
     return copy;
@@ -181,13 +241,31 @@ const libraryService = {
   async borrowMaterial(borrowData) {
     const { copy_id, student_id, user_id, due_at } = borrowData;
 
-    // Check if copy is available
+    // Check if copy exists and is available
     const copy = await prisma.materialCopy.findUnique({
       where: { copy_id },
     });
-
-    if (!copy || copy.status !== "AVAILABLE") {
+    if (!copy) {
+      throw new Error("Material copy not found");
+    }
+    if (copy.status !== "AVAILABLE") {
       throw new Error("Material copy is not available for borrowing");
+    }
+
+    // Check if student exists
+    const student = await prisma.student.findUnique({
+      where: { student_id },
+    });
+    if (!student) {
+      throw new Error("Student not found");
+    }
+
+    // Check if librarian/user exists
+    const user = await prisma.user.findUnique({
+      where: { user_id },
+    });
+    if (!user) {
+      throw new Error("User not found");
     }
 
     // Calculate due date (1 week from now if not provided)
@@ -232,6 +310,19 @@ const libraryService = {
   async returnMaterial(borrowId, returnData) {
     const { penalty_cost, remarks } = returnData;
 
+    // Check if borrow record exists
+    const existingRecord = await prisma.materialBorrowRecord.findUnique({
+      where: { mbr_id: borrowId },
+    });
+    if (!existingRecord) {
+      throw new Error("Borrow record not found");
+    }
+
+    // Check if material has already been returned
+    if (existingRecord.returned_at) {
+      throw new Error("Material has already been returned");
+    }
+
     const record = await prisma.materialBorrowRecord.update({
       where: { mbr_id: borrowId },
       data: {
@@ -273,7 +364,6 @@ const libraryService = {
       where.user_id = parseInt(user_id);
     }
 
-    // Filter by status
     if (status === "borrowed") {
       where.returned_at = null;
     } else if (status === "returned") {
@@ -336,6 +426,14 @@ const libraryService = {
   },
 
   async createCategory(categoryName) {
+    // Check if category name already exists
+    const existingCategory = await prisma.category.findFirst({
+      where: { category_name: categoryName },
+    });
+    if (existingCategory) {
+      throw new Error("Category already exists");
+    }
+
     const category = await prisma.category.create({
       data: {
         category_name: categoryName,

@@ -60,6 +60,14 @@ const eventsService = {
   async createEvent(eventData) {
     const { event_title, event_desc, event_date, created_by, photo_path } = eventData;
 
+    // Check if creator exists
+    const creator = await prisma.user.findUnique({
+      where: { user_id: created_by }
+    });
+    if (!creator) {
+      throw new Error('User not found');
+    }
+
     const event = await prisma.event.create({
       data: {
         event_title,
@@ -83,6 +91,14 @@ const eventsService = {
   },
 
   async updateEvent(eventId, updateData) {
+    // Check if event exists
+    const existingEvent = await prisma.event.findUnique({
+      where: { event_id: eventId }
+    });
+    if (!existingEvent) {
+      throw new Error('Event not found');
+    }
+
     if (updateData.event_date) {
       updateData.event_date = new Date(updateData.event_date);
     }
@@ -105,6 +121,14 @@ const eventsService = {
   },
 
   async deleteEvent(eventId) {
+    // Check if event exists
+    const existingEvent = await prisma.event.findUnique({
+      where: { event_id: eventId }
+    });
+    if (!existingEvent) {
+      throw new Error('Event not found');
+    }
+
     await prisma.event.delete({
       where: { event_id: eventId }
     });

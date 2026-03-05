@@ -2,17 +2,28 @@ const prisma = require('../config/database');
 
 const announcementsService = {
   async getAllAnnouncements({ page, limit, type, userRoles }) {
+    // Validate pagination params
+    if (!page || isNaN(parseInt(page)) || parseInt(page) < 1) {
+      throw new Error('Invalid page number');
+    }
+    if (!limit || isNaN(parseInt(limit)) || parseInt(limit) < 1) {
+      throw new Error('Invalid limit number');
+    }
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
     const where = {};
 
-    // Filter by type if provided
     if (type) {
+      // Validate announcement type
+      const validTypes = ['General', 'Academic', 'Event', 'Emergency'];
+      if (!validTypes.includes(type)) {
+        throw new Error(`Invalid announcement type. Must be one of: ${validTypes.join(', ')}`);
+      }
       where.announcement_type = type;
     } else {
-      // If user is not staff, only show General announcements
-      const isStaff = userRoles.some(role => 
+      const isStaff = userRoles.some(role =>
         ['Teacher', 'Admin', 'Principal', 'Vice_Principal', 'Librarian'].includes(role)
       );
 
@@ -59,6 +70,10 @@ const announcementsService = {
   },
 
   async getAnnouncementById(announcementId) {
+    if (!announcementId) {
+      throw new Error('Announcement ID is required');
+    }
+
     const announcement = await prisma.announcement.findUnique({
       where: { announcement_id: announcementId },
       include: {
@@ -86,6 +101,38 @@ const announcementsService = {
 
   async createAnnouncement(announcementData) {
     const { announcement_title, announcement_desc, announcement_type, announced_by, file_ids } = announcementData;
+
+    // Validate required fields
+    if (!announcement_title || announcement_title.trim() === '') {
+      throw new Error('Announcement title is required');
+    }
+    if (!announcement_desc || announcement_desc.trim() === '') {
+      throw new Error('Announcement description is required');
+    }
+    if (!announcement_type) {
+      throw new Error('Announcement type is required');
+    }
+    if (!announced_by) {
+      throw new Error('Announcer is required');
+    }
+
+    // Validate that the announcing user exists
+    const announcer = await prisma.user.findUnique({
+      where: { user_id: announced_by }
+    });
+    if (!announcer) {
+      throw new Error('Announcing user not found');
+    }
+
+    // Validate that all provided file IDs exist
+    if (file_ids && file_ids.length > 0) {
+      const existingFiles = await prisma.file.findMany({
+        where: { file_id: { in: file_ids } }
+      });
+      if (existingFiles.length !== file_ids.length) {
+        throw new Error('One or more provided file IDs do not exist');
+      }
+    }
 
     const announcement = await prisma.announcement.create({
       data: {
@@ -119,6 +166,26 @@ const announcementsService = {
   },
 
   async updateAnnouncement(announcementId, updateData) {
+    if (!announcementId) {
+      throw new Error('Announcement ID is required');
+    }
+
+    // Check if announcement exists before updating
+    const existingAnnouncement = await prisma.announcement.findUnique({
+      where: { announcement_id: announcementId }
+    });
+    if (!existingAnnouncement) {
+      throw new Error('Announcement not found');
+    }
+
+    // Validate update fields if provided
+    if (updateData.announcement_title !== undefined && updateData.announcement_title.trim() === '') {
+      throw new Error('Announcement title cannot be empty');
+    }
+    if (updateData.announcement_desc !== undefined && updateData.announcement_desc.trim() === '') {
+      throw new Error('Announcement description cannot be empty');
+    }
+
     const announcement = await prisma.announcement.update({
       where: { announcement_id: announcementId },
       data: updateData,
@@ -142,6 +209,18 @@ const announcementsService = {
   },
 
   async deleteAnnouncement(announcementId) {
+    if (!announcementId) {
+      throw new Error('Announcement ID is required');
+    }
+
+    // Check if announcement exists before deleting
+    const existingAnnouncement = await prisma.announcement.findUnique({
+      where: { announcement_id: announcementId }
+    });
+    if (!existingAnnouncement) {
+      throw new Error('Announcement not found');
+    }
+
     await prisma.announcement.delete({
       where: { announcement_id: announcementId }
     });

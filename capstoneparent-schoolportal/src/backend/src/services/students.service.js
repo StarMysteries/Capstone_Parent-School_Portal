@@ -2,7 +2,6 @@ const prisma = require("../config/database");
 
 const studentsService = {
   async getAllStudents({ page, limit, status, grade_level, syear_start }) {
-    // Changed
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
@@ -42,6 +41,7 @@ const studentsService = {
       },
     };
   },
+
   async getStudentById(studentId) {
     const student = await prisma.student.findUnique({
       where: { student_id: studentId },
@@ -77,6 +77,22 @@ const studentsService = {
     const { fname, lname, sex, lrn_number, gl_id, syear_start, syear_end } =
       studentData;
 
+    // Check if grade level exists
+    const gradeLevel = await prisma.gradeLevel.findUnique({
+      where: { gl_id },
+    });
+    if (!gradeLevel) {
+      throw new Error("Grade level not found");
+    }
+
+    // Check if LRN is already in use
+    const existingStudent = await prisma.student.findFirst({
+      where: { lrn_number },
+    });
+    if (existingStudent) {
+      throw new Error("A student with this LRN already exists");
+    }
+
     const student = await prisma.student.create({
       data: {
         fname,
@@ -96,6 +112,27 @@ const studentsService = {
   },
 
   async updateStudent(studentId, updateData) {
+    // Check if student exists
+    const existingStudent = await prisma.student.findUnique({
+      where: { student_id: studentId },
+    });
+    if (!existingStudent) {
+      throw new Error("Student not found");
+    }
+
+    // Check if new LRN is already taken by another student
+    if (
+      updateData.lrn_number &&
+      updateData.lrn_number !== existingStudent.lrn_number
+    ) {
+      const duplicateLRN = await prisma.student.findFirst({
+        where: { lrn_number: updateData.lrn_number },
+      });
+      if (duplicateLRN) {
+        throw new Error("A student with this LRN already exists");
+      }
+    }
+
     const student = await prisma.student.update({
       where: { student_id: studentId },
       data: updateData,
@@ -108,6 +145,14 @@ const studentsService = {
   },
 
   async deleteStudent(studentId) {
+    // Check if student exists
+    const existingStudent = await prisma.student.findUnique({
+      where: { student_id: studentId },
+    });
+    if (!existingStudent) {
+      throw new Error("Student not found");
+    }
+
     await prisma.student.delete({
       where: { student_id: studentId },
     });
@@ -116,6 +161,14 @@ const studentsService = {
   },
 
   async getStudentGrades(studentId) {
+    // Check if student exists
+    const existingStudent = await prisma.student.findUnique({
+      where: { student_id: studentId },
+    });
+    if (!existingStudent) {
+      throw new Error("Student not found");
+    }
+
     const grades = await prisma.subjectRecordStudent.findMany({
       where: { student_id: studentId },
       include: {
@@ -137,6 +190,14 @@ const studentsService = {
   },
 
   async getStudentAttendance(studentId) {
+    // Check if student exists
+    const existingStudent = await prisma.student.findUnique({
+      where: { student_id: studentId },
+    });
+    if (!existingStudent) {
+      throw new Error("Student not found");
+    }
+
     const attendance = await prisma.attendanceRecord.findMany({
       where: { student_id: studentId },
       orderBy: {

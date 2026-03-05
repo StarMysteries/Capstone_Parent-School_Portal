@@ -15,7 +15,7 @@ router.use(authenticate);
 // Submit parent registration (accept file uploads)
 router.post(
   "/register",
-  upload.array("files", 10),
+  upload.array("attachments", 10),
   [
     body("student_ids").isArray({ min: 1 }),
     body("student_ids.*").isInt(),
