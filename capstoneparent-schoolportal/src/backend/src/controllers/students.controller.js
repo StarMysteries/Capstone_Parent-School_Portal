@@ -9,13 +9,13 @@ const studentsController = {
         status,
         grade_level,
         syear_start,
-      } = req.query; 
+      } = req.query;
       const result = await studentsService.getAllStudents({
         page,
         limit,
         status,
         grade_level,
-        syear_start, 
+        syear_start,
       });
 
       res.status(200).json({
@@ -31,10 +31,14 @@ const studentsController = {
     try {
       const { id } = req.params;
       const student = await studentsService.getStudentById(parseInt(id));
+
       res.status(200).json({
         data: student,
       });
     } catch (error) {
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -43,11 +47,18 @@ const studentsController = {
     try {
       const studentData = req.body;
       const student = await studentsService.createStudent(studentData);
+
       res.status(201).json({
         message: "Student created successfully",
         data: student,
       });
     } catch (error) {
+      if (error.message === "Grade level not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "A student with this LRN already exists") {
+        return res.status(409).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -61,11 +72,18 @@ const studentsController = {
         parseInt(id),
         updateData,
       );
+
       res.status(200).json({
         message: "Student updated successfully",
         data: student,
       });
     } catch (error) {
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "A student with this LRN already exists") {
+        return res.status(409).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -74,10 +92,14 @@ const studentsController = {
     try {
       const { id } = req.params;
       await studentsService.deleteStudent(parseInt(id));
+
       res.status(200).json({
         message: "Student deleted successfully",
       });
     } catch (error) {
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -86,10 +108,14 @@ const studentsController = {
     try {
       const { id } = req.params;
       const grades = await studentsService.getStudentGrades(parseInt(id));
+
       res.status(200).json({
         data: grades,
       });
     } catch (error) {
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -100,10 +126,14 @@ const studentsController = {
       const attendance = await studentsService.getStudentAttendance(
         parseInt(id),
       );
+
       res.status(200).json({
         data: attendance,
       });
     } catch (error) {
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },

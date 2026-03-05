@@ -1,4 +1,4 @@
-const classesService = require('../services/classes.service');
+const classesService = require("../services/classes.service");
 
 const classesController = {
   async getAllClasses(req, res, next) {
@@ -8,12 +8,12 @@ const classesController = {
         page,
         limit,
         school_year,
-        grade_level
+        grade_level,
       });
 
       res.status(200).json({
         data: result.classes,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
     } catch (error) {
       next(error);
@@ -24,10 +24,14 @@ const classesController = {
     try {
       const { id } = req.params;
       const classData = await classesService.getClassById(parseInt(id));
+
       res.status(200).json({
-        data: classData
+        data: classData,
       });
     } catch (error) {
+      if (error.message === "Class not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -36,11 +40,33 @@ const classesController = {
     try {
       const classData = req.body;
       const newClass = await classesService.createClass(classData);
+
       res.status(201).json({
-        message: 'Class created successfully',
-        data: newClass
+        message: "Class created successfully",
+        data: newClass,
       });
     } catch (error) {
+      if (error.message === "Grade level not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Section not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Adviser not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (
+        error.message ===
+        "Adviser is already assigned to a class in this school year"
+      ) {
+        return res.status(409).json({ message: error.message });
+      }
+      if (
+        error.message ===
+        "A class with this grade level and section already exists for this school year"
+      ) {
+        return res.status(409).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -49,13 +75,20 @@ const classesController = {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      
-      const updatedClass = await classesService.updateClass(parseInt(id), updateData);
+
+      const updatedClass = await classesService.updateClass(
+        parseInt(id),
+        updateData,
+      );
+
       res.status(200).json({
-        message: 'Class updated successfully',
-        data: updatedClass
+        message: "Class updated successfully",
+        data: updatedClass,
       });
     } catch (error) {
+      if (error.message === "Class not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -64,10 +97,14 @@ const classesController = {
     try {
       const { id } = req.params;
       await classesService.deleteClass(parseInt(id));
+
       res.status(200).json({
-        message: 'Class deleted successfully'
+        message: "Class deleted successfully",
       });
     } catch (error) {
+      if (error.message === "Class not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -76,13 +113,23 @@ const classesController = {
     try {
       const { id } = req.params;
       const subjectData = req.body;
-      
-      const subject = await classesService.addSubjectToClass(parseInt(id), subjectData);
+
+      const subject = await classesService.addSubjectToClass(
+        parseInt(id),
+        subjectData,
+      );
+
       res.status(201).json({
-        message: 'Subject added to class successfully',
-        data: subject
+        message: "Subject added to class successfully",
+        data: subject,
       });
     } catch (error) {
+      if (error.message === "Class not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Teacher not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -91,10 +138,14 @@ const classesController = {
     try {
       const { id } = req.params;
       const subjects = await classesService.getClassSubjects(parseInt(id));
+
       res.status(200).json({
-        data: subjects
+        data: subjects,
       });
     } catch (error) {
+      if (error.message === "Class not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -107,14 +158,20 @@ const classesController = {
       const grades = await classesService.updateStudentGrades({
         subject_id: parseInt(subjectId),
         student_id: parseInt(studentId),
-        ...gradesData
+        ...gradesData,
       });
 
       res.status(200).json({
-        message: 'Grades updated successfully',
-        data: grades
+        message: "Grades updated successfully",
+        data: grades,
       });
     } catch (error) {
+      if (error.message === "Subject record not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -124,18 +181,28 @@ const classesController = {
       const { studentId } = req.params;
       const attendanceData = {
         student_id: parseInt(studentId),
-        ...req.body
+        ...req.body,
       };
 
       const attendance = await classesService.updateAttendance(attendanceData);
+
       res.status(200).json({
-        message: 'Attendance updated successfully',
-        data: attendance
+        message: "Attendance updated successfully",
+        data: attendance,
       });
     } catch (error) {
+      if (error.message === "Student not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (
+        error.message ===
+        "Days present and days absent cannot exceed total school days"
+      ) {
+        return res.status(422).json({ message: error.message });
+      }
       next(error);
     }
-  }
+  },
 };
 
 module.exports = classesController;

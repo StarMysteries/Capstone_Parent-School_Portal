@@ -7,14 +7,12 @@ const authController = {
       const files = req.files || [];
       const userData = req.body;
 
-      // If the front-end sent student_ids but no explicit role, assume Parent
       if (userData.student_ids && !userData.role) {
         userData.role = "Parent";
       }
 
       const result = await authService.register(userData);
 
-      // create a pending parent registration if necessary
       if (userData.role === "Parent" && userData.student_ids) {
         const parentId = result.user_id;
         let file_ids;
@@ -35,6 +33,20 @@ const authController = {
         data: result,
       });
     } catch (error) {
+      if (error.message === "User with this email already exists") {
+        return res.status(409).json({ message: error.message });
+      }
+      if (error.message === "One or more students not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (
+        error.message === "Parent already has an active or pending registration"
+      ) {
+        return res.status(409).json({ message: error.message });
+      }
+      if (error.message === "Failed to send OTP email") {
+        return res.status(502).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -44,11 +56,10 @@ const authController = {
       const { email, password, deviceToken } = req.body;
       const result = await authService.login(email, password, deviceToken);
 
-      // Set token in cookie
       res.cookie("token", result.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       res.status(200).json({
@@ -56,6 +67,12 @@ const authController = {
         data: result,
       });
     } catch (error) {
+      if (error.message === "Invalid email or password") {
+        return res.status(401).json({ message: error.message });
+      }
+      if (error.message === "Account is inactive") {
+        return res.status(403).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -64,10 +81,17 @@ const authController = {
     try {
       const { email } = req.body;
       await authService.sendOTP(email);
+
       res.status(200).json({
         message: "OTP sent successfully",
       });
     } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Failed to send OTP email") {
+        return res.status(502).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -76,11 +100,18 @@ const authController = {
     try {
       const { email, otpCode } = req.body;
       const result = await authService.verifyOTP(email, otpCode);
+
       res.status(200).json({
         message: "OTP verified successfully",
         data: result,
       });
     } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Invalid or expired OTP") {
+        return res.status(401).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -111,8 +142,12 @@ const authController = {
     try {
       const userId = req.user.user_id;
       const devices = await authService.getTrustedDevices(userId);
+
       res.status(200).json({ data: devices });
     } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -122,8 +157,12 @@ const authController = {
       const userId = req.user.user_id;
       const tdId = parseInt(req.params.id, 10);
       await authService.removeTrustedDevice(userId, tdId);
+
       res.status(200).json({ message: "Trusted device removed" });
     } catch (error) {
+      if (error.message === "Trusted device not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },

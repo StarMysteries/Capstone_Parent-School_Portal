@@ -6,20 +6,15 @@ const parentsController = {
       const { student_ids } = req.body;
       const parent_id = req.user.user_id;
 
-      // Determine user roles and uploaded files
       const userRoles = (req.user.roles || []).map((r) => r.role);
       const files = req.files || [];
 
-      // Only require files when the requester has the Parent role
       if (userRoles.includes("Parent") && files.length === 0) {
-        return res
-          .status(400)
-          .json({
-            error: "At least one file must be uploaded with the registration",
-          });
+        return res.status(400).json({
+          error: "At least one file must be uploaded with the registration",
+        });
       }
 
-      // Persist uploaded files (if any) and collect their IDs
       let file_ids = undefined;
       if (files.length > 0) {
         const createdFiles = await parentsService.createFiles(files, parent_id);
@@ -37,6 +32,20 @@ const parentsController = {
         data: registration,
       });
     } catch (error) {
+      if (error.message === "Parent not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "One or more students not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "One or more files not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (
+        error.message === "Parent already has an active or pending registration"
+      ) {
+        return res.status(409).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -65,10 +74,14 @@ const parentsController = {
       const registration = await parentsService.getRegistrationById(
         parseInt(id),
       );
+
       res.status(200).json({
         data: registration,
       });
     } catch (error) {
+      if (error.message === "Registration not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -91,6 +104,15 @@ const parentsController = {
         data: registration,
       });
     } catch (error) {
+      if (error.message === "Registration not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Registration has already been processed") {
+        return res.status(409).json({ message: error.message });
+      }
+      if (error.message === "Verifier not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -99,10 +121,14 @@ const parentsController = {
     try {
       const parent_id = req.user.user_id;
       const children = await parentsService.getMyChildren(parent_id);
+
       res.status(200).json({
         data: children,
       });
     } catch (error) {
+      if (error.message === "Parent not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -121,6 +147,9 @@ const parentsController = {
         data: grades,
       });
     } catch (error) {
+      if (error.message === "Access denied to this student record") {
+        return res.status(403).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -139,6 +168,9 @@ const parentsController = {
         data: attendance,
       });
     } catch (error) {
+      if (error.message === "Access denied to this student record") {
+        return res.status(403).json({ message: error.message });
+      }
       next(error);
     }
   },

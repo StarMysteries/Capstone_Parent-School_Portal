@@ -1,14 +1,14 @@
-const eventsService = require('../services/events.service');
+const eventsService = require("../services/events.service");
 
 const eventsController = {
   async getAllEvents(req, res, next) {
     try {
       const { page = 1, limit = 10 } = req.query;
       const result = await eventsService.getAllEvents({ page, limit });
-      
+
       res.status(200).json({
         data: result.events,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
     } catch (error) {
       next(error);
@@ -19,10 +19,14 @@ const eventsController = {
     try {
       const { id } = req.params;
       const event = await eventsService.getEventById(parseInt(id));
+
       res.status(200).json({
-        data: event
+        data: event,
       });
     } catch (error) {
+      if (error.message === "Event not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -31,15 +35,19 @@ const eventsController = {
     try {
       const eventData = {
         ...req.body,
-        created_by: req.user.user_id
+        created_by: req.user.user_id,
       };
 
       const event = await eventsService.createEvent(eventData);
+
       res.status(201).json({
-        message: 'Event created successfully',
-        data: event
+        message: "Event created successfully",
+        data: event,
       });
     } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -48,13 +56,17 @@ const eventsController = {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      
+
       const event = await eventsService.updateEvent(parseInt(id), updateData);
+
       res.status(200).json({
-        message: 'Event updated successfully',
-        data: event
+        message: "Event updated successfully",
+        data: event,
       });
     } catch (error) {
+      if (error.message === "Event not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -63,13 +75,17 @@ const eventsController = {
     try {
       const { id } = req.params;
       await eventsService.deleteEvent(parseInt(id));
+
       res.status(200).json({
-        message: 'Event deleted successfully'
+        message: "Event deleted successfully",
       });
     } catch (error) {
+      if (error.message === "Event not found") {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
-  }
+  },
 };
 
 module.exports = eventsController;
