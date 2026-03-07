@@ -17,10 +17,19 @@ const comparePassword = async (password, hashedPassword) => {
 };
 
 /**
- * Generate a cryptographically random device token (SHA-256 hex)
+ * Generate a cryptographically random device token.
+ * Returns the RAW token — send this to the client.
+ * Always store only the hash (see hashDeviceToken) in the DB.
  */
 const generateDeviceToken = () => {
-  const token = crypto.randomBytes(32).toString("hex");
+  return crypto.randomBytes(32).toString("hex");
+};
+
+/**
+ * Hash a device token with SHA-256 for safe DB storage.
+ * If the DB is ever compromised, raw tokens still cannot be recovered.
+ */
+const hashDeviceToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
 };
 
@@ -35,5 +44,6 @@ module.exports = {
   hashPassword,
   comparePassword,
   generateDeviceToken,
+  hashDeviceToken,
   generateOTP,
 };

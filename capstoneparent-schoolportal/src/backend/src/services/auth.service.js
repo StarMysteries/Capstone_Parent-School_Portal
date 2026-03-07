@@ -5,11 +5,11 @@ const {
   comparePassword,
   generateOTP,
   generateDeviceToken,
+  hashDeviceToken,
 } = require("../utils/hashUtil");
 const { sendOTPEmail } = require("../utils/emailUtil");
 
 // Temporary store for pending registrations (keyed by email, TTL = 10 min)
-// For production, replace this with a DB table (e.g. PendingRegistration)
 const pendingRegistrations = new Map();
 
 const PENDING_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -35,6 +35,15 @@ function clearPendingRegistration(email) {
   pendingRegistrations.delete(email);
 }
 
+/** Sign a JWT for a given user */
+function signToken(user) {
+  return jwt.sign(
+    { userId: user.user_id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE || "7d" },
+  );
+}
+
 const authService = {
   /**
    * Step 1 of registration: validate uniqueness, persist files if any,
@@ -53,23 +62,19 @@ const authService = {
       student_ids,
     } = userData;
 
-    // Reject if a confirmed account already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new Error("User with this email already exists");
     }
 
-    // Also reject if a non-expired pending registration already exists
     if (getPendingRegistration(email)) {
       throw new Error(
         "A verification email was already sent. Please check your inbox.",
       );
     }
 
-    // Hash password now so we don't store plaintext in the pending map
     const hashedPassword = await hashPassword(password);
 
-    // Store pending data (files are kept on disk; we store their paths)
     storePendingRegistration(email, {
       email,
       hashedPassword,
@@ -87,14 +92,9 @@ const authService = {
       })),
     });
 
-    // Send OTP for email verification
     const otpCode = generateOTP();
     const expiresAt = new Date(Date.now() + PENDING_TTL_MS);
 
-    // We can't link to a user_id yet, so store with a special sentinel
-    // Use a separate table or reuse UserOTPCode with a nullable user_id.
-    // Here we store the OTP in a standalone pending_otp table or in-memory.
-    // For simplicity (and to avoid schema changes), we store it in-memory too.
     storePendingRegistration(email, {
       ...getPendingRegistration(email),
       otpCode,
@@ -115,7 +115,7 @@ const authService = {
 
   /**
    * Step 2 of registration: verify OTP then create the account as Inactive.
-   * Returns a deviceToken so the client can proceed to login once activated.
+   * Returns the RAW deviceToken to the client; the hash is stored in the DB.
    */
   async verifyRegistrationOTP(email, otpCode, parentsService) {
     const pending = getPendingRegistration(email);
@@ -134,7 +134,6 @@ const authService = {
       throw new Error("Invalid or expired OTP");
     }
 
-    // --- Create the user record ---
     const user = await prisma.user.create({
       data: {
         email: pending.email,
@@ -143,7 +142,6 @@ const authService = {
         lname: pending.lname,
         contact_num: pending.contact_num,
         address: pending.address,
-        // All newly verified accounts start as Inactive; admin/teacher activates them
         account_status: "Inactive",
       },
       select: {
@@ -158,14 +156,12 @@ const authService = {
       },
     });
 
-    // Assign role
     if (pending.role) {
       await prisma.userRole_Model.create({
         data: { user_id: user.user_id, role: pending.role },
       });
     }
 
-    // Handle parent-specific registration (files + student links)
     if (pending.role === "Parent" && pending.student_ids && parentsService) {
       let file_ids;
       if (pending.filePaths.length > 0) {
@@ -182,27 +178,34 @@ const authService = {
       });
     }
 
-    // Clean up pending data
     clearPendingRegistration(email);
 
-    // Generate a trusted device token for this verified device
-    const deviceToken = generateDeviceToken();
+    // Generate raw token for client; store only the hash in DB
+    const rawToken = generateDeviceToken();
     await prisma.userTrustedDevice.create({
       data: {
         user_id: user.user_id,
-        device_token: deviceToken,
+        device_token: hashDeviceToken(rawToken),
         last_used_at: new Date(),
       },
     });
 
     return {
       user,
-      deviceToken,
+      deviceToken: rawToken,
       message:
         "Email verified. Your account has been created and is pending activation by an administrator.",
     };
   },
 
+  /**
+   * Login flow:
+   *   - Always validate email + password first.
+   *   - If a deviceToken is supplied and matches a trusted device in the DB,
+   *     issue a JWT immediately (trusted device bypass).
+   *   - Otherwise return { requiresOTP: true } — the client must complete
+   *     the OTP challenge via POST /send-otp then POST /verify-otp.
+   */
   async login(email, password, deviceToken) {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -223,26 +226,28 @@ const authService = {
       throw new Error("Invalid email or password");
     }
 
-    const token = jwt.sign(
-      { userId: user.user_id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || "7d" },
-    );
-
+    // Check for a matching trusted device
     if (deviceToken) {
-      await prisma.userTrustedDevice.upsert({
-        where: { device_token: deviceToken },
-        update: { last_used_at: new Date() },
-        create: {
-          user_id: user.user_id,
-          device_token: deviceToken,
-          last_used_at: new Date(),
-        },
+      const hashedToken = hashDeviceToken(deviceToken);
+      const trustedDevice = await prisma.userTrustedDevice.findFirst({
+        where: { user_id: user.user_id, device_token: hashedToken },
       });
+
+      if (trustedDevice) {
+        // Refresh last_used_at
+        await prisma.userTrustedDevice.update({
+          where: { td_id: trustedDevice.td_id },
+          data: { last_used_at: new Date() },
+        });
+
+        const token = signToken(user);
+        const { password: _, ...userWithoutPassword } = user;
+        return { token, user: userWithoutPassword };
+      }
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    return { token, user: userWithoutPassword };
+    // No valid trusted device — caller must complete OTP
+    return { requiresOTP: true };
   },
 
   async sendOTP(email) {
@@ -266,8 +271,15 @@ const authService = {
     return true;
   },
 
+  /**
+   * Verify OTP, issue a JWT, and register a new trusted device.
+   * Returns the RAW deviceToken to the client; the hash is stored in DB.
+   */
   async verifyOTP(email, otpCode) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { roles: true },
+    });
     if (!user) {
       throw new Error("User not found");
     }
@@ -289,16 +301,21 @@ const authService = {
       data: { used: true },
     });
 
-    const deviceToken = generateDeviceToken();
+    // Register this device as trusted
+    const rawToken = generateDeviceToken();
     await prisma.userTrustedDevice.create({
       data: {
         user_id: user.user_id,
-        device_token: deviceToken,
+        device_token: hashDeviceToken(rawToken),
         last_used_at: new Date(),
       },
     });
 
-    return { deviceToken, message: "OTP verified successfully" };
+    // Issue a full JWT now that identity is confirmed via OTP
+    const token = signToken(user);
+    const { password: _, ...userWithoutPassword } = user;
+
+    return { token, user: userWithoutPassword, deviceToken: rawToken };
   },
 
   async getTrustedDevices(userId) {

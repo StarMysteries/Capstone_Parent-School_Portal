@@ -1,6 +1,12 @@
 const authService = require("../services/auth.service");
 const parentsService = require("../services/parents.service");
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 const authController = {
   /**
    * POST /register
@@ -33,7 +39,7 @@ const authController = {
   },
 
   /**
-   * POST /verify-email-otp  (alias: /verify-registration-otp)
+   * POST /verify-registration-otp
    * Verifies the OTP and finalises account creation (status: Inactive).
    */
   async verifyRegistrationOTP(req, res, next) {
@@ -71,17 +77,27 @@ const authController = {
     }
   },
 
+  /**
+   * POST /login
+   *
+   * Two possible outcomes:
+   *   1. Trusted device supplied → JWT issued immediately, cookie set.
+   *   2. Unknown/missing device  → { requiresOTP: true } returned.
+   *      Client must call POST /send-otp then POST /verify-otp to complete login.
+   */
   async login(req, res, next) {
     try {
       const { email, password, deviceToken } = req.body;
       const result = await authService.login(email, password, deviceToken);
 
-      res.cookie("token", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      if (result.requiresOTP) {
+        return res.status(200).json({
+          message: "OTP required. Please check your email.",
+          data: { requiresOTP: true },
+        });
+      }
 
+      res.cookie("token", result.token, COOKIE_OPTIONS);
       res.status(200).json({ message: "Login successful", data: result });
     } catch (error) {
       if (error.message === "Invalid email or password") {
@@ -110,13 +126,26 @@ const authController = {
     }
   },
 
+  /**
+   * POST /verify-otp
+   * Completes the OTP challenge after an untrusted-device login.
+   * Issues a JWT, sets the auth cookie, and returns the new raw deviceToken
+   * for the client to store and supply on future logins.
+   */
   async verifyOTP(req, res, next) {
     try {
       const { email, otpCode } = req.body;
       const result = await authService.verifyOTP(email, otpCode);
-      res
-        .status(200)
-        .json({ message: "OTP verified successfully", data: result });
+
+      res.cookie("token", result.token, COOKIE_OPTIONS);
+      res.status(200).json({
+        message: "OTP verified successfully",
+        data: {
+          token: result.token,
+          user: result.user,
+          deviceToken: result.deviceToken,
+        },
+      });
     } catch (error) {
       if (error.message === "User not found") {
         return res.status(404).json({ message: error.message });
