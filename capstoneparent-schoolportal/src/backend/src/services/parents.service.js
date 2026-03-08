@@ -1,52 +1,58 @@
 const prisma = require("../config/database");
-const { uploadFile, attachSignedUrls } = require("../utils/supabaseStorage");
+const { uploadFile } = require("../utils/supabaseStorage");
+const { findOrThrow } = require("../utils/findOrThrow");
 
 /**
- * Enrich a registration object by replacing bare file records with
- * ones that also carry a fresh signed_url field.
+ * File → User relationship (from schema):
+ *
+ *   File.uploaded_by  (Int, FK) ──► User.user_id  (PK)
+ *   User.files        (File[])  ◄── uploaded_by relation
+ *
+ * ParentChildFile joins File and ParentRegistration:
+ *   ParentChildFile.file_id (FK) ──► File.file_id
+ *   ParentChildFile.pr_id   (FK) ──► ParentRegistration.pr_id
+ *
+ * Required creation order (enforced in verifyRegistrationOTP):
+ *   1. User must exist before File rows         (File.uploaded_by FK)
+ *   2. File rows must exist before ParentChildFile (file_id FK)
+ *   3. ParentRegistration must exist before ParentChildFile (pr_id FK)
  */
-const enrichRegistrationFiles = async (registration) => {
-  if (!registration?.files?.length) return registration;
-
-  const enrichedFiles = await attachSignedUrls(
-    registration.files.map((pf) => pf.file),
-  );
-
-  return {
-    ...registration,
-    files: registration.files.map((pf, i) => ({
-      ...pf,
-      file: enrichedFiles[i],
-    })),
-  };
-};
 
 const parentsService = {
   /**
-   * Upload multer files to Supabase Storage and persist File records.
-   * file_path stores the Supabase storage object path, NOT a URL.
+   * Upload multer file objects to Supabase Storage and persist File records.
+   *
+   * uploadFile() returns the permanent public URL, which is stored directly
+   * in File.file_path — no URL generation step is needed on reads.
+   *
+   * Precondition: the User row for `uploaded_by` must already exist in the DB
+   * because File.uploaded_by is a non-nullable FK referencing User.user_id.
+   *
+   * @param {Array<{originalname,path,mimetype,size}>} files  multer file objects
+   * @param {number} uploaded_by  user_id of the owning user
+   * @returns {Promise<Array>} created File records (file_path = public URL)
    */
   async createFiles(files, uploaded_by) {
-    const uploader = await prisma.user.findUnique({
-      where: { user_id: uploaded_by },
-    });
-    if (!uploader) {
-      throw new Error("Uploader not found");
-    }
+    // Guard: gives a clear error instead of a cryptic FK violation
+    await findOrThrow(
+      () => prisma.user.findUnique({ where: { user_id: uploaded_by } }),
+      "Uploader not found",
+    );
 
     const created = [];
 
     for (const f of files) {
-      // uploadFile returns the storage path, e.g. "1715000000000_abc123.pdf"
-      const storagePath = await uploadFile(f);
+      // Step 1 — upload to Supabase, receive permanent public URL
+      const publicUrl = await uploadFile(f);
 
+      // Step 2 — persist File row; file_path stores the URL, not a storage key
       const file = await prisma.file.create({
         data: {
           file_name: f.originalname,
-          file_path: storagePath, // storage path — signed URL generated on read
+          file_path: publicUrl, // ← public URL, readable immediately on any request
           file_type: f.mimetype,
           file_size: f.size,
-          uploaded_by,
+          uploaded_by, // ← FK → User.user_id (user must already exist)
         },
       });
 
@@ -57,20 +63,16 @@ const parentsService = {
   },
 
   async submitRegistration({ parent_id, student_ids, file_ids }) {
-    // Coerce to integers — form-data values arrive as strings
     const parsedStudentIds = (student_ids || []).map((id) => parseInt(id, 10));
     const parsedFileIds = (file_ids || []).map((id) => parseInt(id, 10));
 
-    const parent = await prisma.user.findUnique({
-      where: { user_id: parent_id },
-    });
-    if (!parent) throw new Error("Parent not found");
+    await findOrThrow(
+      () => prisma.user.findUnique({ where: { user_id: parent_id } }),
+      "Parent not found",
+    );
 
     const existingRegistration = await prisma.parentRegistration.findFirst({
-      where: {
-        parent_id,
-        status: { in: ["PENDING", "VERIFIED"] },
-      },
+      where: { parent_id, status: { in: ["PENDING", "VERIFIED"] } },
     });
     if (existingRegistration) {
       throw new Error("Parent already has an active or pending registration");
@@ -92,6 +94,9 @@ const parentsService = {
       }
     }
 
+    // ParentRegistration and ParentChildFile rows created together.
+    // File rows must already exist (from createFiles) because
+    // ParentChildFile.file_id is a FK referencing File.file_id.
     const registration = await prisma.parentRegistration.create({
       data: {
         parent_id,
@@ -107,11 +112,11 @@ const parentsService = {
       },
       include: {
         students: { include: { student: true } },
-        files: { include: { file: true } },
+        files: { include: { file: true } }, // file.file_path is already a public URL
       },
     });
 
-    return enrichRegistrationFiles(registration);
+    return registration;
   },
 
   async getAllRegistrations({ page, limit, status }) {
@@ -139,7 +144,7 @@ const parentsService = {
           students: {
             include: { student: { include: { grade_level: true } } },
           },
-          files: { include: { file: true } },
+          files: { include: { file: true } }, // file_path is already a URL
           verifier: { select: { user_id: true, fname: true, lname: true } },
         },
         orderBy: { submitted_at: "desc" },
@@ -147,13 +152,8 @@ const parentsService = {
       prisma.parentRegistration.count({ where }),
     ]);
 
-    // Attach signed URLs to every registration's files in parallel
-    const enriched = await Promise.all(
-      registrations.map((r) => enrichRegistrationFiles(r)),
-    );
-
     return {
-      registrations: enriched,
+      registrations,
       pagination: {
         total,
         page: parseInt(page),
@@ -179,14 +179,13 @@ const parentsService = {
         students: {
           include: { student: { include: { grade_level: true } } },
         },
-        files: { include: { file: true } },
+        files: { include: { file: true } }, // file_path is already a URL
         verifier: { select: { user_id: true, fname: true, lname: true } },
       },
     });
 
     if (!registration) throw new Error("Registration not found");
-
-    return enrichRegistrationFiles(registration);
+    return registration;
   },
 
   async verifyRegistration({ pr_id, status, remarks, verified_by }) {
@@ -198,10 +197,10 @@ const parentsService = {
       throw new Error("Registration has already been processed");
     }
 
-    const verifier = await prisma.user.findUnique({
-      where: { user_id: verified_by },
-    });
-    if (!verifier) throw new Error("Verifier not found");
+    await findOrThrow(
+      () => prisma.user.findUnique({ where: { user_id: verified_by } }),
+      "Verifier not found",
+    );
 
     const registration = await prisma.parentRegistration.update({
       where: { pr_id },
@@ -231,10 +230,10 @@ const parentsService = {
   },
 
   async getMyChildren(parentId) {
-    const parent = await prisma.user.findUnique({
-      where: { user_id: parentId },
-    });
-    if (!parent) throw new Error("Parent not found");
+    await findOrThrow(
+      () => prisma.user.findUnique({ where: { user_id: parentId } }),
+      "Parent not found",
+    );
 
     const verifiedRegistrations = await prisma.parentRegistration.findMany({
       where: { parent_id: parentId, status: "VERIFIED" },

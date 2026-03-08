@@ -114,8 +114,33 @@ const authService = {
   },
 
   /**
-   * Step 2 of registration: verify OTP then create the account as Inactive.
-   * Returns the RAW deviceToken to the client; the hash is stored in the DB.
+   * Step 2 of registration: verify OTP then finalise account creation.
+   *
+   * DB write order is dictated by FK constraints — every step depends on the
+   * row created by the step before it:
+   *
+   *   1. prisma.user.create
+   *        → User row exists; its user_id can now be used as a FK.
+   *
+   *   2. prisma.userRole_Model.create  (if a role was supplied)
+   *        → user_id FK satisfied by step 1.
+   *
+   *   3. parentsService.createFiles(pending.filePaths, user.user_id)
+   *        → Uploads each file to Supabase Storage, receives a permanent
+   *          public URL, and writes a File row with:
+   *            file_path  = public URL   (readable immediately, no signing)
+   *            uploaded_by = user.user_id (FK → User — satisfied by step 1)
+   *        → Returns the created File rows including their file_ids.
+   *
+   *   4. parentsService.submitRegistration({ parent_id, student_ids, file_ids })
+   *        → Creates ParentRegistration  (parent_id FK → User — step 1)
+   *        → Creates ParentChildFile rows (file_id FK → File — step 3,
+   *                                        pr_id FK → ParentRegistration — same tx)
+   *
+   *   5. prisma.userTrustedDevice.create
+   *        → user_id FK → User — step 1.
+   *
+   * Returns the RAW deviceToken to the client; only the hash is stored in DB.
    */
   async verifyRegistrationOTP(email, otpCode, parentsService) {
     const pending = getPendingRegistration(email);
@@ -132,6 +157,21 @@ const authService = {
 
     if (pending.otpCode !== otpCode) {
       throw new Error("Invalid or expired OTP");
+    }
+
+    // Clear the pending entry immediately after the OTP is accepted.
+    // This must happen BEFORE any DB writes so that a second submission of
+    // the same OTP (e.g. double-click, network retry) finds no pending entry
+    // and gets a "No pending registration found" error instead of racing into
+    // prisma.user.create and hitting a unique constraint violation (P2002).
+    clearPendingRegistration(email);
+
+    // Guard: if a previous attempt already created the user (e.g. the DB
+    // write succeeded but the response was lost), return a clear error instead
+    // of letting Prisma throw a cryptic unique constraint failure.
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      throw new Error("Email already registered. Please log in instead.");
     }
 
     const user = await prisma.user.create({
@@ -178,7 +218,7 @@ const authService = {
       });
     }
 
-    clearPendingRegistration(email);
+    clearPendingRegistration(email); // already called above — kept as no-op safety net
 
     // Generate raw token for client; store only the hash in DB
     const rawToken = generateDeviceToken();
@@ -311,23 +351,34 @@ const authService = {
       },
     });
 
-    // Issue a full JWT now that identity is confirmed via OTP
     const token = signToken(user);
     const { password: _, ...userWithoutPassword } = user;
 
     return { token, user: userWithoutPassword, deviceToken: rawToken };
   },
 
+  /**
+   * ✅ FIX: Removed redundant prisma.user.findUnique check.
+   *
+   * This method is only reachable via the `authenticate` middleware, which
+   * already verifies the token, confirms the user exists in the DB, and
+   * attaches the full user object to req.user. A second DB round-trip here
+   * to check the same thing is wasteful and adds no safety.
+   */
   async getTrustedDevices(userId) {
-    const user = await prisma.user.findUnique({ where: { user_id: userId } });
-    if (!user) throw new Error("User not found");
-
     return prisma.userTrustedDevice.findMany({
       where: { user_id: userId },
       orderBy: { last_used_at: "desc" },
     });
   },
 
+  /**
+   * ✅ FIX: Removed redundant prisma.user.findUnique check (same reason as above).
+   *
+   * The device ownership check (`user_id: userId` in the where clause) already
+   * implicitly guarantees we only touch devices belonging to the authenticated
+   * user. The prior explicit user lookup added nothing.
+   */
   async removeTrustedDevice(userId, tdId) {
     const device = await prisma.userTrustedDevice.findFirst({
       where: { td_id: tdId, user_id: userId },

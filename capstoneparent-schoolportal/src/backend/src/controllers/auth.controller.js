@@ -73,6 +73,13 @@ const authController = {
       ) {
         return res.status(409).json({ message: error.message });
       }
+      // Triggered when a previous OTP submission already created the user
+      // but the client retried (e.g. double-submit, lost response).
+      if (
+        error.message === "Email already registered. Please log in instead."
+      ) {
+        return res.status(409).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -179,9 +186,6 @@ const authController = {
       const devices = await authService.getTrustedDevices(req.user.user_id);
       res.status(200).json({ data: devices });
     } catch (error) {
-      if (error.message === "User not found") {
-        return res.status(404).json({ message: error.message });
-      }
       next(error);
     }
   },
