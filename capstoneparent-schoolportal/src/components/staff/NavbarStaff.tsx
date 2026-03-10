@@ -8,10 +8,11 @@ import { RecordsDropdown } from "./RecordsDropdown";
 export const NavbarStaff = () => {  
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
-  const isStaffAnnouncementPage =
-    location.pathname === "/generalannouncement" ||
-    location.pathname === "/staffannouncement" ||
-    location.pathname === "/memorandumannouncement";
+  const isStaffAnnouncementPage = [
+    "/generalannouncement",
+    "/staffannouncement",
+    "/memorandumannouncement",
+  ].includes(location.pathname);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
