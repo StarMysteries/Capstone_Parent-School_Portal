@@ -6,7 +6,25 @@ const { authenticate, authorize } = require("../middlewares/auth");
 
 const router = express.Router();
 
-// All routes require authentication
+// ─── Public route — no authentication required ───────────────────────────────
+// Used during parent registration to look up a student by LRN before the
+// parent account exists. Returns only safe, non-sensitive fields.
+router.get(
+  "/search",
+  [
+    query("lrn")
+      .notEmpty()
+      .withMessage("LRN is required")
+      .isNumeric()
+      .withMessage("LRN must be numeric")
+      .isLength({ min: 1, max: 20 })
+      .withMessage("LRN must be between 1 and 20 digits"),
+  ],
+  validate,
+  studentsController.searchByLRN,
+);
+
+// ─── All routes below require authentication ─────────────────────────────────
 router.use(authenticate);
 
 // Get all students

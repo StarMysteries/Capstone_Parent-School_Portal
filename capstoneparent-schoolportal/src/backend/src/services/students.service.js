@@ -1,6 +1,33 @@
 const prisma = require("../config/database");
 
 const studentsService = {
+  /**
+   * Public LRN prefix search used during parent registration.
+   * Returns up to 10 ENROLLED students whose lrn_number starts with `lrn`.
+   * Only exposes safe, non-sensitive fields.
+   */
+  async searchByLRN(lrn) {
+    const students = await prisma.student.findMany({
+      where: {
+        lrn_number: { startsWith: lrn },
+        status: "ENROLLED",
+      },
+      select: {
+        student_id: true,
+        lrn_number: true,
+        fname: true,
+        lname: true,
+        grade_level: {
+          select: { grade_level: true },
+        },
+      },
+      orderBy: { lrn_number: "asc" },
+      take: 10,
+    });
+
+    return students;
+  },
+
   async getAllStudents({ page, limit, status, grade_level, syear_start }) {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);

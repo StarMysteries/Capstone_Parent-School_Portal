@@ -1,6 +1,23 @@
 const studentsService = require("../services/students.service");
 
 const studentsController = {
+  /**
+   * GET /students/search?lrn=<digits>
+   * Public — no auth required. Returns up to 10 enrolled students whose
+   * lrn_number starts with the supplied prefix. Only exposes safe fields
+   * (student_id, lrn_number, fname, lname, grade_level) for the
+   * registration lookup UI.
+   */
+  async searchByLRN(req, res, next) {
+    try {
+      const { lrn } = req.query;
+      const results = await studentsService.searchByLRN(lrn);
+      res.status(200).json({ data: results });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async getAllStudents(req, res, next) {
     try {
       const {
