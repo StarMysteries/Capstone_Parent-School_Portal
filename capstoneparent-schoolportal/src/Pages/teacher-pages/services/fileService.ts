@@ -24,14 +24,14 @@ export const downloadGradeSheetTemplate = async (fileType: 'csv' = 'csv') => {
   }
 };
 
-export const exportQuarterlyGradeSheet = async (
+// UPDATED: Export all quarters
+export const exportAllQuartersGradeSheet = async (
   classId: number,
-  quarter: number,
   fileType: 'csv' = 'csv'
 ) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/classes/${classId}/export-grades?quarter=${quarter}&format=${fileType}`,
+      `${API_BASE_URL}/classes/${classId}/export-grades-all-quarters?format=${fileType}`,
       {
         method: 'GET',
       }
@@ -43,7 +43,7 @@ export const exportQuarterlyGradeSheet = async (
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `class-${classId}-q${quarter}-grades.${fileType}`;
+    a.download = `class-${classId}-all-quarters-grades.${fileType}`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

@@ -99,6 +99,24 @@ export const fetchTeachers = async (): Promise<TeacherItem[]> => {
   }
 };
 
+export const addSubjects = async (
+  classId: number,
+  subjectNames: string[]
+): Promise<SubjectItem[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/classes/${classId}/add-subjects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject_names: subjectNames }),
+    });
+    if (!response.ok) throw new Error('Failed to add subjects');
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding subjects:', error);
+    throw error;
+  }
+};
+
 // ==================== MUTATIONS ====================
 
 export const addClass = async (classData: {

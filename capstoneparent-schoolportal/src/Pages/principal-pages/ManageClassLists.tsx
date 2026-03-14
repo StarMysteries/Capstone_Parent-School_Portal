@@ -27,6 +27,7 @@ import {
   downloadStudentListTemplate,
   uploadStudentList,
 } from '@/Pages/principal-pages/services/fileService';
+import { addSubjects, assignClassAdviser, assignTeacherToSubject } from '@/Pages/principal-pages/services/api';
 
 export const ManageClassLists = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -80,6 +81,7 @@ export const ManageClassLists = () => {
     studentCountByClass,
     filterClasses,
     reloadClasses,
+    reloadSubjects,
   } = useClassData();
 
   // Apply filters
@@ -188,9 +190,8 @@ export const ManageClassLists = () => {
   };
 
   // Handler functions for subjects and students
-  const handleAssignTeacher = (subject: SubjectItem) => {
-    console.log('Assign teacher to subject:', subject);
-    alert(`Assign teacher to ${subject.name}`);
+  const handleAssignTeacher = (subject: SubjectItem, teacherId: number) => {
+    handleAssignSubjectTeacher(subject, teacherId);
   };
 
   const handleRemoveSubject = (subject: SubjectItem) => {
@@ -241,6 +242,44 @@ export const ManageClassLists = () => {
 
   // Dynamically change color of dropdown fields in modals
   const getSelectColor = (value: string) => value ? "text-gray-900" : "border-gray-300 text-gray-500";
+
+  // Add & Remove subjects/teachers handlers
+  const handleAddSubjects = async (subjectNames: string[]) => {
+    if (!selectedClass) return;
+    
+    try {
+      await addSubjects(selectedClass.id, subjectNames);
+      await reloadSubjects();
+      alert(`Successfully added ${subjectNames.length} subject(s)!`);
+    } catch (error) {
+      console.error('Failed to add subjects:', error);
+      alert('Failed to add subjects. Please try again.');
+    }
+  };
+
+  const handleAssignAdviser = async (teacherId: number) => {
+    if (!selectedClass) return;
+    
+    try {
+      await assignClassAdviser(selectedClass.id, teacherId);
+      await reloadClasses();
+      alert('Class adviser assigned successfully!');
+    } catch (error) {
+      console.error('Failed to assign class adviser:', error);
+      alert('Failed to assign class adviser. Please try again.');
+    }
+  };
+
+  const handleAssignSubjectTeacher = async (subject: SubjectItem, teacherId: number) => {
+    try {
+      await assignTeacherToSubject(subject.id, teacherId);
+      await reloadSubjects();
+      alert('Teacher assigned successfully!');
+    } catch (error) {
+      console.error('Failed to assign teacher:', error);
+      alert('Failed to assign teacher. Please try again.');
+    }
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
@@ -418,11 +457,13 @@ export const ManageClassLists = () => {
                     selectedClass={selectedClass}
                     subjects={classSubjects}
                     isLoadingSubjects={isLoadingSubjects}
+                    teachers={teachers}
+                    isLoadingTeachers={isLoadingTeachers}
                     onBack={() => setSelectedClass(null)}
                     onAssignTeacher={handleAssignTeacher}
                     onRemoveSubject={handleRemoveSubject}
-                    onAddSubject={() => setIsAddSubjectModalOpen(true)}
-                    onAssignAdviser={() => setIsAssignAdviserModalOpen(true)}
+                    onAddSubjects={handleAddSubjects}
+                    onAssignAdviser={handleAssignAdviser}
                   />
                 </TabsContent>
 

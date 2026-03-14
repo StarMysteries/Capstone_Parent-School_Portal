@@ -20,7 +20,7 @@ import { SubjectSummary } from "./SubjectSummary";
 import { FileUploadModal } from './FileUploadModal';
 import {
   downloadGradeSheetTemplate,
-  exportQuarterlyGradeSheet,
+  exportAllQuartersGradeSheet,
   uploadGradeSheet,
   uploadClassSchedulePicture,
   uploadSubjectGradeSheet,
@@ -156,13 +156,11 @@ export const ClassList = () => {
     }
   };
 
-  const handleExportQuarterlyGrades = async () => {
+  const handleExportAllQuartersGrades = async () => {
     if (!selectedClass) return;
     
     try {
-      // You can modify this to select which quarter to export
-      const quarter = 1; // Default to Q1, can be made dynamic
-      await exportQuarterlyGradeSheet(selectedClass.id, quarter, 'csv');
+      await exportAllQuartersGradeSheet(selectedClass.id, 'csv');
     } catch (error) {
       alert('Failed to export grades. Please try again.');
     }
@@ -550,7 +548,7 @@ export const ClassList = () => {
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
-                          onClick={handleExportQuarterlyGrades}
+                          onClick={handleExportAllQuartersGrades}
                         >
                           <Upload className="mr-2 h-4 w-4" />
                           Export Quarterly Grade Sheet (.csv)
