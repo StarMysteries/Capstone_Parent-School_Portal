@@ -22,6 +22,11 @@ import type { ClassItem, SubjectItem, Student } from '@/Pages/principal-pages/ty
 import { NavbarPrincipal } from '@/components/principal/NavbarPrincipal';
 import { Subjects } from '@/Pages/principal-pages/Subjects';
 import { StudentList } from '@/Pages/principal-pages/StudentList';
+import { FileUploadModal } from '@/Pages/principal-pages/FileUploadModal';
+import {
+  downloadStudentListTemplate,
+  uploadStudentList,
+} from '@/Pages/principal-pages/services/fileService';
 
 export const ManageClassLists = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -38,6 +43,9 @@ export const ManageClassLists = () => {
   const [isAssignAdviserModalOpen, setIsAssignAdviserModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Modal state for file upload
+  const [isImportStudentListModalOpen, setIsImportStudentListModalOpen] = useState(false);
 
   // Form states for Add Class
   const [addFormData, setAddFormData] = useState({
@@ -199,17 +207,30 @@ export const ManageClassLists = () => {
     }
   };
 
-  // Add these new handler functions after handleRemoveStudent
+  // Upload and Download Handler Functions
   const handleImportStudents = () => {
-    console.log('Import students');
-    // TODO: Implement import functionality
-    alert('Import student list functionality will be implemented here');
+    setIsImportStudentListModalOpen(true);
   };
 
-  const handleDownloadTemplate = () => {
-    console.log('Download template');
-    // TODO: Implement download template functionality
-    alert('Download template functionality will be implemented here');
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadStudentListTemplate('csv');
+    } catch (error) {
+      alert('Failed to download template. Please try again.');
+    }
+  };
+
+  // Add this new handler
+  const handleUploadStudentList = async (file: File) => {
+    if (!selectedClass) return;
+    
+    try {
+      await uploadStudentList(selectedClass.id, file);
+      alert('Student list uploaded successfully!');
+      // TODO: Reload student data
+    } catch (error) {
+      throw new Error('Failed to upload student list');
+    }
   };
 
   // Generate year options (current year - 5 to current year + 5)
@@ -684,6 +705,16 @@ export const ManageClassLists = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={isImportStudentListModalOpen}
+        onClose={() => setIsImportStudentListModalOpen(false)}
+        onUpload={handleUploadStudentList}
+        title="Import Student List"
+        acceptedFileTypes={['.csv']}
+        maxSizeMB={25}
+      />
     </div>
   );
 };

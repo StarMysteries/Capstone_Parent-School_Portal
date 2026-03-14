@@ -62,14 +62,14 @@ export const StudentList = ({
             onClick={onImportStudents}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Import Student List (.xlsx)
+            Import Student List (.csv)
           </Button>
           <Button 
             className="bg-(--button-green) hover:bg-green-700 text-white"
             onClick={onDownloadTemplate}
           >
             <Download className="mr-2 h-4 w-4" />
-            Download Student List Template (.xlsx)
+            Download Student List Template (.csv)
           </Button>
         </div>
       </div>
