@@ -8,7 +8,7 @@ export const filterClasses = (
 ): ClassItem[] => {
   return classes.filter((classItem) => {
     const matchesGrade = gradeLevel === 'allgrades' || classItem.grade.includes(gradeLevel);
-    const matchesSection = section === 'all' || classItem.section.toLowerCase().includes(section);
+    const matchesSection = section === 'all' || classItem.section === section;
     const matchesYear = year === 'all' || `${classItem.start_year}-${classItem.end_year}` === year;
     
     return matchesGrade && matchesSection && matchesYear;
@@ -25,7 +25,7 @@ export const filterSubjects = (
   return subjects.filter((subject) => {
     const matchesSearch = subject.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesGrade = gradeLevel === 'allgrades' || subject.grade.includes(gradeLevel);
-    const matchesSection = section === 'all' || subject.section.toLowerCase().includes(section);
+    const matchesSection = section === 'all' || subject.section === section;
     const matchesYear = year === 'all' || `${subject.start_year}-${subject.end_year}` === year;
     
     return matchesSearch && matchesGrade && matchesSection && matchesYear;
