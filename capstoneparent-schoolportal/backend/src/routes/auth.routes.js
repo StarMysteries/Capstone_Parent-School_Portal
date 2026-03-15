@@ -1,5 +1,5 @@
 const express = require("express");
-const { body, param } = require("express-validator");
+const { body, param, query } = require("express-validator");
 const authController = require("../controllers/auth.controller");
 const validate = require("../middlewares/validation");
 const { authenticate } = require("../middlewares/auth");
@@ -43,6 +43,12 @@ router.post(
   ],
   validate,
   authController.register,
+);
+router.get(
+  "/reset-password-info",
+  [query("token").notEmpty().isHexadecimal().isLength({ min: 64, max: 64 })],
+  validate,
+  authController.getResetPasswordInfo,
 );
 
 // Step 2: Verify OTP → create account as Inactive

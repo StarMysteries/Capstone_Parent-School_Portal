@@ -6,17 +6,28 @@ import { Modal } from "@/components/ui/modal";
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onChangePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => {
+  onChangePassword: (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ) => {
     success: boolean;
     message: string;
   };
 }
 
-export const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }: ChangePasswordModalProps) => {
+export const ChangePasswordModal = ({
+  isOpen,
+  onClose,
+  onChangePassword,
+}: ChangePasswordModalProps) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -28,7 +39,11 @@ export const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }: Chang
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = onChangePassword(currentPassword, newPassword, confirmPassword);
+    const result = onChangePassword(
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    );
 
     setStatus({
       type: result.success ? "success" : "error",
@@ -46,7 +61,10 @@ export const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }: Chang
     <Modal isOpen={isOpen} onClose={onClose} title="Change Password">
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="current-password" className="mb-2 block text-base font-semibold text-gray-900">
+          <label
+            htmlFor="current-password"
+            className="mb-2 block text-base font-semibold text-gray-900"
+          >
             Current Password
           </label>
           <Input
@@ -60,7 +78,10 @@ export const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }: Chang
         </div>
 
         <div>
-          <label htmlFor="new-password" className="mb-2 block text-base font-semibold text-gray-900">
+          <label
+            htmlFor="new-password"
+            className="mb-2 block text-base font-semibold text-gray-900"
+          >
             New Password
           </label>
           <Input
@@ -74,7 +95,10 @@ export const ChangePasswordModal = ({ isOpen, onClose, onChangePassword }: Chang
         </div>
 
         <div>
-          <label htmlFor="confirm-password" className="mb-2 block text-base font-semibold text-gray-900">
+          <label
+            htmlFor="confirm-password"
+            className="mb-2 block text-base font-semibold text-gray-900"
+          >
             Confirm New Password
           </label>
           <Input
