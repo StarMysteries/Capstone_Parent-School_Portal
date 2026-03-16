@@ -1,110 +1,23 @@
-import { useState, useRef, useEffect } from "react";
-import { AboutUsDropdown } from "../general/AboutUsDropdown";
-import { ProfileDropdown } from "../general/ProfileDropdown";
-import { RecordsDropdown } from "./RecordsDropdown";
-import { useLocation, Link } from "react-router-dom";
+import { AuthenticatedNavbar } from "@/components/general/AuthenticatedNavbar";
 
 export const NavbarLibrarian = () => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const location = useLocation();
-  const navRef = useRef<HTMLElement>(null);
-  const isRecordsRoute = [
-    "/managebooks",
-    "/managelearningresources",
-    "/borrowedresources",
-    "/managecategories",
-  ].includes(location.pathname);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   return (
-    <header className="bg-(--navbar-bg) px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link
-            to="/"
-            className="relative h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <img
-              src="/Logo.png"
-              alt="Bayog Elementary National School Logo"
-              className="object-contain"
-            />
-          </Link>
-          <nav
-            ref={navRef}
-            className="flex flex-col md:flex-row items-center gap-4 md:gap-20 text-center md:text-left"
-          >
-            <div className="relative">
-              <a
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  openDropdown === "about"
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                onClick={() =>
-                  setOpenDropdown(openDropdown === "about" ? null : "about")
-                }
-              >
-                About Us
-              </a>
-              {openDropdown === "about" && <AboutUsDropdown />}
-            </div>
-            <div className="relative">
-              <Link
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname === "/announcements"
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                to="/announcements"
-              >
-                Announcements
-              </Link>
-            </div>
-            <Link
-              to="/partnership&events"
-              className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                location.pathname === "/partnership&events"
-                  ? "text-xl font-bold"
-                  : "text-lg font-medium"
-              }`}
-            >
-              Partnership & Events
-            </Link>
-            <div className="relative">
-              <a
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  openDropdown === "records" || isRecordsRoute
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                onClick={() =>
-                  setOpenDropdown(openDropdown === "records" ? null : "records")
-                }
-              >
-                Records
-              </a>
-              {openDropdown === "records" && <RecordsDropdown />}
-            </div>
-          </nav>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <ProfileDropdown />
-        </div>
-      </div>
-    </header>
+    <AuthenticatedNavbar
+      announcementPath="/announcements"
+      announcementActivePaths={["/announcements"]}
+      recordsItems={[
+        { label: "Manage Books", to: "/managebooks" },
+        { label: "Manage Learning Resources", to: "/managelearningresources" },
+        { label: "Borrowed Resources", to: "/borrowedresources" },
+        { label: "Manage Categories", to: "/managecategories" },
+      ]}
+      recordsActivePaths={[
+        "/managebooks",
+        "/managelearningresources",
+        "/borrowedresources",
+        "/managecategories",
+      ]}
+      logoAlt="Bayog Elementary National School Logo"
+    />
   );
 };

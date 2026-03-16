@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { AboutUsDropdown } from "../general/AboutUsDropdown";
+import { NavbarMenu, type NavbarMenuItem } from "../general/NavbarMenu";
 import { ProfileDropdown } from "../general/ProfileDropdown";
 import { useLocation, Link } from "react-router-dom";
 import { getAuthUser } from "@/lib/auth";
@@ -40,6 +41,35 @@ export const NavbarParent = () => {
     };
   }, []);
 
+  const navItems: NavbarMenuItem[] = [
+    {
+      key: "about",
+      label: "About Us",
+      type: "dropdown",
+      isActive: isAboutSelected || openDropdown === "about",
+      onClick: () => setOpenDropdown(openDropdown === "about" ? null : "about"),
+      dropdown: openDropdown === "about" ? <AboutUsDropdown /> : null,
+    },
+    {
+      key: "announcements",
+      label: "Announcements",
+      to: "/announcements",
+      isActive: location.pathname === "/announcements",
+    },
+    {
+      key: "events",
+      label: "Partnership & Events",
+      to: "/partnership&events",
+      isActive: location.pathname === "/partnership&events",
+    },
+    {
+      key: "learn",
+      label: "Learn about your child",
+      to: isParentLoggedIn ? "/parentview" : "/login",
+      isActive: isLearnAboutChildSelected,
+    },
+  ];
+
   return (
     <header className="bg-(--navbar-bg) px-6 py-4">
       <div className="flex items-center justify-between">
@@ -51,56 +81,7 @@ export const NavbarParent = () => {
               className="object-contain"
             />
           </Link>
-          <nav
-            ref={navRef}
-            className="flex flex-col md:flex-row items-center gap-4 md:gap-20 text-center md:text-left"
-          >
-            <div className="relative">
-              <a
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  isAboutSelected
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                onClick={() => setOpenDropdown(openDropdown === "about" ? null : "about")}
-              >
-                About Us
-              </a>
-              {openDropdown === "about" && <AboutUsDropdown />}
-            </div>
-            <div className="relative">
-              <Link
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname === "/announcements"
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                to="/announcements"
-              >
-                Announcements
-              </Link>
-            </div>
-            <Link
-              to="/partnership&events"
-              className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                location.pathname === "/partnership&events"
-                  ? "text-xl font-bold"
-                  : "text-lg font-medium"
-              }`}
-            >
-              Partnership & Events
-            </Link>
-            <a
-              href={isParentLoggedIn ? "/parentview" : "/login"}
-              className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                isLearnAboutChildSelected
-                  ? "text-xl font-bold"
-                  : "text-lg font-medium"
-              }`}
-            >
-              Learn about your child
-            </a>
-          </nav>
+          <NavbarMenu items={navItems} navRef={navRef} />
         </div>
         <div className="flex items-center gap-4">
           <ProfileDropdown />
