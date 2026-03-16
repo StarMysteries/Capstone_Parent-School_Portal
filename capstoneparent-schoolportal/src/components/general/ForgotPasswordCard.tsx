@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { authApi } from "@/lib/api";
 
 export const ForgotPasswordCard = () => {
   const [email, setEmail] = useState("");
@@ -18,33 +17,21 @@ export const ForgotPasswordCard = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setStatus({
-          type: "error",
-          message: data.message || "Something went wrong. Please try again.",
-        });
-        return;
-      }
-
+      const result = await authApi.forgotPassword(email);
       setStatus({
         type: "success",
         message:
-          data.message ||
+          result.message ||
           "If that email is registered, a password reset link has been sent. The link expires in 1 hour.",
       });
       setEmail("");
-    } catch {
+    } catch (err) {
       setStatus({
         type: "error",
-        message: "Unable to connect to the server. Please try again later.",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Unable to connect to the server. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -55,7 +42,7 @@ export const ForgotPasswordCard = () => {
     <div className="min-h-[calc(100vh-96px)] bg-white px-4 py-12 md:py-16">
       <div className="mx-auto w-full max-w-xl rounded-2xl bg-(--signin-bg) px-8 py-10 md:px-12 md:py-12">
         <h1 className="mb-10 text-center text-5xl font-bold text-gray-900">
-          Password Reset
+         Password Reset
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-8">

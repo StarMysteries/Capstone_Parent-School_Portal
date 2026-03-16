@@ -248,9 +248,10 @@ const authService = {
         last_used_at: new Date(),
       },
     });
+    const { password: _, ...userWithoutPassword } = user;
 
     return {
-      user,
+      user: userWithoutPassword,
       deviceToken: rawToken,
       message:
         "Email verified. Your account has been created and is pending activation by an administrator.",
@@ -460,12 +461,11 @@ const authService = {
 
     let maskedLocal;
 
-    if (local.length <= 4) {
+    if (local.length <= 2) {
       maskedLocal = local[0] + "*".repeat(local.length - 1);
     } else {
-      maskedLocal = local[0] + "*".repeat(local.length - 4) + local.slice(-3);
+      maskedLocal = local.slice(0, 2) + "*".repeat(local.length - 2);
     }
-
     return { maskedEmail: `${maskedLocal}@${domain}` };
   },
 

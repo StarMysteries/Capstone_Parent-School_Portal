@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { authApi } from "@/lib/api";
 
 export const ResetPasswordCard = () => {
   const [searchParams] = useSearchParams();
@@ -12,7 +11,7 @@ export const ResetPasswordCard = () => {
   const token = searchParams.get("token") ?? "";
 
   const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null); // null = still checking
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<{
@@ -21,7 +20,6 @@ export const ResetPasswordCard = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // On mount: validate the token and fetch the masked email
   useEffect(() => {
     if (!token) {
       setTokenValid(false);
@@ -30,15 +28,8 @@ export const ResetPasswordCard = () => {
 
     const fetchInfo = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE}/api/auth/reset-password-info?token=${token}`,
-        );
-        if (!response.ok) {
-          setTokenValid(false);
-          return;
-        }
-        const data = await response.json();
-        setMaskedEmail(data.data?.maskedEmail ?? null);
+        const result = await authApi.getResetPasswordInfo(token);
+        setMaskedEmail(result.data?.maskedEmail ?? null);
         setTokenValid(true);
       } catch {
         setTokenValid(false);
@@ -66,38 +57,24 @@ export const ResetPasswordCard = () => {
     }
 
     setIsLoading(true);
-
     try {
-      const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setStatus({
-          type: "error",
-          message: data.message || "Something went wrong. Please try again.",
-        });
-        return;
-      }
-
+      const result = await authApi.resetPassword(token, newPassword);
       setStatus({
         type: "success",
         message:
-          data.message ||
+          result.message ||
           "Password has been reset successfully. Please log in.",
       });
       setNewPassword("");
       setConfirmPassword("");
-
       setTimeout(() => navigate("/login"), 2500);
-    } catch {
+    } catch (err) {
       setStatus({
         type: "error",
-        message: "Unable to connect to the server. Please try again later.",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Unable to connect to the server. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -147,7 +124,7 @@ export const ResetPasswordCard = () => {
         {/* Header: Logo + Title */}
         <div className="mb-6 flex items-center gap-3">
           <img
-            src="../../../public/Logo.png"
+            src="/Logo.png"
             alt="School Logo"
             className="h-14 w-14 flex-shrink-0 object-contain"
           />
@@ -158,7 +135,10 @@ export const ResetPasswordCard = () => {
           {/* Masked email */}
           {maskedEmail && (
             <div className="text-base text-gray-800">
-              Email: <span className="font-bold">{maskedEmail}</span>
+              Email:{" "}
+              <span className="font-bold italic text-gray-900">
+                {maskedEmail}
+              </span>
             </div>
           )}
 

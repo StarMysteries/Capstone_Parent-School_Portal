@@ -3,20 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2, Upload, Plus, Search, X, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE = "http://localhost:5000/api";
+import { authApi, studentsApi, type StudentSearchResult } from "@/lib/api";
+import { setDeviceToken } from "@/lib/auth";
 
 type RegistrationStep = "form" | "otp" | "complete";
 
 const FILE_INPUT_ID = "register-file-upload";
-
-interface StudentResult {
-  student_id: number;
-  lrn_number: string;
-  fname: string;
-  lname: string;
-  grade_level: { grade_level: string };
-}
 
 interface SelectedStudent {
   student_id: number;
@@ -29,22 +21,23 @@ interface SelectedStudent {
 interface StudentRow {
   rowId: number;
   query: string;
-  results: StudentResult[];
+  results: StudentSearchResult[];
   isSearching: boolean;
   showDropdown: boolean;
 }
 
+const maskEmail = (email: string): string => {
+  const [local, domain] = email.split("@");
+  if (!domain) return email;
+  if (local.length <= 2) {
+    return local[0] + "*".repeat(local.length - 1) + "@" + domain;
+  }
+  return local.slice(0, 2) + "*".repeat(local.length - 2) + "@" + domain;
+};
 const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof Error && error.message.trim().length > 0)
     return error.message;
   return fallback;
-};
-
-const readApiMessage = async (response: Response): Promise<string> => {
-  const parsed = (await response.json().catch(() => null)) as {
-    message?: string;
-  } | null;
-  return parsed?.message || "";
 };
 
 function useDebouncedCallback<T extends unknown[]>(
@@ -124,12 +117,7 @@ export const RegisterCard = () => {
     );
 
     try {
-      const res = await fetch(
-        `${API_BASE}/students/search?lrn=${encodeURIComponent(lrn)}`,
-      );
-      if (!res.ok) throw new Error("Search failed");
-      const json = (await res.json()) as { data: StudentResult[] };
-
+      const json = await studentsApi.searchByLrn(lrn);
       setStudentRows((prev) =>
         prev.map((r) =>
           r.rowId === rowId
@@ -153,11 +141,10 @@ export const RegisterCard = () => {
     }
   }, []);
 
-  // Debounced version for typing (auto-search after 300 ms pause)
   const debouncedSearch = useDebouncedCallback(doSearch, 300);
 
   const handleLrnInput = (rowId: number, raw: string) => {
-    const value = raw.replace(/\D/g, ""); // numbers only
+    const value = raw.replace(/\D/g, "");
     setStudentRows((prev) =>
       prev.map((r) =>
         r.rowId === rowId ? { ...r, query: value, showDropdown: false } : r,
@@ -173,7 +160,6 @@ export const RegisterCard = () => {
     }
   };
 
-  // Enter → immediate search (bypasses debounce)
   const handleLrnKeyDown = (
     rowId: number,
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -185,7 +171,7 @@ export const RegisterCard = () => {
     }
   };
 
-  const handleSelectStudent = (rowId: number, student: StudentResult) => {
+  const handleSelectStudent = (rowId: number, student: StudentSearchResult) => {
     if (selectedStudents.some((s) => s.student_id === student.student_id))
       return;
 
@@ -199,7 +185,6 @@ export const RegisterCard = () => {
         grade_level: student.grade_level.grade_level,
       },
     ]);
-    // Remove the row that was used for this selection
     setStudentRows((prev) => prev.filter((r) => r.rowId !== rowId));
   };
 
@@ -227,7 +212,6 @@ export const RegisterCard = () => {
     setStudentRows((prev) => prev.filter((r) => r.rowId !== rowId));
   };
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const close = () =>
       setStudentRows((prev) =>
@@ -310,21 +294,13 @@ export const RegisterCard = () => {
         payload.append("student_ids", String(s.student_id));
       for (const f of uploadedFiles) payload.append("attachments", f.file);
 
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        body: payload,
-      });
-      const apiMessage = await readApiMessage(response);
-      if (!response.ok)
-        throw new Error(
-          apiMessage || "Unable to submit registration right now",
-        );
+      const result = await authApi.register(payload);
 
       setPendingEmail(formData.email.trim().toLowerCase());
       setStep("otp");
       setOtpCode("");
       setInfoMessage(
-        apiMessage || "OTP sent to your email. Enter it below to continue.",
+        result.message || "OTP sent to your email. Enter it below to continue.",
       );
     } catch (error) {
       setErrorMessage(
@@ -346,16 +322,17 @@ export const RegisterCard = () => {
 
     setIsVerifyingOtp(true);
     try {
-      const response = await fetch(`${API_BASE}/auth/verify-otp-code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pendingEmail, otpCode }),
-      });
-      const apiMessage = await readApiMessage(response);
-      if (!response.ok) throw new Error(apiMessage || "Unable to verify OTP");
+      const otpResult = await authApi.verifyRegistrationOtp(
+        pendingEmail,
+        otpCode,
+      );
+
+      if (otpResult.data?.deviceToken) {
+        setDeviceToken(otpResult.data.deviceToken);
+      }
 
       setStep("complete");
-      setInfoMessage(apiMessage || "Email verified successfully");
+      setInfoMessage(otpResult.message || "Email verified successfully");
     } catch (error) {
       setErrorMessage(getErrorMessage(error, "Unable to verify OTP"));
     } finally {
@@ -455,7 +432,6 @@ export const RegisterCard = () => {
                   Children
                 </h2>
 
-                {/* Requirements */}
                 <div className="space-y-3 mb-8">
                   <p className="text-red-700 italic font-semibold text-base">
                     Registration Requirements:
@@ -476,7 +452,6 @@ export const RegisterCard = () => {
                   </ul>
                 </div>
 
-                {/* ── Confirmed selections ── */}
                 {selectedStudents.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
@@ -510,12 +485,10 @@ export const RegisterCard = () => {
                   </div>
                 )}
 
-                {/* ── Search rows ── */}
                 <div className="space-y-3">
                   {studentRows.map((row) => (
                     <div key={row.rowId} className="relative">
                       <div className="flex gap-2">
-                        {/* Search input — stop propagation so outside-click doesn't close dropdown immediately */}
                         <div
                           className="relative flex-1"
                           onMouseDown={(e) => e.stopPropagation()}
@@ -561,7 +534,6 @@ export const RegisterCard = () => {
                         )}
                       </div>
 
-                      {/* Dropdown */}
                       {row.showDropdown && (
                         <div
                           className="absolute z-30 mt-1 w-full rounded-2xl border-2 border-gray-200 bg-white shadow-xl overflow-hidden"
@@ -616,7 +588,6 @@ export const RegisterCard = () => {
                   ))}
                 </div>
 
-                {/* Add another student */}
                 <Button
                   type="button"
                   onClick={addStudentRow}
@@ -625,7 +596,6 @@ export const RegisterCard = () => {
                   Add another student <Plus className="h-5 w-5" />
                 </Button>
 
-                {/* File upload */}
                 <div>
                   <input
                     type="file"
@@ -645,7 +615,6 @@ export const RegisterCard = () => {
                   </Button>
                 </div>
 
-                {/* Drag & Drop */}
                 <div
                   className={`border-4 border-dashed ${isDragging ? "border-green-600 bg-green-50" : "border-gray-400"} rounded-2xl p-8 text-center bg-white transition-colors cursor-pointer hover:border-green-500 hover:bg-green-50`}
                   onDragOver={handleDragOver}
@@ -663,7 +632,6 @@ export const RegisterCard = () => {
                   </div>
                 </div>
 
-                {/* Uploaded file list */}
                 <div className="space-y-3">
                   {uploadedFiles.map((fileObj, index) => (
                     <div
@@ -684,7 +652,6 @@ export const RegisterCard = () => {
                   ))}
                 </div>
 
-                {/* Submit */}
                 <div className="flex justify-end pt-4">
                   <Button
                     disabled={isSubmitting}
@@ -709,7 +676,7 @@ export const RegisterCard = () => {
             </h2>
             <p className="mt-4 text-center text-gray-700">
               Enter the 6-digit code sent to{" "}
-              <span className="font-semibold">{pendingEmail}</span>.
+              <span className="font-semibold">{maskEmail(pendingEmail)}</span>.
             </p>
             <Input
               type="text"

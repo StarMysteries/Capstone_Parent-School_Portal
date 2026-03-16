@@ -19,10 +19,8 @@ router.post(
     body("password").isLength({ min: 8 }),
     body("fname").notEmpty().trim(),
     body("lname").notEmpty().trim(),
-    body("contact_num").notEmpty(),
+    body("contact_num").notEmpty().isNumeric,
     body("address").notEmpty(),
-    // roles: optional array of non-Parent roles
-    // Parent is automatically added when student_ids is present
     body("roles")
       .optional()
       .isArray({ min: 1 })

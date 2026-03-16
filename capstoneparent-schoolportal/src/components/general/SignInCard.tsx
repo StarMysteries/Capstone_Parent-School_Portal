@@ -11,44 +11,11 @@ import {
   getDefaultRouteForRole,
   type UserRole,
 } from "@/lib/auth";
+import { authApi, type BackendUser } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Step = "credentials" | "otp";
-
-interface BackendUser {
-  user_id: number;
-  email: string;
-  fname: string;
-  lname: string;
-  roles: { role: string }[];
-}
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api";
-
-// ─── API helpers ─────────────────────────────────────────────────────────────
-
-async function apiFetch<T>(
-  path: string,
-  body: Record<string, unknown>,
-): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include", // send/receive httpOnly cookies
-    body: JSON.stringify(body),
-  });
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    throw new Error(json.message ?? json.error ?? "Request failed");
-  }
-
-  return json as T;
-}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -118,13 +85,11 @@ export const SignInCard = () => {
 
       if (storedDeviceToken) {
         // Known device — skip OTP, login directly
-        const res = await apiFetch<{
-          data: { token: string; user: BackendUser };
-        }>("/auth/login", { email, password, deviceToken: storedDeviceToken });
+        const res = await authApi.login(email, password, storedDeviceToken);
         finalise(res.data.token, res.data.user);
       } else {
         // Unknown device — request OTP first
-        await apiFetch("/auth/send-otp", { email });
+        await authApi.sendOtp(email);
         setStep("otp");
       }
     } catch (err) {
@@ -132,9 +97,9 @@ export const SignInCard = () => {
 
       // If the stored device token was rejected, clear it and retry via OTP
       if (msg.toLowerCase().includes("unrecognized device")) {
-        setDeviceToken(""); // clear stale token
+        setDeviceToken("");
         try {
-          await apiFetch("/auth/send-otp", { email });
+          await authApi.sendOtp(email);
           setStep("otp");
         } catch {
           setError("Could not send OTP. Please try again.");
@@ -154,10 +119,7 @@ export const SignInCard = () => {
     setLoading(true);
 
     try {
-      const res = await apiFetch<{
-        data: { token: string; user: BackendUser; deviceToken: string };
-      }>("/auth/verify-otp", { email, otpCode });
-
+      const res = await authApi.verifyOtp(email, otpCode);
       finalise(res.data.token, res.data.user, res.data.deviceToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid OTP");
@@ -170,7 +132,7 @@ export const SignInCard = () => {
     setError("");
     setLoading(true);
     try {
-      await apiFetch("/auth/send-otp", { email });
+      await authApi.sendOtp(email);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not resend OTP");
     } finally {
