@@ -1,4 +1,4 @@
-import type { ClassItem, SubjectItem, Student } from '@/Pages/teacher-pages/types';
+import type { ClassItem, SubjectItem, Student } from '@/Pages/principal-pages/types';
 
 export const filterClasses = (
   classes: ClassItem[],
@@ -7,8 +7,8 @@ export const filterClasses = (
   year: string
 ): ClassItem[] => {
   return classes.filter((classItem) => {
-    const matchesGrade = gradeLevel === 'allgrades' || classItem.grade.includes(gradeLevel);
-    const matchesSection = section === 'all' || classItem.section.toLowerCase().includes(section);
+    const matchesGrade = gradeLevel === 'allgrades' || classItem.grade === gradeLevel;
+    const matchesSection = section === 'all' || classItem.section === section;
     const matchesYear = year === 'all' || `${classItem.start_year}-${classItem.end_year}` === year;
     
     return matchesGrade && matchesSection && matchesYear;
@@ -17,33 +17,20 @@ export const filterClasses = (
 
 export const filterSubjects = (
   subjects: SubjectItem[],
-  searchQuery: string,
-  gradeLevel: string,
-  section: string,
-  year: string
+  searchQuery: string
 ): SubjectItem[] => {
   return subjects.filter((subject) => {
-    const matchesSearch = subject.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesGrade = gradeLevel === 'allgrades' || subject.grade.includes(gradeLevel);
-    const matchesSection = section === 'all' || subject.section.toLowerCase().includes(section);
-    const matchesYear = year === 'all' || `${subject.start_year}-${subject.end_year}` === year;
-    
-    return matchesSearch && matchesGrade && matchesSection && matchesYear;
+    return subject.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 };
 
 export const filterStudents = (
   students: Student[],
-  searchQuery: string,
-  remarksFilter: string
+  searchQuery: string
 ): Student[] => {
   return students.filter((student) => {
-    const matchesSearch = 
-      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.lrn.includes(searchQuery);
-    const matchesRemarks = remarksFilter === 'all' || student.remarks === remarksFilter;
-    
-    return matchesSearch && matchesRemarks;
+    return student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           student.lrn.includes(searchQuery);
   });
 };
 

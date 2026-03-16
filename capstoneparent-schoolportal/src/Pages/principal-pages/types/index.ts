@@ -8,13 +8,30 @@ export interface TeacherItem {
   name: string;
 }
 
-// Update ClassItem to include teacher reference
 export interface ClassItem {
   id: number;
   grade: string;
-  section: string; //Foreign key to class section
+  section: string;
   start_year: number;
   end_year: number;
-  teacher_id?: number; // Foreign key to teacher
+  teacher_id?: number;
   teacher_name?: string; // Populated from join
+}
+
+export interface SubjectItem {
+  id: number;
+  name: string;
+  grade: string;
+  section: string;
+  start_year: number;
+  end_year: number;
+  teacher_id?: number;
+  teacher_name?: string; // Populated from join
+}
+
+export interface Student {
+  id: number;
+  classId: number;
+  name: string;
+  lrn: string;
 }

@@ -249,6 +249,19 @@ const authController = {
       next(error);
     }
   },
+
+  async getResetPasswordInfo(req, res, next) {
+    try {
+      const { token } = req.query;
+      const result = await authService.getResetPasswordInfo(token);
+      res.status(200).json({ data: result });
+    } catch (error) {
+      if (error.message === "Invalid or expired reset token") {
+        return res.status(401).json({ message: error.message });
+      }
+      next(error);
+    }
+  },
 };
 
 module.exports = authController;

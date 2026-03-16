@@ -10,13 +10,21 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Search, Download, Upload, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useClassData } from '@/Pages/teacher-pages/hooks/useClassData';
 import type { ClassItem, SubjectItem, Student } from '@/Pages/teacher-pages/types';
 import { ClassSummary } from "./ClassSummary";
 import { StudentGrades } from "./StudentGrades";
 import { SubjectSummary } from "./SubjectSummary";
+import { FileUploadModal } from './FileUploadModal';
+import {
+  downloadGradeSheetTemplate,
+  exportAllQuartersGradeSheet,
+  uploadGradeSheet,
+  uploadClassSchedulePicture,
+  uploadSubjectGradeSheet,
+} from './services/fileService';
 
 export const ClassList = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -41,6 +49,11 @@ export const ClassList = () => {
 
   // Student selection
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  // Modal states for file uploads
+  const [isImportGradeSheetModalOpen, setIsImportGradeSheetModalOpen] = useState(false);
+  const [isUploadScheduleModalOpen, setIsUploadScheduleModalOpen] = useState(false);
+  const [isImportSubjectGradeSheetModalOpen, setIsImportSubjectGradeSheetModalOpen] = useState(false);
 
   // Use custom hook for data management
   const {
@@ -133,6 +146,61 @@ export const ClassList = () => {
   );
 
   const isDetailView = selectedClass !== null || selectedSubject !== null;
+
+  // Download handlers
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadGradeSheetTemplate('csv');
+    } catch (error) {
+      alert('Failed to download template. Please try again.');
+    }
+  };
+
+  const handleExportAllQuartersGrades = async () => {
+    if (!selectedClass) return;
+    
+    try {
+      await exportAllQuartersGradeSheet(selectedClass.id, 'csv');
+    } catch (error) {
+      alert('Failed to export grades. Please try again.');
+    }
+  };
+
+  // Upload handlers
+  const handleImportGradeSheet = async (file: File) => {
+    if (!selectedClass) return;
+    
+    try {
+      await uploadGradeSheet(selectedClass.id, file);
+      alert('Grade sheet uploaded successfully!');
+      // TODO: Reload student data
+    } catch (error) {
+      throw new Error('Failed to upload grade sheet');
+    }
+  };
+
+  const handleUploadSchedulePicture = async (file: File) => {
+    if (!selectedClass) return;
+    
+    try {
+      await uploadClassSchedulePicture(selectedClass.id, file);
+      alert('Class schedule uploaded successfully!');
+    } catch (error) {
+      throw new Error('Failed to upload class schedule');
+    }
+  };
+
+  const handleImportSubjectGradeSheet = async (file: File) => {
+    if (!selectedSubject) return;
+    
+    try {
+      await uploadSubjectGradeSheet(selectedSubject.id, file);
+      alert('Grade sheet uploaded successfully!');
+      // TODO: Reload student data
+    } catch (error) {
+      throw new Error('Failed to upload grade sheet');
+    }
+  };
 
   return (
     // ROOT CONTAINER
@@ -471,20 +539,32 @@ export const ClassList = () => {
                       </div>
 
                       <div className="flex gap-3 flex-wrap justify-center md:justify-start">
-                        <Button className="bg-(--button-green) hover:bg-green-700 text-white">
-                          <Upload className="mr-2 h-4 w-4" />
-                          Import Grade Sheet (.xlsx)
-                        </Button>
-                        <Button className="bg-(--button-green) hover:bg-green-700 text-white">
+                        <Button 
+                          className="bg-(--button-green) hover:bg-green-700 text-white"
+                          onClick={() => setIsImportGradeSheetModalOpen(true)}
+                        >
                           <Download className="mr-2 h-4 w-4" />
-                          Export Quarterly Grade Sheet (.xlsx)
+                          Import Grade Sheet (.csv)
                         </Button>
-                        <Button className="bg-(--button-green) hover:bg-green-700 text-white">
-                          <Download className="mr-2 h-4 w-4" />
-                          Download Grade Sheet Template (.xlsx)
-                        </Button>
-                        <Button className="bg-(--button-green) hover:bg-green-700 text-white">
+                        <Button 
+                          className="bg-(--button-green) hover:bg-green-700 text-white"
+                          onClick={handleExportAllQuartersGrades}
+                        >
                           <Upload className="mr-2 h-4 w-4" />
+                          Export Quarterly Grade Sheet (.csv)
+                        </Button>
+                        <Button 
+                          className="bg-(--button-green) hover:bg-green-700 text-white"
+                          onClick={handleDownloadTemplate}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download Grade Sheet Template (.csv)
+                        </Button>
+                        <Button 
+                          className="bg-(--button-green) hover:bg-green-700 text-white"
+                          onClick={() => setIsUploadScheduleModalOpen(true)}
+                        >
+                          <Image className="mr-2 h-4 w-4" />
                           Upload Class Schedule Picture
                         </Button>
                       </div>
@@ -641,13 +721,19 @@ export const ClassList = () => {
                     </div>
 
                     <div className="flex gap-3 flex-wrap justify-center md:justify-start">
-                      <Button className="bg-(--button-green) hover:bg-green-700 text-white">
+                      <Button 
+                        className="bg-(--button-green) hover:bg-green-700 text-white"
+                        onClick={() => setIsImportSubjectGradeSheetModalOpen(true)}
+                      >
                         <Upload className="mr-2 h-4 w-4" />
-                        Import Grade Sheet (.xlsx)
+                        Import Grade Sheet (.csv)
                       </Button>
-                      <Button className="bg-(--button-green) hover:bg-green-700 text-white">
+                      <Button 
+                        className="bg-(--button-green) hover:bg-green-700 text-white"
+                        onClick={handleDownloadTemplate}
+                      >
                         <Download className="mr-2 h-4 w-4" />
-                        Download Grade Sheet Template (.xlsx)
+                        Download Grade Sheet Template (.csv)
                       </Button>
                     </div>
 
@@ -734,6 +820,36 @@ export const ClassList = () => {
           )}
         </div>
       </div>
+      {/* File Upload Modals */}
+      {/* Class Grades */}
+      <FileUploadModal
+        isOpen={isImportGradeSheetModalOpen}
+        onClose={() => setIsImportGradeSheetModalOpen(false)}
+        onUpload={handleImportGradeSheet}
+        title="Import Grade Sheet"
+        acceptedFileTypes={['.csv']}
+        maxSizeMB={25}
+      />
+
+      {/* Class Schedule */}
+      <FileUploadModal
+        isOpen={isUploadScheduleModalOpen}
+        onClose={() => setIsUploadScheduleModalOpen(false)}
+        onUpload={handleUploadSchedulePicture}
+        title="Upload Class Schedule Picture"
+        acceptedFileTypes={['.png', '.jpg', '.jpeg', '.webp']}
+        maxSizeMB={15}
+      />
+
+      {/* Subject Grades */}
+      <FileUploadModal
+        isOpen={isImportSubjectGradeSheetModalOpen}
+        onClose={() => setIsImportSubjectGradeSheetModalOpen(false)}
+        onUpload={handleImportSubjectGradeSheet}
+        title="Import Grade Sheet"
+        acceptedFileTypes={['.csv']}
+        maxSizeMB={25}
+      />
     </div>
   );
 };

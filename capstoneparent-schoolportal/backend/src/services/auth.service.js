@@ -405,7 +405,7 @@ const authService = {
     passwordResetTokens.set(rawToken, { email, expiresAt });
     passwordResetByEmail.set(email, rawToken);
 
-    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}`;
+    const resetLink = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
 
     const emailSent = await sendPasswordResetEmail(email, resetLink);
     if (!emailSent) {
@@ -416,7 +416,6 @@ const authService = {
 
     return true;
   },
-
   async resetPassword(token, newPassword) {
     const entry = passwordResetTokens.get(token);
 
@@ -449,6 +448,25 @@ const authService = {
     passwordResetByEmail.delete(entry.email);
 
     return true;
+  },
+  async getResetPasswordInfo(token) {
+    const entry = passwordResetTokens.get(token);
+
+    if (!entry || Date.now() > entry.expiresAt) {
+      throw new Error("Invalid or expired reset token");
+    }
+
+    const [local, domain] = entry.email.split("@");
+
+    let maskedLocal;
+
+    if (local.length <= 4) {
+      maskedLocal = local[0] + "*".repeat(local.length - 1);
+    } else {
+      maskedLocal = local[0] + "*".repeat(local.length - 4) + local.slice(-3);
+    }
+
+    return { maskedEmail: `${maskedLocal}@${domain}` };
   },
 
   // ─── Trusted Devices ──────────────────────────────────────────────────────

@@ -1,11 +1,11 @@
 import { Navbar } from "@/components/general/Navbar";
-import { PasswordResetCard } from "@/components/general/PasswordResetCard";
+import { ForgotPasswordCard } from "@/components/general/ForgotPasswordCard";
 
 export const ForgotPassword = () => {
   return (
     <>
       <Navbar />
-      <PasswordResetCard />
+      <ForgotPasswordCard />
     </>
   );
-}
+};

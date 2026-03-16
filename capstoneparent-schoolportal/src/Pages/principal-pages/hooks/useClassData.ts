@@ -1,15 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { ClassItem, SubjectItem, Student } from '@/Pages/teacher-pages/types';
+import type { ClassItem, SubjectItem, Student, SectionItem, TeacherItem } from '@/Pages/principal-pages/types';
 import { 
   fetchClasses, 
   fetchSubjects, 
-  fetchStudents
-} from '@/Pages/principal-pages/services/api';
-import type { SectionItem, TeacherItem } from '@/Pages/principal-pages/types';
-import {
+  fetchStudents,
   fetchSections,
   fetchTeachers
-} from '@/Pages/principal-pages/services/api'
+} from '@/Pages/principal-pages/services/api';
 import {
   filterClasses,
   filterSubjects,
@@ -83,9 +80,17 @@ export const useClassData = () => {
     [allStudents]
   );
 
-  // Reload function for after adding/editing classes
+  // Reload functions
   const reloadClasses = async () => {
     await loadClasses();
+  };
+
+  const reloadSubjects = async () => {
+    await loadSubjects();
+  };
+
+  const reloadStudents = async () => {
+    await loadStudents();
   };
 
   return {
@@ -105,5 +110,7 @@ export const useClassData = () => {
     filterStudents,
     getStudentsForClass,
     reloadClasses,
+    reloadSubjects,
+    reloadStudents,
   };
 };
