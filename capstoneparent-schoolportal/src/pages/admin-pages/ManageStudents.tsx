@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { Button } from "../../components/ui/button";
 import { StatusDropdown } from "../../components/general/StatusDropdown";
 import { StudentFormModal } from "../../components/admin/StudentFormModal";
@@ -210,7 +210,7 @@ export const ManageStudents = () => {
 
   return (
     <div className="min-h-screen">
-      <NavbarAdmin />
+      <RoleAwareNavbar />
       <div className="max-w-7xl mx-auto py-12 px-4">
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="flex justify-between items-center mb-8">

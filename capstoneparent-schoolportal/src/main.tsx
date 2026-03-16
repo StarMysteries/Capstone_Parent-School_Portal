@@ -251,7 +251,7 @@ const App = () => {
         element={
           <ProtectedRoute allowedRoles={["librarian"]}>
             <ManageLearningResources />
-          // </ProtectedRoute>
+          </ProtectedRoute>
         }
       />
       <Route

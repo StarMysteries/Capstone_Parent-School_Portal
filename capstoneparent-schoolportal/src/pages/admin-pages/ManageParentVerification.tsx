@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
+import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { StatusDropdown } from "../../components/general/StatusDropdown";
 
 interface ParentVerification {
@@ -59,7 +59,7 @@ export const ManageParentVerification = () => {
 
   return (
     <div className="min-h-screen">
-      <NavbarAdmin />
+      <RoleAwareNavbar />
       <div className="max-w-6xl mx-auto py-12 px-4">
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="flex justify-between items-center mb-8">

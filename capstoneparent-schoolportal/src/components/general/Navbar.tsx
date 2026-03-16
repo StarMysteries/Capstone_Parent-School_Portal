@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { NavbarMenu, type NavbarMenuItem } from "@/components/general/NavbarMenu";
 import { useState, useRef, useEffect } from "react"
 import { AboutUsDropdown } from "./AboutUsDropdown";
 import { useLocation, Link } from "react-router-dom";
@@ -32,6 +33,35 @@ export const Navbar = () => {
     };
   }, []);
 
+  const navItems: NavbarMenuItem[] = [
+    {
+      key: "about",
+      label: "About Us",
+      type: "dropdown",
+      isActive: isAboutSelected || openDropdown === "about",
+      onClick: () => setOpenDropdown(openDropdown === "about" ? null : "about"),
+      dropdown: openDropdown === "about" ? <AboutUsDropdown /> : null,
+    },
+    {
+      key: "announcements",
+      label: "Announcements",
+      to: "/announcements",
+      isActive: location.pathname === "/announcements",
+    },
+    {
+      key: "events",
+      label: "Partnership & Events",
+      to: "/partnership&events",
+      isActive: isPartnershipAndEventsRoute,
+    },
+    {
+      key: "learn",
+      label: "Learn about your child",
+      to: "/login",
+      isActive: location.pathname === "/login",
+    },
+  ];
+
   return (
     <header className="bg-(--navbar-bg) px-6 py-4">
       <div className="flex items-center justify-between">
@@ -43,81 +73,30 @@ export const Navbar = () => {
               className="object-contain"
             />
           </Link>
-          <nav
-            ref={navRef}
-            className="flex flex-col md:flex-row items-center gap-4 md:gap-20 text-center md:text-left"
-          >
-            <div className="relative">
-              <a
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  isAboutSelected
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                onClick={() => setOpenDropdown(openDropdown === "about" ? null : "about")}
-              >
-                About Us
-              </a>
-              {openDropdown === "about" && <AboutUsDropdown />}
-            </div>
-            <div className="relative">
-              <Link
-                className={`text-gray-900 hover:text-gray-700 transition-colors cursor-pointer ${
-                  location.pathname === "/announcements"
-                    ? "text-xl font-bold"
-                    : "text-lg font-medium"
-                }`}
-                to="/announcements"
-              >
-                Announcements
-              </Link>
-            </div>
-            <Link
-              to="/partnership&events"
-              className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                isPartnershipAndEventsRoute
-                  ? "text-xl font-bold"
-                  : "text-lg font-medium"
-              }`}
-            >
-              Partnership & Events
-            </Link>
-            <a
-              href="/login"
-              className={`text-gray-900 hover:text-gray-700 transition-colors ${
-                location.pathname === "/learn"
-                  ? "text-xl font-bold"
-                  : "text-lg font-medium"
-              }`}
-            >
-              Learn about your child
-            </a>
-          </nav>
+          <NavbarMenu items={navItems} navRef={navRef} />
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-          <a href="/login">
-            <Button
-              className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
-                isRegisterPage
-                  ? "bg-(--button-white) text-(--button-green) hover:bg-(--button-gray)"
-                  : "bg-(--button-green) text-(--button-white) hover:bg-(--button-hover-green)"
-              }`}
-            >
-              Login
-            </Button>
-          </a>
+          <Button
+            asChild
+            className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
+              isRegisterPage
+                ? "bg-(--button-white) text-(--button-green) hover:bg-(--button-gray)"
+                : "bg-(--button-green) text-(--button-white) hover:bg-(--button-hover-green)"
+            }`}
+          >
+            <Link to="/login">Login</Link>
+          </Button>
 
-          <a href="/register">
-            <Button
-              className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
-                isRegisterPage
-                  ? "bg-(--button-green) text-(--button-white) hover:bg-(--button-hover-green)"
-                  : "bg-(--button-white) text-(--button-green) hover:bg-(--button-gray)"
-              }`}
-            >
-              Register
-            </Button>
-          </a>
+          <Button
+            asChild
+            className={`h-10 w-32 rounded-full px-12 text-base text-[20px] font-semibold transition-colors ${
+              isRegisterPage
+                ? "bg-(--button-green) text-(--button-white) hover:bg-(--button-hover-green)"
+                : "bg-(--button-white) text-(--button-green) hover:bg-(--button-gray)"
+            }`}
+          >
+            <Link to="/register">Register</Link>
+          </Button>
         </div>
       </div>
     </header>
