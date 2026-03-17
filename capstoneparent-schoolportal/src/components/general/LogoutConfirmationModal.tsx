@@ -5,12 +5,14 @@ interface LogoutConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirmLogout: () => void;
+  isLoading?: boolean;
 }
 
 export const LogoutConfirmationModal = ({
   isOpen,
   onClose,
   onConfirmLogout,
+  isLoading = false,
 }: LogoutConfirmationModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Confirm Logout">
@@ -23,16 +25,18 @@ export const LogoutConfirmationModal = ({
           <Button
             type="button"
             onClick={onClose}
-            className="h-11 rounded-full bg-gray-500 px-6 text-base font-semibold text-white hover:bg-gray-600"
+            disabled={isLoading}
+            className="h-11 rounded-full bg-gray-500 px-6 text-base font-semibold text-white hover:bg-gray-600 disabled:opacity-60"
           >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={onConfirmLogout}
-            className="h-11 rounded-full bg-red-600 px-6 text-base font-semibold text-white hover:bg-red-700"
+            disabled={isLoading}
+            className="h-11 rounded-full bg-red-600 px-6 text-base font-semibold text-white hover:bg-red-700 disabled:opacity-60"
           >
-            Yes, Logout
+            {isLoading ? "Logging out…" : "Yes, Logout"}
           </Button>
         </div>
       </div>

@@ -11,7 +11,7 @@ import {
   getDefaultRouteForRole,
   type UserRole,
 } from "@/lib/auth";
-import { authApi, type BackendUser } from "@/lib/api";
+import { authApi, type AuthUser } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,11 +55,7 @@ export const SignInCard = () => {
   const navigate = useNavigate();
 
   // ── Finish: store session and navigate ──────────────────────────────────────
-  const finalise = (
-    token: string,
-    user: BackendUser,
-    rawDeviceToken?: string,
-  ) => {
+  const finalise = (token: string, user: AuthUser, rawDeviceToken?: string) => {
     if (rawDeviceToken) setDeviceToken(rawDeviceToken);
     setJwt(token);
 

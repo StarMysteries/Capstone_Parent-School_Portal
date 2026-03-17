@@ -19,7 +19,7 @@ router.post(
     body("password").isLength({ min: 8 }),
     body("fname").notEmpty().trim(),
     body("lname").notEmpty().trim(),
-    body("contact_num").notEmpty().isNumeric,
+    body("contact_num").notEmpty().isNumeric(),
     body("address").notEmpty(),
     body("roles")
       .optional()

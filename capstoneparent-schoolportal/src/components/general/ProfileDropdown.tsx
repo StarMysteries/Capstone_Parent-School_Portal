@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { clearAuthUser, getAuthUser, setAuthUser, type AuthUser } from "@/lib/auth";
+import {
+  clearAuthUser,
+  getAuthUser,
+  setAuthUser,
+  type AuthUser,
+} from "@/lib/auth";
 import {
   loadProfileModalData,
   saveProfileModalData,
@@ -11,16 +16,24 @@ import { MyProfileModal } from "./MyProfileModal";
 import { ManageAccountModal } from "./ManageAccountModal";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { LogoutConfirmationModal } from "./LogoutConfirmationModal";
+import { authApi } from "@/lib/api";
 
-type ActiveProfileModal = "my-profile" | "manage-account" | "change-password" | null;
+type ActiveProfileModal =
+  | "my-profile"
+  | "manage-account"
+  | "change-password"
+  | null;
 
 export const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<ActiveProfileModal>(null);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-  const [authUser, setAuthUserState] = useState<AuthUser | null>(() => getAuthUser());
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [authUser, setAuthUserState] = useState<AuthUser | null>(() =>
+    getAuthUser(),
+  );
   const [profileData, setProfileData] = useState<ProfileModalData>(() =>
-    loadProfileModalData(getAuthUser())
+    loadProfileModalData(getAuthUser()),
   );
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
@@ -48,7 +61,9 @@ export const ProfileDropdown = () => {
 
   const closeModal = () => setActiveModal(null);
 
-  const handleSaveProfile = (updatedProfileData: ProfileModalData): { success: boolean; message: string } => {
+  const handleSaveProfile = (
+    updatedProfileData: ProfileModalData,
+  ): { success: boolean; message: string } => {
     if (!updatedProfileData.email.includes("@")) {
       return { success: false, message: "Enter a valid email address." };
     }
@@ -72,7 +87,7 @@ export const ProfileDropdown = () => {
   const handleChangePassword = (
     currentPassword: string,
     newPassword: string,
-    confirmPassword: string
+    confirmPassword: string,
   ): { success: boolean; message: string } => {
     if (!authUser) {
       return { success: false, message: "No authenticated user found." };
@@ -81,7 +96,11 @@ export const ProfileDropdown = () => {
     const passwordKey = `dummyAuthPassword:${authUser.email.toLowerCase()}`;
     const savedPassword = localStorage.getItem(passwordKey);
 
-    if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
+    if (
+      !currentPassword.trim() ||
+      !newPassword.trim() ||
+      !confirmPassword.trim()
+    ) {
       return { success: false, message: "All password fields are required." };
     }
 
@@ -90,26 +109,44 @@ export const ProfileDropdown = () => {
     }
 
     if (newPassword.length < 6) {
-      return { success: false, message: "New password must be at least 6 characters." };
+      return {
+        success: false,
+        message: "New password must be at least 6 characters.",
+      };
     }
 
     if (newPassword !== confirmPassword) {
-      return { success: false, message: "New password and confirmation do not match." };
+      return {
+        success: false,
+        message: "New password and confirmation do not match.",
+      };
     }
 
     if (currentPassword === newPassword) {
-      return { success: false, message: "New password must be different from current password." };
+      return {
+        success: false,
+        message: "New password must be different from current password.",
+      };
     }
 
     localStorage.setItem(passwordKey, newPassword);
     return { success: true, message: "Password updated successfully." };
   };
 
-  const handleLogout = () => {
-    clearAuthUser();
-    setIsLogoutConfirmOpen(false);
-    setIsOpen(false);
-    navigate("/login");
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authApi.logout();
+    } catch {
+      // Server-side logout failed (e.g. already expired session).
+      // Proceed with local cleanup regardless.
+    } finally {
+      clearAuthUser();
+      setIsLogoutConfirmOpen(false);
+      setIsOpen(false);
+      setIsLoggingOut(false);
+      navigate("/login");
+    }
   };
 
   const openLogoutConfirmation = () => {
@@ -196,6 +233,7 @@ export const ProfileDropdown = () => {
         isOpen={isLogoutConfirmOpen}
         onClose={() => setIsLogoutConfirmOpen(false)}
         onConfirmLogout={handleLogout}
+        isLoading={isLoggingOut}
       />
     </div>
   );

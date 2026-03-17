@@ -358,7 +358,7 @@ export const RegisterCard = () => {
 
         {/* ── FORM STEP ── */}
         {step === "form" && (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-8">
               {/* Left — Parent Information */}
               <div className="space-y-6">
