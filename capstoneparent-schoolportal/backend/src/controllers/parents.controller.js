@@ -1,4 +1,5 @@
 const parentsService = require("../services/parents.service");
+const usersService = require("../services/users.service");
 
 const parentsController = {
   async submitRegistration(req, res, next) {
@@ -17,7 +18,7 @@ const parentsController = {
 
       let file_ids = undefined;
       if (files.length > 0) {
-        const createdFiles = await parentsService.createFiles(files, parent_id);
+        const createdFiles = await usersService.createFiles(files, parent_id);
         file_ids = createdFiles.map((f) => f.file_id);
       }
 

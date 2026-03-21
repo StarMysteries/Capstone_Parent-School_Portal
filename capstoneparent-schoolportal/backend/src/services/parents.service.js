@@ -1,5 +1,4 @@
 const prisma = require("../config/database");
-const { uploadFiles } = require("../utils/supabaseStorage");
 const { findOrThrow } = require("../utils/findOrThrow");
 
 /**
@@ -16,55 +15,12 @@ const { findOrThrow } = require("../utils/findOrThrow");
  *   1. User must exist before File rows         (File.uploaded_by FK)
  *   2. File rows must exist before ParentChildFile (file_id FK)
  *   3. ParentRegistration must exist before ParentChildFile (pr_id FK)
+ *
+ * Note: createFiles has been moved to users.service.js as it is a
+ * general user-scoped file operation, not specific to parent registration.
  */
 
 const parentsService = {
-  /**
-   * Upload multer file objects to Supabase Storage in parallel and persist
-   * File records.
-   *
-   * uploadFiles() uploads all files concurrently and returns an array of
-   * permanent signed URLs in the same order as the input. Each URL is stored
-   * directly in File.file_path — no URL generation step is needed on reads.
-   *
-   * Precondition: the User row for `uploaded_by` must already exist in the DB
-   * because File.uploaded_by is a non-nullable FK referencing User.user_id.
-   *
-   * @param {Array<{originalname,path,mimetype,size}>} files  multer file objects
-   * @param {number} uploaded_by  user_id of the owning user
-   * @returns {Promise<Array>} created File records (file_path = signed URL)
-   */
-  async createFiles(files, uploaded_by) {
-    if (!files || files.length === 0) return [];
-
-    await findOrThrow(
-      () => prisma.user.findUnique({ where: { user_id: uploaded_by } }),
-      "Uploader not found",
-    );
-
-    // Upload all files to Supabase in parallel — returns signed URLs in input order
-    const signedUrls = await uploadFiles(files);
-
-    // Persist all File rows using createMany for a single DB round-trip
-    const fileData = files.map((f, i) => ({
-      file_name: f.originalname,
-      file_path: signedUrls[i],
-      file_type: f.mimetype,
-      file_size: f.size,
-      uploaded_by,
-    }));
-
-    await prisma.file.createMany({ data: fileData });
-
-    // createMany does not return created rows — fetch them back by matching
-    // the signed URLs which are guaranteed unique per upload
-    const created = await prisma.file.findMany({
-      where: { file_path: { in: signedUrls } },
-    });
-
-    return created;
-  },
-
   async submitRegistration({ parent_id, student_ids, file_ids }) {
     const parsedStudentIds = (student_ids || []).map((id) => parseInt(id, 10));
     const parsedFileIds = (file_ids || []).map((id) => parseInt(id, 10));
@@ -98,7 +54,7 @@ const parentsService = {
     }
 
     // ParentRegistration and ParentChildFile rows created together.
-    // File rows must already exist (from createFiles) because
+    // File rows must already exist (from usersService.createFiles) because
     // ParentChildFile.file_id is a FK referencing File.file_id.
     const registration = await prisma.parentRegistration.create({
       data: {

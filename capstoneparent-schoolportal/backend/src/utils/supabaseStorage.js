@@ -89,7 +89,7 @@ const uploadFile = async (file) => {
       fs.unlinkSync(file.path);
     } catch (_) {}
     throw new Error(
-      `Invalid file type: ${file.originalname}. Only JPG, PNG, and PDF files are allowed.`,
+      `Invalid file type: ${file.originalname}. Only JPG, JPEG, PNG, and PDF files are allowed.`,
     );
   }
 

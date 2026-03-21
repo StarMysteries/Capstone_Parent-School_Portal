@@ -10,6 +10,7 @@ const {
   hashDeviceToken,
 } = require("../utils/hashUtil");
 const { sendOTPEmail, sendPasswordResetEmail } = require("../utils/emailUtil");
+const usersService = require("./users.service");
 
 // ─── Pending Registrations Store ────────────────────────────────────────────
 const pendingRegistrations = new Map();
@@ -159,6 +160,9 @@ const authService = {
    *
    * Returns the raw deviceToken so the client can store it and pass it
    * on every future POST /login request — skipping OTP on known devices.
+   *
+   * File uploads are handled via usersService.createFiles, which owns all
+   * file-related DB operations regardless of the registering user's role.
    */
   async verifyRegistrationOTP(email, otpCode, parentsService) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -217,7 +221,9 @@ const authService = {
       });
     }
 
-    // Submit parent registration if applicable
+    // Submit parent registration if applicable.
+    // File upload is delegated to usersService.createFiles — file handling
+    // is a user-level concern, not specific to parent registration.
     if (
       pending.roles?.includes("Parent") &&
       pending.student_ids &&
@@ -225,7 +231,7 @@ const authService = {
     ) {
       let file_ids;
       if (pending.filePaths && pending.filePaths.length > 0) {
-        const created = await parentsService.createFiles(
+        const created = await usersService.createFiles(
           pending.filePaths,
           user.user_id,
         );
