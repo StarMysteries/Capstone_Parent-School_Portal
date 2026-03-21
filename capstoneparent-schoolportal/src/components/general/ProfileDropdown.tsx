@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  clearAuthUser,
-  getAuthUser,
-  setAuthUser,
-  type AuthUser,
-} from "@/lib/auth";
+import { useAuthStore } from "../../lib/store/authStore";
 import {
   loadProfileModalData,
   saveProfileModalData,
@@ -29,14 +24,19 @@ export const ProfileDropdown = () => {
   const [activeModal, setActiveModal] = useState<ActiveProfileModal>(null);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [authUser, setAuthUserState] = useState<AuthUser | null>(() =>
-    getAuthUser(),
-  );
-  const [profileData, setProfileData] = useState<ProfileModalData>(() =>
-    loadProfileModalData(getAuthUser()),
-  );
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+
+  const { user, logout: storeLogout } = useAuthStore();
+
+  const [profileData, setProfileData] = useState<ProfileModalData>(() =>
+    loadProfileModalData(user),
+  );
+
+  // Keep profileData in sync if the store user changes (e.g. after re-login)
+  useEffect(() => {
+    setProfileData(loadProfileModalData(user));
+  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,11 +47,8 @@ export const ProfileDropdown = () => {
         setIsOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const openModal = (modalType: Exclude<ActiveProfileModal, null>) => {
@@ -71,14 +68,11 @@ export const ProfileDropdown = () => {
     setProfileData(updatedProfileData);
     saveProfileModalData(updatedProfileData);
 
-    if (authUser) {
-      const updatedAuthUser: AuthUser = {
-        ...authUser,
-        name: updatedProfileData.fullName,
-        email: updatedProfileData.email,
-      };
-      setAuthUser(updatedAuthUser);
-      setAuthUserState(updatedAuthUser);
+    // Sync the display name in the store
+    if (user) {
+      useAuthStore.setState({
+        user: { ...user, name: updatedProfileData.fullName },
+      });
     }
 
     return { success: true, message: "Profile updated successfully." };
@@ -89,13 +83,6 @@ export const ProfileDropdown = () => {
     newPassword: string,
     confirmPassword: string,
   ): { success: boolean; message: string } => {
-    if (!authUser) {
-      return { success: false, message: "No authenticated user found." };
-    }
-
-    const passwordKey = `dummyAuthPassword:${authUser.email.toLowerCase()}`;
-    const savedPassword = localStorage.getItem(passwordKey);
-
     if (
       !currentPassword.trim() ||
       !newPassword.trim() ||
@@ -104,14 +91,10 @@ export const ProfileDropdown = () => {
       return { success: false, message: "All password fields are required." };
     }
 
-    if (savedPassword && currentPassword !== savedPassword) {
-      return { success: false, message: "Current password is incorrect." };
-    }
-
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       return {
         success: false,
-        message: "New password must be at least 6 characters.",
+        message: "New password must be at least 8 characters.",
       };
     }
 
@@ -125,12 +108,13 @@ export const ProfileDropdown = () => {
     if (currentPassword === newPassword) {
       return {
         success: false,
-        message: "New password must be different from current password.",
+        message: "New password must be different from the current password.",
       };
     }
 
-    localStorage.setItem(passwordKey, newPassword);
-    return { success: true, message: "Password updated successfully." };
+    // TODO: wire to usersApi.changePassword({ currentPassword, newPassword })
+    // when the PATCH /api/users/me/password endpoint is implemented.
+    return { success: false, message: "Password change is not yet available." };
   };
 
   const handleLogout = async () => {
@@ -138,10 +122,10 @@ export const ProfileDropdown = () => {
     try {
       await authApi.logout();
     } catch {
-      // Server-side logout failed (e.g. already expired session).
+      // Server-side logout failed (expired session, network error, etc.).
       // Proceed with local cleanup regardless.
     } finally {
-      clearAuthUser();
+      storeLogout();
       setIsLogoutConfirmOpen(false);
       setIsOpen(false);
       setIsLoggingOut(false);

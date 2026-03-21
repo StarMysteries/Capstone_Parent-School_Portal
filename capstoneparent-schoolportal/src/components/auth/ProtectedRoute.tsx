@@ -1,11 +1,11 @@
 import { Navigate, useLocation } from "react-router-dom";
 import type { ReactElement } from "react";
+import { useAuthStore } from "../../lib/store/authStore";
 import {
-  getAuthUser,
   getDefaultRouteForRole,
   hasAllowedRole,
   type UserRole,
-} from "@/lib/auth";
+} from "../../lib/auth";
 
 interface ProtectedRouteProps {
   children: ReactElement;
@@ -17,14 +17,14 @@ export const ProtectedRoute = ({
   allowedRoles,
 }: ProtectedRouteProps) => {
   const location = useLocation();
-  const authUser = getAuthUser();
+  const { user, isAuthenticated } = useAuthStore();
 
-  if (!authUser) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (!hasAllowedRole(authUser, allowedRoles)) {
-    return <Navigate to={getDefaultRouteForRole(authUser.role)} replace />;
+  if (!hasAllowedRole(user, allowedRoles)) {
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
   }
 
   return children;

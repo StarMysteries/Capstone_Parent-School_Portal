@@ -137,10 +137,18 @@ router.post(
 //http://localhost:5000/api/auth/logout
 router.post("/logout", authenticate, authController.logout);
 
-//http://localhost:5000/api/auth/reset-password-info
+//http://localhost:5000/api/auth/reset-password-info?token=...
 router.get(
   "/reset-password-info",
-  [query("token").notEmpty().isHexadecimal().isLength({ min: 64, max: 64 })],
+  [
+    query("token")
+      .notEmpty()
+      .withMessage("Token is required")
+      .isHexadecimal()
+      .withMessage("Invalid token format")
+      .isLength({ min: 64, max: 64 })
+      .withMessage("Invalid token length"),
+  ],
   validate,
   authController.getResetPasswordInfo,
 );
