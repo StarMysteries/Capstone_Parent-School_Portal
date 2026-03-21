@@ -23,5 +23,4 @@ export const Announcements = () => {
       <AnnouncementPostFeed posts={posts} />
     </div>
   );
-
-}
+};
