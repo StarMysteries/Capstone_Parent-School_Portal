@@ -33,6 +33,7 @@ router.use("/auth/reset-password", passwordResetLimiter);
 router.use("/auth", globalLimiter); // /me, /logout, /trusted-devices
 
 // ─── Users ───────────────────────────────────────────────────────────────────
+router.use("/users/:id/account", writeLimiter); // account_status + roles update
 router.use("/users", globalLimiter);
 
 // ─── Students ────────────────────────────────────────────────────────────────

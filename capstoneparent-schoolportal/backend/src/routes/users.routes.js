@@ -34,17 +34,17 @@ router.put(
 // Both fields are optional — supply one or both.
 router.patch(
   "/:id/account",
-  authorize("Admin", "Principal"),
+  authorize("Admin"),
   [
     param("id").isInt(),
     body("account_status")
       .optional()
       .isIn(["Active", "Inactive"])
-      .withMessage("account_status must be Active or Inactive"),
+      .withMessage("Account status must be Active or Inactive"),
     body("roles")
       .optional()
       .isArray({ min: 1 })
-      .withMessage("roles must be a non-empty array"),
+      .withMessage("Roles must be a non-empty array"),
     body("roles.*")
       .optional()
       .isIn([
