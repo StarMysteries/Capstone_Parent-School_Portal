@@ -137,4 +137,12 @@ router.post(
 //http://localhost:5000/api/auth/logout
 router.post("/logout", authenticate, authController.logout);
 
+//http://localhost:5000/api/auth/reset-password-info
+router.get(
+  "/reset-password-info",
+  [query("token").notEmpty().isHexadecimal().isLength({ min: 64, max: 64 })],
+  validate,
+  authController.getResetPasswordInfo,
+);
+
 module.exports = router;

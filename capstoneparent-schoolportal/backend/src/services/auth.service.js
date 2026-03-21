@@ -424,6 +424,25 @@ const authService = {
 
     return true;
   },
+
+  async getResetPasswordInfo(token) {
+    const entry = passwordResetTokens.get(token);
+
+    if (!entry || Date.now() > entry.expiresAt) {
+      throw new Error("Invalid or expired reset token");
+    }
+
+    const [local, domain] = entry.email.split("@");
+
+    let maskedLocal;
+
+    if (local.length <= 2) {
+      maskedLocal = local[0] + "*".repeat(local.length - 1);
+    } else {
+      maskedLocal = local.slice(0, 2) + "*".repeat(local.length - 2);
+    }
+    return { maskedEmail: `${maskedLocal}@${domain}` };
+  },
 };
 
 module.exports = authService;
