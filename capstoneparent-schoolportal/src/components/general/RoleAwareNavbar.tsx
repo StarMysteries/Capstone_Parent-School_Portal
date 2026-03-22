@@ -15,6 +15,8 @@ import { Navbar } from "@/components/general/Navbar";
 
 type NavConfig = React.ComponentProps<typeof AuthenticatedNavbar>;
 
+const LOGO_ALT = "Bayog Elementary National School Logo";
+
 const ANNOUNCEMENT_STAFF_PATHS = [
   "/announcements",
   "/generalannouncement",
@@ -38,6 +40,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
       "/managestaffaccounts",
       "/managestudents",
     ],
+    logoAlt: LOGO_ALT,
   },
 
   principal: {
@@ -49,6 +52,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
     ],
     recordsActivePaths: ["/manageclasslists", "/managesections"],
     sticky: true,
+    logoAlt: LOGO_ALT,
   },
 
   vice_principal: {
@@ -60,6 +64,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
     ],
     recordsActivePaths: ["/manageclasslists", "/managesections"],
     sticky: true,
+    logoAlt: LOGO_ALT,
   },
 
   teacher: {
@@ -76,6 +81,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
       "/managestudents",
     ],
     sticky: true,
+    logoAlt: LOGO_ALT,
   },
 
   librarian: {
@@ -93,6 +99,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
       "/borrowedresources",
       "/managecategories",
     ],
+    logoAlt: LOGO_ALT,
   },
 
   staff: {
@@ -114,6 +121,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
       "/staffannouncement",
       "/memorandumannouncement",
     ],
+    logoAlt: LOGO_ALT,
   },
 
   parent: {
@@ -130,6 +138,7 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
         "/libraryrecords",
       ],
     },
+    logoAlt: LOGO_ALT,
   },
 };
 
