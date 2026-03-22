@@ -3,45 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  setAuthUser,
-  setJwt,
   setDeviceToken,
   getDeviceToken,
-  mapBackendRole,
   getDefaultRouteForRole,
-  type UserRole,
 } from "@/lib/auth";
 import { authApi, type AuthUser } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/authStore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Step = "credentials" | "otp";
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Pick the "best" frontend role from the user's role list.
- * Priority: Admin/Principal/Vice_Principal > Teacher > Librarian > Parent > Staff
- */
-function resolveFrontendRole(roles: { role: string }[]): UserRole {
-  const PRIORITY: string[] = [
-    "admin",
-    "principal",
-    "vice_principal",
-    "teacher",
-    "librarian",
-    "parent",
-    "staff",
-  ];
-
-  const sorted = [...roles].sort((a, b) => {
-    const ai = PRIORITY.indexOf(a.role.toLowerCase());
-    const bi = PRIORITY.indexOf(b.role.toLowerCase());
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
-
-  return mapBackendRole(sorted[0]?.role ?? "staff");
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -56,17 +27,11 @@ export const SignInCard = () => {
 
   // ── Finish: store session and navigate ──────────────────────────────────────
   const finalise = (token: string, user: AuthUser, rawDeviceToken?: string) => {
+    // loginSuccess stores the JWT, resolves all roles, picks default role
+    useAuthStore.getState().loginSuccess(token, user, rawDeviceToken);
     if (rawDeviceToken) setDeviceToken(rawDeviceToken);
-    setJwt(token);
 
-    const role = resolveFrontendRole(user.roles);
-    setAuthUser({
-      email: user.email,
-      name: `${user.fname} ${user.lname}`,
-      role,
-      userId: user.user_id,
-    });
-
+    const role = useAuthStore.getState().user?.role ?? "staff";
     navigate(getDefaultRouteForRole(role));
   };
 
@@ -80,18 +45,15 @@ export const SignInCard = () => {
       const storedDeviceToken = getDeviceToken();
 
       if (storedDeviceToken) {
-        // Known device — skip OTP, login directly
         const res = await authApi.login(email, password, storedDeviceToken);
         finalise(res.data.token, res.data.user);
       } else {
-        // Unknown device — request OTP first
         await authApi.sendOtp(email);
         setStep("otp");
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
 
-      // If the stored device token was rejected, clear it and retry via OTP
       if (msg.toLowerCase().includes("unrecognized device")) {
         setDeviceToken("");
         try {

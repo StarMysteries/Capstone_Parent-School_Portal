@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react";
 import { AboutUsDropdown } from "../general/AboutUsDropdown";
 import { NavbarMenu, type NavbarMenuItem } from "../general/NavbarMenu";
 import { ProfileDropdown } from "../general/ProfileDropdown";
+import { RoleSwitcherDropdown } from "../general/RoleSwitcherDropdown";
 import { useLocation, Link } from "react-router-dom";
 import { getAuthUser } from "@/lib/auth";
 
@@ -25,7 +26,9 @@ export const NavbarParent = () => {
     "/quarterlygrades",
     "/libraryrecords",
   ];
-  const isLearnAboutChildSelected = learnChildRoutes.includes(location.pathname);
+  const isLearnAboutChildSelected = learnChildRoutes.includes(
+    location.pathname,
+  );
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -34,11 +37,8 @@ export const NavbarParent = () => {
         setOpenDropdown(null);
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const navItems: NavbarMenuItem[] = [
@@ -74,7 +74,10 @@ export const NavbarParent = () => {
     <header className="bg-(--navbar-bg) px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link to="/" className="relative h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity">
+          <Link
+            to="/"
+            className="relative h-16 w-16 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <img
               src="/Logo.png"
               alt="Bayog Elementary National School Logo"
@@ -83,7 +86,10 @@ export const NavbarParent = () => {
           </Link>
           <NavbarMenu items={navItems} navRef={navRef} />
         </div>
-        <div className="flex items-center gap-4">
+
+        {/* Right side: role switcher + profile */}
+        <div className="flex items-center gap-3">
+          <RoleSwitcherDropdown />
           <ProfileDropdown />
         </div>
       </div>

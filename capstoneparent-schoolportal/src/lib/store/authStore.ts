@@ -17,47 +17,32 @@ export interface SessionUser {
   userId: number;
   email: string;
   name: string;
-  role: UserRole;
+  role: UserRole; // currently active role
+  roles: UserRole[]; // all roles this user has
 }
 
 interface AuthState {
-  /** Resolved session user (name, role, etc.) */
   user: SessionUser | null;
-  /** JWT returned by /login or /verify-otp */
   token: string | null;
-  /**
-   * Raw device token stored on this browser.
-   * Sent with every /login so OTP is skipped for known devices.
-   * Kept in the store even after logout so the same device stays trusted.
-   */
   deviceToken: string | null;
   isAuthenticated: boolean;
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  /**
-   * Called after a successful login or OTP verification.
-   * Stores the JWT, resolves the best role, and marks the session active.
-   */
   loginSuccess: (
     token: string,
     apiUser: AuthUser,
     newDeviceToken?: string,
   ) => void;
 
-  /**
-   * Clears the active session (token + user) but intentionally keeps the
-   * deviceToken so future logins on this device skip OTP.
-   */
+  /** Clears session but preserves deviceToken so OTP is skipped next login. */
   logout: () => void;
 
-  /** Stores (or replaces) the trusted device token for this browser. */
+  /** Switch active role (only to a role the user actually has). */
+  switchRole: (role: UserRole) => void;
+
   setDeviceToken: (token: string) => void;
-
-  /** Removes the device token, forcing OTP on the next login. */
   clearDeviceToken: () => void;
-
-  /** Replaces the in-memory session user (used by auth.ts helpers). */
   setUser: (user: SessionUser) => void;
 }
 
@@ -73,50 +58,62 @@ const ROLE_MAP: Record<string, UserRole> = {
   staff: "staff",
 };
 
+/** Priority order for selecting the "default" active role. */
 const ROLE_PRIORITY: UserRole[] = [
-  "staff",
   "admin",
   "principal",
   "vice_principal",
   "teacher",
   "librarian",
   "parent",
+  "staff",
 ];
 
 function mapRole(raw: string): UserRole {
   return ROLE_MAP[raw.toLowerCase()] ?? "staff";
 }
 
-/** Pick the highest-priority role from the user's role list. */
-function resolveRole(roles: { role: string }[]): UserRole {
+/** Map and deduplicate all backend roles. */
+function resolveAllRoles(roles: { role: string }[]): UserRole[] {
   const mapped = roles.map((r) => mapRole(r.role));
-  return ROLE_PRIORITY.find((p) => mapped.includes(p)) ?? "staff";
+  const unique = [...new Set(mapped)];
+  // Sort by priority so the list is consistent
+  return unique.sort(
+    (a, b) => ROLE_PRIORITY.indexOf(a) - ROLE_PRIORITY.indexOf(b),
+  );
+}
+
+/** Pick the highest-priority role from the user's role list. */
+function resolveDefaultRole(roles: { role: string }[]): UserRole {
+  const allRoles = resolveAllRoles(roles);
+  return allRoles[0] ?? "staff";
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       deviceToken: null,
       isAuthenticated: false,
 
       loginSuccess(token, apiUser, newDeviceToken) {
-        const role = resolveRole(apiUser.roles ?? []);
+        const allRoles = resolveAllRoles(apiUser.roles ?? []);
+        const role = resolveDefaultRole(apiUser.roles ?? []);
 
         const sessionUser: SessionUser = {
           userId: apiUser.user_id,
           email: apiUser.email,
           name: `${apiUser.fname} ${apiUser.lname}`,
           role,
+          roles: allRoles,
         };
 
         set((prev) => ({
           user: sessionUser,
           token,
-          // Only overwrite deviceToken when a new one is provided
           deviceToken: newDeviceToken ?? prev.deviceToken,
           isAuthenticated: true,
         }));
@@ -127,9 +124,16 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           token: null,
           isAuthenticated: false,
-          // Intentionally preserve deviceToken
           deviceToken: prev.deviceToken,
         }));
+      },
+
+      switchRole(role) {
+        const { user } = get();
+        if (!user) return;
+        // Only allow switching to a role the user actually has
+        if (!user.roles.includes(role)) return;
+        set({ user: { ...user, role } });
       },
 
       setDeviceToken(token) {
@@ -145,7 +149,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "auth-session", // localStorage key
+      name: "auth-session",
       partialize: (state) => ({
         user: state.user,
         token: state.token,

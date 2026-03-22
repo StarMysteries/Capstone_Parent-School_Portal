@@ -1,39 +1,162 @@
+/**
+ * RoleAwareNavbar
+ *
+ * The ONE navbar component every page should use.
+ * All role-specific nav configs are defined here; no other role-specific
+ * navbar files are needed.
+ */
+
+import { useAuthStore } from "@/lib/store/authStore";
+import type { UserRole } from "@/lib/store/authStore";
+import { AuthenticatedNavbar } from "@/components/general/AuthenticatedNavbar";
 import { Navbar } from "@/components/general/Navbar";
-import { NavbarAdmin } from "@/components/admin/NavbarAdmin";
-import { NavbarTeacher } from "@/components/teacher/NavbarTeacher";
-import { NavbarLibrarian } from "@/components/librarian/NavbarLibrarian";
-import { NavbarParent } from "@/components/parent/NavbarParent";
-import { NavbarStaff } from "@/components/staff/NavbarStaff";
-import { NavbarPrincipal } from "@/components/principal/NavbarPrincipal";
-import { getAuthUser, type UserRole } from "@/lib/auth";
 
-const getStoredRole = (): UserRole | null => {
-  const authRole = getAuthUser()?.role ?? null;
-  if (authRole) {
-    return authRole;
-  }
+// ─── Per-role nav configurations ─────────────────────────────────────────────
 
-  // Keep backward compatibility for local mock sessions.
-  const rawLegacyAuthUser = localStorage.getItem("dummyAuthUser");
-  if (!rawLegacyAuthUser) return null;
+type NavConfig = React.ComponentProps<typeof AuthenticatedNavbar>;
 
+const ANNOUNCEMENT_STAFF_PATHS = [
+  "/announcements",
+  "/generalannouncement",
+  "/staffannouncement",
+  "/memorandumannouncement",
+];
+
+const NAV_CONFIGS: Record<UserRole, NavConfig> = {
+  admin: {
+    announcementPath: "/generalannouncement",
+    announcementActivePaths: ANNOUNCEMENT_STAFF_PATHS,
+    recordsItems: [
+      { label: "Manage Parent Verification", to: "/manageparentverification" },
+      { label: "Manage Sections", to: "/managesections" },
+      { label: "Manage Staff Accounts", to: "/managestaffaccounts" },
+      { label: "Manage Students", to: "/managestudents" },
+    ],
+    recordsActivePaths: [
+      "/manageparentverification",
+      "/managesections",
+      "/managestaffaccounts",
+      "/managestudents",
+    ],
+  },
+
+  principal: {
+    announcementPath: "/announcements",
+    announcementActivePaths: ANNOUNCEMENT_STAFF_PATHS,
+    recordsItems: [
+      { label: "Manage Class Lists", to: "/manageclasslists" },
+      { label: "Manage Sections", to: "/managesections" },
+    ],
+    recordsActivePaths: ["/manageclasslists", "/managesections"],
+    sticky: true,
+  },
+
+  vice_principal: {
+    announcementPath: "/announcements",
+    announcementActivePaths: ANNOUNCEMENT_STAFF_PATHS,
+    recordsItems: [
+      { label: "Manage Class Lists", to: "/manageclasslists" },
+      { label: "Manage Sections", to: "/managesections" },
+    ],
+    recordsActivePaths: ["/manageclasslists", "/managesections"],
+    sticky: true,
+  },
+
+  teacher: {
+    announcementPath: "/generalannouncement",
+    announcementActivePaths: ANNOUNCEMENT_STAFF_PATHS,
+    recordsItems: [
+      { label: "Class Lists", to: "/classlist" },
+      { label: "Manage Parent Verification", to: "/manageparentverification" },
+      { label: "Manage Students", to: "/managestudents" },
+    ],
+    recordsActivePaths: [
+      "/classlist",
+      "/manageparentverification",
+      "/managestudents",
+    ],
+    sticky: true,
+  },
+
+  librarian: {
+    announcementPath: "/announcements",
+    announcementActivePaths: ["/announcements"],
+    recordsItems: [
+      { label: "Manage Books", to: "/managebooks" },
+      { label: "Manage Learning Resources", to: "/managelearningresources" },
+      { label: "Borrowed Resources", to: "/borrowedresources" },
+      { label: "Manage Categories", to: "/managecategories" },
+    ],
+    recordsActivePaths: [
+      "/managebooks",
+      "/managelearningresources",
+      "/borrowedresources",
+      "/managecategories",
+    ],
+  },
+
+  staff: {
+    announcementPath: "/generalannouncement",
+    announcementActivePaths: [
+      "/generalannouncement",
+      "/staffannouncement",
+      "/memorandumannouncement",
+    ],
+    recordsItems: [
+      { label: "General Announcements", to: "/generalannouncement" },
+      { label: "Staff Announcements", to: "/staffannouncement" },
+      { label: "Memorandums", to: "/memorandumannouncement" },
+      { label: "Staff Dashboard", to: "/staffview" },
+    ],
+    recordsActivePaths: [
+      "/staffview",
+      "/generalannouncement",
+      "/staffannouncement",
+      "/memorandumannouncement",
+    ],
+  },
+
+  parent: {
+    announcementPath: "/announcements",
+    announcementActivePaths: ["/announcements"],
+    // Parent uses a plain link instead of a Records dropdown
+    customNavLink: {
+      label: "Learn about your child",
+      to: "/parentview",
+      activePaths: [
+        "/parentview",
+        "/classschedule",
+        "/quarterlygrades",
+        "/libraryrecords",
+      ],
+    },
+  },
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export const RoleAwareNavbar = () => {
+  // Reactive: re-renders automatically when active role switches
+  const role = useAuthStore((s) => s.user?.role ?? null);
+  const effectiveRole: UserRole | null = role ?? getLegacyRole();
+
+  if (!effectiveRole) return <Navbar />;
+
+  const config = NAV_CONFIGS[effectiveRole];
+  if (!config) return <Navbar />;
+
+  return <AuthenticatedNavbar {...config} />;
+};
+
+// ─── Legacy helper (backward compat for old dummy sessions) ──────────────────
+
+function getLegacyRole(): UserRole | null {
   try {
-    const parsedUser = JSON.parse(rawLegacyAuthUser) as { role?: UserRole };
-    return parsedUser.role ?? null;
+    const raw = localStorage.getItem("dummyAuthUser");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { role?: UserRole };
+    return parsed.role ?? null;
   } catch {
     return null;
   }
-};
-
-export const RoleAwareNavbar = () => {
-  const role = getStoredRole();
-
-  if (role === "admin") return <NavbarAdmin />;
-  if (role === "principal" || role === "vice_principal") return <NavbarPrincipal />;
-  if (role === "teacher") return <NavbarTeacher />;
-  if (role === "librarian") return <NavbarLibrarian />;
-  if (role === "parent") return <NavbarParent />;
-  if (role === "staff") return <NavbarStaff />;
-
-  return <Navbar />;
-};
+}
