@@ -25,6 +25,8 @@ export interface AuthUser {
   address: string;
   account_status: "Active" | "Inactive";
   created_at: string;
+  date_of_birth?: string;
+  photo_path?: string;
   roles: { role: string }[];
 }
 

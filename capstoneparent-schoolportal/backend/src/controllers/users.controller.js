@@ -39,7 +39,12 @@ const usersController = {
   async updateUser(req, res, next) {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      const updateData = { ...req.body };
+      
+      if (updateData.date_of_birth) {
+        updateData.date_of_birth = new Date(updateData.date_of_birth);
+      }
+      
       const user = await usersService.updateUser(parseInt(id), updateData);
 
       res.status(200).json({
@@ -52,6 +57,34 @@ const usersController = {
       }
       if (error.message === "Email is already in use") {
         return res.status(409).json({ message: error.message });
+      }
+      next(error);
+    }
+  },
+
+  async uploadPhoto(req, res, next) {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ message: "No photo uploaded" });
+      }
+
+      const { uploadFile } = require("../utils/supabaseStorage");
+      const signedUrl = await uploadFile(file);
+
+      const user = await usersService.updateUser(parseInt(id), {
+        photo_path: signedUrl,
+      });
+
+      res.status(200).json({
+        message: "Profile picture uploaded successfully",
+        data: user,
+      });
+    } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ message: error.message });
       }
       next(error);
     }

@@ -4,6 +4,7 @@
 
 export { authApi } from "./authApi";
 export { studentsApi } from "./studentsApi";
+export { usersApi } from "./usersApi";
 
 export type {
   ApiMessage,

@@ -94,9 +94,10 @@ model User {
   password                     String
   fname                        String
   lname                        String
+  photo_path                   String?               @db.Text
   contact_num                  String
   address                      String
-  date_of_birth                DateTime?              @db.Date
+  date_of_birth                DateTime?             @db.Date
   account_status               AccountStatus         @default(Active)
   created_at                   DateTime              @default(now())
   updated_at                   DateTime              @updatedAt

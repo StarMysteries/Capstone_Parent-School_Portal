@@ -4,6 +4,9 @@ const usersController = require("../controllers/users.controller");
 const validate = require("../middlewares/validation");
 const { authenticate, authorize } = require("../middlewares/auth");
 
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+
 const router = express.Router();
 
 // All routes require authentication
@@ -15,7 +18,7 @@ router.get("/", authorize("Admin", "Principal"), usersController.getAllUsers);
 // Get user by ID
 router.get("/:id", param("id").isInt(), validate, usersController.getUserById);
 
-// Update user profile fields (fname, lname, contact_num, address)
+// Update user profile fields (fname, lname, contact_num, address, email, date_of_birth)
 router.put(
   "/:id",
   [
@@ -24,9 +27,20 @@ router.put(
     body("lname").optional().trim(),
     body("contact_num").optional(),
     body("address").optional(),
+    body("email").optional().isEmail().withMessage("Invalid email format"),
+    body("date_of_birth").optional().isISO8601().withMessage("Invalid date format"),
   ],
   validate,
   usersController.updateUser,
+);
+
+// Upload user profile picture
+router.post(
+  "/:id/photo",
+  upload.single("photo"),
+  [param("id").isInt()],
+  validate,
+  usersController.uploadPhoto,
 );
 
 // Update account_status and/or roles in one request (Admin, Principal only)

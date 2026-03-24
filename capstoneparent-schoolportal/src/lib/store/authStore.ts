@@ -19,6 +19,10 @@ export interface SessionUser {
   name: string;
   role: UserRole; // currently active role
   roles: UserRole[]; // all roles this user has
+  contact_num?: string;
+  address?: string;
+  date_of_birth?: string;
+  photo_path?: string;
 }
 
 interface AuthState {
@@ -109,6 +113,10 @@ export const useAuthStore = create<AuthState>()(
           name: `${apiUser.fname} ${apiUser.lname}`,
           role,
           roles: allRoles,
+          contact_num: apiUser.contact_num,
+          address: apiUser.address,
+          date_of_birth: apiUser.date_of_birth,
+          photo_path: apiUser.photo_path,
         };
 
         set((prev) => ({
