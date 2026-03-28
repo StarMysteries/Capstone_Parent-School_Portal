@@ -20,8 +20,6 @@ const defaultProfileModalData: ProfileModalData = {
   profilePicture: "",
 };
 
-const PROFILE_STORAGE_KEY = "userProfileData";
-
 export const buildProfileModalData = (authUser: SessionUser | null): ProfileModalData => {
   const [fname = "", ...rest] = (authUser?.name ?? "").split(" ");
   const lname = rest.join(" ");
@@ -39,25 +37,9 @@ export const buildProfileModalData = (authUser: SessionUser | null): ProfileModa
 };
 
 export const loadProfileModalData = (authUser: SessionUser | null): ProfileModalData => {
-  const fallback = buildProfileModalData(authUser);
-  const rawProfileData = localStorage.getItem(PROFILE_STORAGE_KEY);
-
-  if (!rawProfileData) return fallback;
-
-  try {
-    const parsed = JSON.parse(rawProfileData) as Partial<ProfileModalData>;
-    return {
-      ...fallback,
-      ...parsed,
-      fname: parsed.fname?.trim() || fallback.fname,
-      lname: parsed.lname?.trim() || fallback.lname,
-      email: parsed.email?.trim() || fallback.email,
-    };
-  } catch {
-    return fallback;
-  }
+  return buildProfileModalData(authUser);
 };
 
-export const saveProfileModalData = (profileData: ProfileModalData): void => {
-  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData));
+export const saveProfileModalData = (_profileData: ProfileModalData): void => {
+  // No longer caching profile in localStorage to ensure data is always tied to the authenticated user.
 };
