@@ -57,6 +57,9 @@ export interface AnnouncementPostItem {
     fname: string;
     lname: string;
     photo_path?: string;
+    roles?: Array<{
+      role: string;
+    }>;
   };
   files?: Array<{
     file: {
@@ -135,6 +138,29 @@ export const AnnouncementPostFeed = ({
   onEdit,
   canEditPost,
 }: AnnouncementPostFeedProps) => {
+  const ROLE_ORDER = [
+    "admin",
+    "principal",
+    "vice_principal",
+    "teacher",
+    "librarian",
+  ] as const;
+
+  const ROLE_LABELS: Record<(typeof ROLE_ORDER)[number], string> = {
+    admin: "Admin",
+    principal: "Principal",
+    vice_principal: "Vice Principal",
+    teacher: "Teacher",
+    librarian: "librarian",
+  };
+
+  const getPrimaryRoleLabel = (roles?: Array<{ role: string }>) => {
+    if (!roles || roles.length === 0) return null;
+    const roleSet = new Set(roles.map((r) => r.role.toLowerCase()));
+    const primary = ROLE_ORDER.find((r) => roleSet.has(r));
+    return primary ? ROLE_LABELS[primary] : null;
+  };
+
   if (isLoading) {
     return (
       <section className="mx-auto flex h-64 w-full max-w-330 items-center justify-center px-3 py-6 sm:px-5 lg:px-6">
@@ -174,6 +200,11 @@ export const AnnouncementPostFeed = ({
                 <p className="text-xl font-semibold uppercase tracking-wide text-blue-600 sm:text-2xl">
                   {post.user ? `${post.user.fname} ${post.user.lname}` : "Admin"}
                 </p>
+                {post.user && getPrimaryRoleLabel(post.user.roles) && (
+                  <p className="mt-1 text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
+                    {getPrimaryRoleLabel(post.user.roles)}
+                  </p>
+                )}
                 <p className="text-sm text-gray-600 sm:text-base">
                   {new Date(post.created_at).toLocaleDateString("en-US", {
                     month: "long",

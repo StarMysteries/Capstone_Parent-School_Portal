@@ -31,3 +31,22 @@ export const getAnnouncements = (params?: GetAnnouncementsParams) => {
     headers: bearerHeaders(),
   });
 };
+
+export interface CreateAnnouncementPayload {
+  announcement_title: string;
+  announcement_desc: string;
+  announcement_type: "General" | "Staff_only" | "Memorandum";
+  announced_by: number;
+  file_ids?: number[];
+}
+
+export const createAnnouncement = (payload: CreateAnnouncementPayload) => {
+  return apiFetch<AnnouncementPostItem>("/announcements", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...bearerHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+};

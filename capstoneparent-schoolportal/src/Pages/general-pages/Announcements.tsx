@@ -49,6 +49,7 @@ export const Announcements = () => {
     title: string;
     content: string;
     category: AnnouncementCategory;
+    files?: Array<{ id: string; name: string }>;
   }) => {
     createPost(data);
   };

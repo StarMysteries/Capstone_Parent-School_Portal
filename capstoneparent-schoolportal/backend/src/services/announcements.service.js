@@ -43,7 +43,12 @@ const announcementsService = {
               user_id: true,
               fname: true,
               lname: true,
-              photo_path: true
+              photo_path: true,
+              roles: {
+                select: {
+                  role: true,
+                },
+              },
             }
           },
           files: {
@@ -83,7 +88,12 @@ const announcementsService = {
             user_id: true,
             fname: true,
             lname: true,
-            photo_path: true
+            photo_path: true,
+            roles: {
+              select: {
+                role: true,
+              },
+            },
           }
         },
         files: {
@@ -154,7 +164,12 @@ const announcementsService = {
             user_id: true,
             fname: true,
             lname: true,
-            photo_path: true
+            photo_path: true,
+            roles: {
+              select: {
+                role: true,
+              },
+            },
           }
         },
         files: {
@@ -198,7 +213,12 @@ const announcementsService = {
             user_id: true,
             fname: true,
             lname: true,
-            photo_path: true
+            photo_path: true,
+            roles: {
+              select: {
+                role: true,
+              },
+            },
           }
         },
         files: {
