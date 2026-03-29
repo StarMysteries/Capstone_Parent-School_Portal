@@ -1,45 +1,12 @@
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
+import { getAuthUser } from "@/lib/auth";
+import {
+  getSchoolCalendars,
+  type SchoolCalendarItem,
+} from "@/lib/schoolCalendarContent";
+import { Pencil } from "lucide-react";
 import { useState } from "react";
-
-type CalendarItem = {
-  year: string;
-  label: string;
-  imageUrl: string;
-  note: string;
-};
-
-const schoolCalendars: CalendarItem[] = [
-  {
-    year: "2025",
-    label: "2025 - 2026",
-    imageUrl: "/school-calendar-2025-2026.png",
-    note: "Latest monthly school activities and key academic dates.",
-  },
-  {
-    year: "2024",
-    label: "2024 - 2025",
-    imageUrl: "/school-calendar-2024-2025.png",
-    note: "Official school calendar for enrollment, class days, and school events.",
-  },
-  {
-    year: "2023",
-    label: "2023 - 2024",
-    imageUrl: "/school-calendar-2023-2024.png",
-    note: "Archived school-year calendar reference.",
-  },
-  {
-    year: "2022",
-    label: "2022 - 2023",
-    imageUrl: "/school-calendar-2022-2023.png",
-    note: "Archived school-year calendar reference.",
-  },
-  {
-    year: "2021",
-    label: "2021 - 2022",
-    imageUrl: "/school-calendar-2021-2022.png",
-    note: "Archived school-year calendar reference.",
-  },
-];
+import { Link } from "react-router-dom";
 
 const CalendarPreview = ({ imageUrl, label }: { imageUrl: string; label: string }) => {
   const [hasImageError, setHasImageError] = useState(false);
@@ -68,9 +35,25 @@ const CalendarPreview = ({ imageUrl, label }: { imageUrl: string; label: string 
 };
 
 export const SchoolCalendar = () => {
-  const [selectedYear, setSelectedYear] = useState("2025");
+  const user = getAuthUser();
+  const isAdmin = user?.role === "admin";
+  const schoolCalendars = getSchoolCalendars();
+
+  const [selectedYear, setSelectedYear] = useState(schoolCalendars[0]?.year ?? "2025");
   const selectedCalendar =
     schoolCalendars.find((calendar) => calendar.year === selectedYear) ?? schoolCalendars[0];
+
+  if (!selectedCalendar) {
+    return (
+      <div>
+        <RoleAwareNavbar />
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>
+          <p>No school calendar data available.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -87,14 +70,13 @@ export const SchoolCalendar = () => {
               />
             </div>
             <p className="text-center font-bold mt-4">School Year {selectedCalendar.label}</p>
-            <p className="text-center text-gray-600 mt-2">{selectedCalendar.note}</p>
           </div>
 
           <div className="lg:col-span-1 flex lg:block lg:w-full w-fit mx-auto">
             <div>
               <h3 className="font-bold text-lg mb-4">Year</h3>
               <div className="space-y-2">
-                {schoolCalendars.map((calendar) => (
+                {schoolCalendars.map((calendar: SchoolCalendarItem) => (
                   <button
                     key={calendar.year}
                     onClick={() => setSelectedYear(calendar.year)}
@@ -111,6 +93,16 @@ export const SchoolCalendar = () => {
             </div>
           </div>
         </div>
+
+        {isAdmin && (
+          <Link
+            to={`/editschoolcalendar?year=${selectedYear}`}
+            className="fixed bottom-8 right-8 inline-flex h-20 w-20 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105"
+            aria-label="Edit School Calendar"
+          >
+            <Pencil className="h-10 w-10" />
+          </Link>
+        )}
       </div>
     </div>
   );
