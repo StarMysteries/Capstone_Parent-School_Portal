@@ -1,6 +1,16 @@
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
+import { getAuthUser } from "@/lib/auth";
+import { getContactUsContent } from "@/lib/contactUsContent";
+import { Pencil } from "lucide-react";
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
 
 export const ContactUs = () => {
+  const user = getAuthUser();
+  const isAdmin = user?.role === "admin";
+
+  const content = useMemo(() => getContactUsContent(), []);
+
   return (
     <div>
       <RoleAwareNavbar />
@@ -13,28 +23,28 @@ export const ContactUs = () => {
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-semibold mb-2">Principal's Office:</h2>
-                <p className="text-lg">0129293512</p>
+                <p className="text-lg">{content.principalOffice}</p>
               </div>
               
               <div>
                 <h2 className="text-xl font-semibold mb-2">Library Office:</h2>
-                <p className="text-lg">012983759</p>
+                <p className="text-lg">{content.libraryOffice}</p>
               </div>
               
               <div>
                 <h2 className="text-xl font-semibold mb-2">Faculty Office:</h2>
-                <p className="text-lg">0129023121</p>
+                <p className="text-lg">{content.facultyOffice}</p>
               </div>
               
               <div>
                 <h2 className="text-xl font-semibold mb-2">Facebook Page:</h2>
                 <a 
-                  href="https://www.facebook.com/pages/Pagsabungan-Elementary-School/416573625065073" 
+                  href={content.facebookPageUrl}
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-yellow-300 text-lg hover:underline"
                 >
-                  Pagsabungan Elementary School
+                  {content.facebookPageLabel}
                 </a>
               </div>
             </div>
@@ -43,7 +53,7 @@ export const ContactUs = () => {
           {/* Map Box */}
           <div className="rounded-lg overflow-hidden shadow-lg h-100 md:h-auto">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6147.85805286023!2d123.93795581216922!3d10.356494766753164!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a9987ccd09bc87%3A0x2f7440ce2f8c0b6e!2sPagsabungan%20Elementary%20School!5e1!3m2!1sen!2sus!4v1769654678624!5m2!1sen!2sus" 
+              src={content.mapEmbedUrl}
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 
@@ -54,6 +64,18 @@ export const ContactUs = () => {
             />
           </div>
         </div>
+
+        {isAdmin && (
+          <div className="mt-6 flex justify-center">
+            <Link
+              to="/editcontactus"
+              className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105"
+              aria-label="Edit Contact Us"
+            >
+              <Pencil className="h-8 w-8" />
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

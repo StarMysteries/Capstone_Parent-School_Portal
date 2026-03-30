@@ -40,6 +40,11 @@ import { ManageParentVerification } from "./Pages/admin-pages/ManageParentVerifi
 import { ManageSection } from "./Pages/admin-pages/ManageSection";
 import { ManageStaffAccounts } from "./Pages/admin-pages/ManageStaffAccounts";
 import { ManageStudents } from "./Pages/admin-pages/ManageStudents";
+import { EditContactUs } from "./Pages/admin-pages/edit-pages/EditContactUs";
+import { EditSchoolCalendar } from "./Pages/admin-pages/edit-pages/EditSchoolCalendar";
+import { EditOrganizationalChart } from "./Pages/admin-pages/edit-pages/EditOrganizationalChart";
+import { EditTransparency } from "./Pages/admin-pages/edit-pages/EditTransparency";
+import { EditHistory } from "./Pages/admin-pages/edit-pages/EditHistory";
 
 {
   /*Teacher Sub Pages */
@@ -183,6 +188,46 @@ const App = () => {
           <ProtectedRoute allowedRoles={["admin"]}>
             <ManageStaffAccounts />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/editcontactus"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <EditContactUs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/editschoolcalendar"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <EditSchoolCalendar />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/editorganizationalchart"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <EditOrganizationalChart />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/edittransparency"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <EditTransparency />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/edithistory"
+        element={
+          //<ProtectedRoute allowedRoles={["admin"]}>
+            <EditHistory />
+          //</ProtectedRoute>
         }
       />
 
