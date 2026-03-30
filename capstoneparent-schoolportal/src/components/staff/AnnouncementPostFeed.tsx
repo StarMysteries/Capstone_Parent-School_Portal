@@ -63,6 +63,7 @@ export interface AnnouncementPostItem {
   };
   files?: Array<{
     file: {
+      file_id?: number;
       file_name: string;
       file_path: string;
     }

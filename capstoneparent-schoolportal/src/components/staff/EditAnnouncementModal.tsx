@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Trash2, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, Trash2, Upload, X } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -7,72 +7,135 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import type { AnnouncementPostItem } from "@/components/staff/AnnouncementPostFeed";
+import type { AnnouncementCategory } from "@/lib/announcementPosts";
 
 interface EditAnnouncementModalProps {
   isOpen: boolean;
   onClose: () => void;
+  post: AnnouncementPostItem | null;
+  onUpdate: (data: {
+    announcementId: number;
+    title: string;
+    content: string;
+    category: AnnouncementCategory;
+    files?: Array<{ id: string; name: string; file: File }>;
+    replaceAttachments?: boolean;
+    removeFileIds?: number[];
+  }) => void;
 }
 
 interface UploadedFile {
   id: string;
   name: string;
+  file: File;
 }
 
 export const EditAnnouncementModal = ({
   isOpen,
   onClose,
+  post,
+  onUpdate,
 }: EditAnnouncementModalProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [announcementType, setAnnouncementType] =
+    useState<AnnouncementCategory>("general");
   const [files, setFiles] = useState<UploadedFile[]>([]);
-  const [announcementType, setAnnouncementType] = useState("general");
+  const [removedFileIds, setRemovedFileIds] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = e.target.files;
-    if (uploadedFiles) {
-      Array.from(uploadedFiles).forEach((file) => {
-        setFiles((prev) => [
-          ...prev,
-          {
-            id: Math.random().toString(),
-            name: file.name,
-          },
-        ]);
-      });
+  useEffect(() => {
+    if (!isOpen || !post) return;
+    setTitle(post.announcement_title ?? "");
+    setContent(post.announcement_desc ?? "");
+    if (post.announcement_type === "Staff_only") {
+      setAnnouncementType("staffs");
+    } else if (post.announcement_type === "Memorandum") {
+      setAnnouncementType("memorandum");
+    } else {
+      setAnnouncementType("general");
     }
+    setError(null);
+    setSubmitting(false);
+    setFiles([]);
+    setRemovedFileIds([]);
+  }, [isOpen, post]);
+
+  if (!isOpen || !post) return null;
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): void => {
+    const uploadedFiles = e.target.files;
+    if (!uploadedFiles) return;
+    Array.from(uploadedFiles).forEach((file) => {
+      setFiles((prev) => [
+        ...prev,
+        { id: Math.random().toString(), name: file.name, file },
+      ]);
+    });
+    e.target.value = "";
   };
 
   const handleDragDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const droppedFiles = e.dataTransfer.files;
-    if (droppedFiles) {
-      Array.from(droppedFiles).forEach((file) => {
-        setFiles((prev) => [
-          ...prev,
-          {
-            id: Math.random().toString(),
-            name: file.name,
-          },
-        ]);
-      });
-    }
+    if (!droppedFiles) return;
+    Array.from(droppedFiles).forEach((file) => {
+      setFiles((prev) => [
+        ...prev,
+        { id: Math.random().toString(), name: file.name, file },
+      ]);
+    });
   };
 
   const handleDeleteFile = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const handlePost = () => {
-    // TODO: handle post announcement
-    console.log({
-      title,
-      content,
-      files,
-      announcementType,
-    });
-    onClose();
+  const handleRemoveExistingAttachment = (fileId?: number) => {
+    if (fileId == null) return;
+    setRemovedFileIds((prev) =>
+      prev.includes(fileId) ? prev : [...prev, fileId],
+    );
+  };
+
+  const visibleExistingFiles =
+    post.files?.filter(({ file }) => !removedFileIds.includes(file.file_id ?? -1)) ||
+    [];
+
+  const handlePost = async () => {
+    setError(null);
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+    if (!content.trim()) {
+      setError("Content is required");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await Promise.resolve(
+        onUpdate({
+          announcementId: post.announcement_id,
+          title: title.trim(),
+          content: content.trim(),
+          category: announcementType,
+          files,
+          replaceAttachments: false,
+          removeFileIds: removedFileIds,
+        }),
+      );
+      onClose();
+    } catch {
+      setError("Failed to update announcement");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -95,7 +158,7 @@ export const EditAnnouncementModal = ({
             onClick={onClose}
             className="text-red-600 hover:text-red-800 transition-colors text-4xl font-bold"
           >
-            ✕
+            <X />
           </button>
         </div>
 
@@ -110,32 +173,6 @@ export const EditAnnouncementModal = ({
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
           />
 
-          {/* Toolbar */}
-          <div className="flex gap-1 bg-white border border-gray-300 rounded-lg p-2">
-            <button className="px-3 py-1 font-bold hover:bg-gray-100 rounded">
-              B
-            </button>
-            <button className="px-3 py-1 italic hover:bg-gray-100 rounded">
-              I
-            </button>
-            <button className="px-3 py-1 underline hover:bg-gray-100 rounded">
-              U
-            </button>
-            <button className="px-3 py-1 line-through hover:bg-gray-100 rounded">
-              S
-            </button>
-            <div className="border-l border-gray-300" />
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">≡</button>
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">≡</button>
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">⋯</button>
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">≣</button>
-            <div className="border-l border-gray-300" />
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">🔗</button>
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">↶</button>
-            <button className="px-3 py-1 hover:bg-gray-100 rounded">↷</button>
-          </div>
-
-          {/* Content Area */}
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -143,40 +180,54 @@ export const EditAnnouncementModal = ({
             placeholder="Enter announcement content..."
           />
 
-          {/* File Upload Area */}
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDragDrop}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-white text-center"
+            className="border-2 border-dashed border-yellow-400 rounded-lg p-5 bg-[#fff7b0] text-left"
           >
-            <Upload className="mx-auto mb-2 text-gray-400" size={32} />
-            <p className="text-gray-700 font-medium mb-2">
-              Drag and drop files here, or click to browse
-            </p>
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-input"
-            />
-            <label htmlFor="file-input" className="cursor-pointer">
-              <span className="text-blue-600 hover:underline">Browse files</span>
-            </label>
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Add Attachments</p>
+                <p className="text-xs text-gray-500">
+                  You can add new files and remove old ones below.
+                </p>
+              </div>
+              <label
+                htmlFor="edit-announcement-file-input"
+                className="flex items-center gap-2 px-3 py-2 rounded-md border border-yellow-500 bg-yellow-300 cursor-pointer font-semibold text-sm text-black hover:bg-yellow-400"
+              >
+                <Upload size={16} />
+                Choose
+              </label>
+              <input
+                id="edit-announcement-file-input"
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
           </div>
 
-          {/* File List */}
-          {files.length > 0 && (
-            <div className="space-y-2 bg-white rounded-lg p-4">
-              {files.map((file) => (
+          {!!visibleExistingFiles.length && (
+            <div className="bg-white rounded-lg p-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Current attachments
+              </p>
+              {visibleExistingFiles.map(({ file }) => (
                 <div
-                  key={file.id}
-                  className="flex items-center justify-between p-2 border border-gray-200 rounded"
+                  key={`${file.file_name}-${file.file_path}`}
+                  className="flex items-center justify-between gap-4 border border-gray-200 rounded p-3"
                 >
-                  <span className="text-gray-700">{file.name}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText size={18} className="text-red-500 shrink-0" />
+                    <span className="text-sm text-gray-800 truncate">{file.file_name}</span>
+                  </div>
                   <button
-                    onClick={() => handleDeleteFile(file.id)}
+                    onClick={() => handleRemoveExistingAttachment(file.file_id)}
                     className="text-red-500 hover:text-red-700"
+                    type="button"
+                    aria-label={`Remove existing ${file.file_name}`}
                   >
                     <Trash2 size={20} />
                   </button>
@@ -184,6 +235,35 @@ export const EditAnnouncementModal = ({
               ))}
             </div>
           )}
+
+          {files.length > 0 && (
+            <div className="bg-white rounded-lg p-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                New attachments
+              </p>
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between gap-4 border border-gray-200 rounded p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText size={18} className="text-red-500 shrink-0" />
+                    <span className="text-sm text-gray-800 truncate">{file.name}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteFile(file.id)}
+                    className="text-red-500 hover:text-red-700"
+                    type="button"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {error && <div className="text-sm text-red-600">{error}</div>}
 
           {/* Bottom Row */}
           <div className="flex items-center justify-between pt-4">
@@ -193,16 +273,17 @@ export const EditAnnouncementModal = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="general">General</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
+                <SelectItem value="staffs">Staff</SelectItem>
                 <SelectItem value="memorandum">Memorandum</SelectItem>
               </SelectContent>
             </Select>
 
             <button
               onClick={handlePost}
+              disabled={submitting}
               className="bg-green-500 hover:bg-green-600 text-white px-10 py-3 rounded-full font-semibold text-lg transition-colors"
             >
-              Post
+              {submitting ? "Updating..." : "Update"}
             </button>
           </div>
         </div>

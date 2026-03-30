@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
 import type { AnnouncementPostItem } from "@/components/staff/AnnouncementPostFeed"
-import { createAnnouncement, getAnnouncements } from "@/lib/api/announcementsApi"
+import {
+  createAnnouncement,
+  getAnnouncements,
+  updateAnnouncement,
+} from "@/lib/api/announcementsApi"
 import type { AnnouncementCategory } from "@/lib/announcementPosts"
 import { getAuthUser } from "@/lib/auth"
 
@@ -70,9 +74,40 @@ export const useAnnouncementPosts = (category: AnnouncementCategory) => {
     [reload],
   )
 
+  const updatePost = useCallback(
+    async (data: {
+      announcementId: number
+      title: string
+      content: string
+      category: AnnouncementCategory
+      files?: Array<{ id: string; name: string; file: File }>
+      replaceAttachments?: boolean
+      removeFileIds?: number[]
+    }) => {
+      try {
+        const announcement_type = getBackendType(data.category)
+        const mappedAttachments = (data.files || []).map((f) => f.file)
+        await updateAnnouncement(data.announcementId, {
+          announcement_title: data.title,
+          announcement_desc: data.content,
+          announcement_type,
+          replace_attachments: data.replaceAttachments,
+          remove_file_ids: data.removeFileIds,
+          ...(mappedAttachments.length > 0 ? { attachments: mappedAttachments } : {}),
+        })
+        await reload()
+      } catch (e) {
+        console.error("Failed to update announcement:", e)
+        throw e
+      }
+    },
+    [reload],
+  )
+
   return {
     posts,
     createPost,
+    updatePost,
     reload,
     isLoading,
   }

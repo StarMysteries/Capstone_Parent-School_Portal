@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const usersService = require("./users.service");
+const { deleteFileByUrl } = require("../utils/supabaseStorage");
 
 const announcementsService = {
   async getAllAnnouncements({ page, limit, type, userRoles }) {
@@ -200,23 +201,96 @@ const announcementsService = {
 
     // Check if announcement exists before updating
     const existingAnnouncement = await prisma.announcement.findUnique({
-      where: { announcement_id: announcementId }
+      where: { announcement_id: announcementId },
+      include: {
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
     });
     if (!existingAnnouncement) {
       throw new Error('Announcement not found');
     }
 
+    const {
+      files = [],
+      replace_attachments,
+      remove_file_ids = [],
+      updated_by,
+      announcement_title,
+      announcement_desc,
+      announcement_type,
+    } = updateData;
+
+    const fieldsToUpdate = {
+      ...(announcement_title !== undefined ? { announcement_title } : {}),
+      ...(announcement_desc !== undefined ? { announcement_desc } : {}),
+      ...(announcement_type !== undefined ? { announcement_type } : {}),
+    };
+
     // Validate update fields if provided
-    if (updateData.announcement_title !== undefined && updateData.announcement_title.trim() === '') {
+    if (fieldsToUpdate.announcement_title !== undefined && fieldsToUpdate.announcement_title.trim() === '') {
       throw new Error('Announcement title cannot be empty');
     }
-    if (updateData.announcement_desc !== undefined && updateData.announcement_desc.trim() === '') {
+    if (fieldsToUpdate.announcement_desc !== undefined && fieldsToUpdate.announcement_desc.trim() === '') {
       throw new Error('Announcement description cannot be empty');
     }
 
+    const parsedRemoveFileIds = (Array.isArray(remove_file_ids) ? remove_file_ids : [])
+      .map((id) => parseInt(id))
+      .filter((id) => Number.isInteger(id));
+
+    const hasNewUploads = Array.isArray(files) && files.length > 0;
+    const hasExplicitRemovals = parsedRemoveFileIds.length > 0;
+    const shouldReplaceAttachments = replace_attachments === true;
+    const shouldUpdateAttachments =
+      shouldReplaceAttachments || hasNewUploads || hasExplicitRemovals;
+
+    if (shouldUpdateAttachments && !updated_by) {
+      throw new Error("Updating user not found");
+    }
+
+    let uploadedFiles = [];
+    if (hasNewUploads) {
+      uploadedFiles = await usersService.createFiles(files, updated_by);
+    }
+
+    const uploadedFileIds = uploadedFiles.map((f) => f.file_id);
+    const oldFiles = existingAnnouncement.files.map((af) => af.file);
+    const existingAnnouncementFileIds = new Set(oldFiles.map((f) => f.file_id));
+
+    const removableFileIds = shouldReplaceAttachments
+      ? [...existingAnnouncementFileIds]
+      : parsedRemoveFileIds.filter((id) => existingAnnouncementFileIds.has(id));
+
     const announcement = await prisma.announcement.update({
       where: { announcement_id: announcementId },
-      data: updateData,
+      data: {
+        ...fieldsToUpdate,
+        created_at: new Date(),
+        ...(shouldUpdateAttachments
+          ? {
+              files: {
+                ...(removableFileIds.length > 0
+                  ? {
+                      deleteMany: {
+                        file_id: { in: removableFileIds },
+                      },
+                    }
+                  : {}),
+                ...(uploadedFileIds.length > 0
+                  ? {
+                      create: uploadedFileIds.map((fileId) => ({
+                        file_id: fileId,
+                      })),
+                    }
+                  : {}),
+              },
+            }
+          : {}),
+      },
       include: {
         user: {
           select: {
@@ -238,6 +312,49 @@ const announcementsService = {
         }
       }
     });
+
+    if (removableFileIds.length > 0) {
+      const removedFileIdSet = new Set(removableFileIds);
+      const removedFiles = oldFiles.filter((f) => removedFileIdSet.has(f.file_id));
+      const removedFileIds = removedFiles.map((f) => f.file_id);
+
+      const references = await prisma.file.findMany({
+        where: { file_id: { in: removedFileIds } },
+        select: {
+          file_id: true,
+          file_path: true,
+          _count: {
+            select: {
+              announcements: true,
+              parent_child_files: true,
+            },
+          },
+        },
+      });
+
+      const orphanedFiles = references.filter(
+        (fileRef) =>
+          fileRef._count.announcements === 0 &&
+          fileRef._count.parent_child_files === 0,
+      );
+
+      if (orphanedFiles.length > 0) {
+        await prisma.file.deleteMany({
+          where: { file_id: { in: orphanedFiles.map((f) => f.file_id) } },
+        });
+
+        for (const file of orphanedFiles) {
+          try {
+            await deleteFileByUrl(file.file_path);
+          } catch (error) {
+            console.error(
+              `[announcements.service] Failed deleting old announcement file from Supabase: ${file.file_path}`,
+              error,
+            );
+          }
+        }
+      }
+    }
 
     return announcement;
   },

@@ -53,11 +53,21 @@ router.post('/',
 // Update announcement
 router.put('/:id',
   authorize('Admin', 'Principal', 'Vice_Principal', 'Teacher', 'Librarian'),
+  upload.array("attachments", 10),
   [
     param('id').isInt(),
     body('announcement_title').optional().trim(),
     body('announcement_desc').optional(),
-    body('announcement_type').optional().isIn(['General', 'Staff_only', 'Memorandum'])
+    body('announcement_type').optional().isIn(['General', 'Staff_only', 'Memorandum']),
+    body('replace_attachments').optional().isBoolean().toBoolean(),
+    body('remove_file_ids')
+      .optional()
+      .customSanitizer((value) => {
+        if (Array.isArray(value)) return value;
+        return [value];
+      }),
+    body('remove_file_ids').optional().isArray(),
+    body('remove_file_ids.*').optional().isInt()
   ],
   validate,
   announcementsController.updateAnnouncement

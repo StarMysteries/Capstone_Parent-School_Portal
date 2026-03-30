@@ -69,7 +69,11 @@ const announcementsController = {
   async updateAnnouncement(req, res, next) {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      const updateData = {
+        ...req.body,
+        files: req.files || [],
+        updated_by: req.user.user_id,
+      };
 
       const announcement = await announcementsService.updateAnnouncement(
         parseInt(id),
@@ -82,6 +86,9 @@ const announcementsController = {
       });
     } catch (error) {
       if (error.message === "Announcement not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Updating user not found") {
         return res.status(404).json({ message: error.message });
       }
       next(error);

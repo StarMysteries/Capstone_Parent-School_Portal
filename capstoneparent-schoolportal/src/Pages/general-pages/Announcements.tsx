@@ -39,11 +39,14 @@ export const Announcements = () => {
     ? viewCategory
     : "general";
 
-  const { posts, isLoading, createPost } =
+  const { posts, isLoading, createPost, updatePost } =
     useAnnouncementPosts(effectiveCategory);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<AnnouncementPostItem | null>(
+    null,
+  );
 
   const handleCreate = (data: {
     title: string;
@@ -54,8 +57,21 @@ export const Announcements = () => {
     createPost(data);
   };
 
-  const handleOpenEdit = (_post: AnnouncementPostItem) => {
+  const handleOpenEdit = (post: AnnouncementPostItem) => {
+    setSelectedPost(post);
     setIsEditModalOpen(true);
+  };
+
+  const handleUpdate = async (data: {
+    announcementId: number;
+    title: string;
+    content: string;
+    category: AnnouncementCategory;
+    files?: Array<{ id: string; name: string; file: File }>;
+    replaceAttachments?: boolean;
+    removeFileIds?: number[];
+  }) => {
+    await updatePost(data);
   };
 
   const canEditPost = useCallback(
@@ -117,7 +133,12 @@ export const Announcements = () => {
           />
           <EditAnnouncementModal
             isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setSelectedPost(null);
+            }}
+            post={selectedPost}
+            onUpdate={handleUpdate}
           />
         </>
       )}
