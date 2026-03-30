@@ -45,7 +45,7 @@ export const useAnnouncementPosts = (category: AnnouncementCategory) => {
       title: string
       content: string
       category: AnnouncementCategory
-      files?: Array<{ id: string; name: string }>
+      files?: Array<{ id: string; name: string; file: File }>
     }) => {
       const authUser = getAuthUser()
       if (!authUser) {
@@ -59,9 +59,7 @@ export const useAnnouncementPosts = (category: AnnouncementCategory) => {
           announcement_title: data.title,
           announcement_desc: data.content,
           announcement_type,
-          announced_by: authUser.userId,
-          // TODO: integrate real uploaded file IDs when file upload API is wired.
-          file_ids: [],
+          attachments: (data.files || []).map((f) => f.file),
         })
         await reload()
       } catch (e) {

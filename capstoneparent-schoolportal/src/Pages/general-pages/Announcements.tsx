@@ -49,7 +49,7 @@ export const Announcements = () => {
     title: string;
     content: string;
     category: AnnouncementCategory;
-    files?: Array<{ id: string; name: string }>;
+    files?: Array<{ id: string; name: string; file: File }>;
   }) => {
     createPost(data);
   };

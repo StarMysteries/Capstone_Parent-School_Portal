@@ -3,8 +3,10 @@ const { body, param, query } = require('express-validator');
 const announcementsController = require('../controllers/announcements.controller');
 const validate = require('../middlewares/validation');
 const { authenticate, authorize } = require('../middlewares/auth');
+const multer = require("multer");
 
 const router = express.Router();
+const upload = multer({ dest: process.env.UPLOAD_PATH || "uploads/" });
 
 // All routes require authentication
 router.use(authenticate);
@@ -30,11 +32,19 @@ router.get('/:id',
 // Create announcement 
 router.post('/',
   authorize('Admin', 'Principal', 'Vice_Principal', 'Teacher', 'Librarian'),
+  upload.array("attachments", 10),
   [
     body('announcement_title').notEmpty().trim(),
     body('announcement_desc').notEmpty(),
     body('announcement_type').isIn(['General', 'Staff_only', 'Memorandum']),
-    body('file_ids').optional().isArray()
+    body('file_ids')
+      .optional()
+      .customSanitizer((value) => {
+        if (Array.isArray(value)) return value;
+        return [value];
+      }),
+    body('file_ids').optional().isArray(),
+    body('file_ids.*').optional().isInt()
   ],
   validate,
   announcementsController.createAnnouncement

@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const usersService = require("./users.service");
 
 const announcementsService = {
   async getAllAnnouncements({ page, limit, type, userRoles }) {
@@ -112,7 +113,7 @@ const announcementsService = {
   },
 
   async createAnnouncement(announcementData) {
-    const { announcement_title, announcement_desc, announcement_type, announced_by, file_ids } = announcementData;
+    const { announcement_title, announcement_desc, announcement_type, announced_by, file_ids, files } = announcementData;
 
     // Validate required fields
     if (!announcement_title || announcement_title.trim() === '') {
@@ -136,15 +137,24 @@ const announcementsService = {
       throw new Error('Announcing user not found');
     }
 
+    const parsedFileIds = (Array.isArray(file_ids) ? file_ids : [])
+      .map((id) => parseInt(id))
+      .filter((id) => Number.isInteger(id));
+
     // Validate that all provided file IDs exist
-    if (file_ids && file_ids.length > 0) {
+    if (parsedFileIds.length > 0) {
       const existingFiles = await prisma.file.findMany({
-        where: { file_id: { in: file_ids } }
+        where: { file_id: { in: parsedFileIds } }
       });
-      if (existingFiles.length !== file_ids.length) {
+      if (existingFiles.length !== parsedFileIds.length) {
         throw new Error('One or more provided file IDs do not exist');
       }
     }
+
+    // Upload incoming attachment files (if any), then use their file IDs
+    const uploadedFiles = await usersService.createFiles(files || [], announced_by);
+    const uploadedFileIds = uploadedFiles.map((file) => file.file_id);
+    const finalFileIds = [...new Set([...parsedFileIds, ...uploadedFileIds])];
 
     const announcement = await prisma.announcement.create({
       data: {
@@ -152,8 +162,8 @@ const announcementsService = {
         announcement_desc,
         announcement_type,
         announced_by,
-        files: file_ids ? {
-          create: file_ids.map(fileId => ({
+        files: finalFileIds.length > 0 ? {
+          create: finalFileIds.map(fileId => ({
             file_id: fileId
           }))
         } : undefined

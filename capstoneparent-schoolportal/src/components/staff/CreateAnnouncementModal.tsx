@@ -13,6 +13,7 @@ type AnnouncementCategory = "general" | "staffs" | "memorandum";
 interface UploadedFile {
   id: string;
   name: string;
+  file: File;
 }
 
 interface AnnouncementData {
@@ -62,7 +63,7 @@ export const CreateAnnouncementModal = ({
     Array.from(uploadedFiles).forEach((file) => {
       setFiles((prev) => [
         ...prev,
-        { id: Math.random().toString(), name: file.name },
+        { id: Math.random().toString(), name: file.name, file },
       ]);
     });
     // allow re-upload of same file names
@@ -76,7 +77,7 @@ export const CreateAnnouncementModal = ({
     Array.from(droppedFiles).forEach((file) => {
       setFiles((prev) => [
         ...prev,
-        { id: Math.random().toString(), name: file.name },
+        { id: Math.random().toString(), name: file.name, file },
       ]);
     });
   };

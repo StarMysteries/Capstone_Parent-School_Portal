@@ -36,17 +36,27 @@ export interface CreateAnnouncementPayload {
   announcement_title: string;
   announcement_desc: string;
   announcement_type: "General" | "Staff_only" | "Memorandum";
-  announced_by: number;
   file_ids?: number[];
+  attachments?: File[];
 }
 
 export const createAnnouncement = (payload: CreateAnnouncementPayload) => {
+  const formData = new FormData();
+  formData.append("announcement_title", payload.announcement_title);
+  formData.append("announcement_desc", payload.announcement_desc);
+  formData.append("announcement_type", payload.announcement_type);
+  if (payload.file_ids?.length) {
+    payload.file_ids.forEach((id) => formData.append("file_ids", id.toString()));
+  }
+  if (payload.attachments?.length) {
+    payload.attachments.forEach((file) => formData.append("attachments", file));
+  }
+
   return apiFetch<AnnouncementPostItem>("/announcements", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       ...bearerHeaders(),
     },
-    body: JSON.stringify(payload),
+    body: formData,
   });
 };

@@ -45,6 +45,7 @@ const announcementsController = {
       const announcementData = {
         ...req.body,
         announced_by: req.user.user_id,
+        files: req.files || [],
       };
 
       const announcement =
