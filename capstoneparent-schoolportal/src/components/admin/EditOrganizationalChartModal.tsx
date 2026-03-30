@@ -1,59 +1,59 @@
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import type { SchoolCalendarItem } from "@/lib/schoolCalendarContent";
+import type { OrganizationalChartItem } from "@/lib/organizationalChartContent";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-interface EditSchoolCalendarModalProps {
+interface EditOrganizationalChartModalProps {
   isOpen: boolean;
   onClose: () => void;
-  calendars: SchoolCalendarItem[];
+  charts: OrganizationalChartItem[];
   selectedYear: string;
   onSelectYear: (year: string) => void;
-  onSave: (updatedCalendar: SchoolCalendarItem) => void;
+  onSave: (updatedChart: OrganizationalChartItem) => void;
 }
 
-function getReadableFileName(calendar: SchoolCalendarItem): string {
-  if (calendar.fileName) {
-    return calendar.fileName;
+function getReadableFileName(chart: OrganizationalChartItem): string {
+  if (chart.fileName) {
+    return chart.fileName;
   }
 
-  if (calendar.imageUrl.startsWith("data:")) {
-    return `SchoolCalendar-${calendar.year}.png`;
+  if (chart.imageUrl.startsWith("data:")) {
+    return `organizational-chart-${chart.year}.png`;
   }
 
-  const filePart = calendar.imageUrl.split("/").pop();
-  return filePart || `SchoolCalendar-${calendar.year}.png`;
+  const filePart = chart.imageUrl.split("/").pop();
+  return filePart || `organizational-chart-${chart.year}.png`;
 }
 
-export const EditSchoolCalendarModal = ({
+export const EditOrganizationalChartModal = ({
   isOpen,
   onClose,
-  calendars,
+  charts,
   selectedYear,
   onSelectYear,
   onSave,
-}: EditSchoolCalendarModalProps) => {
-  const selectedCalendar = useMemo(
-    () => calendars.find((calendar) => calendar.year === selectedYear) ?? calendars[0],
-    [calendars, selectedYear],
+}: EditOrganizationalChartModalProps) => {
+  const selectedChart = useMemo(
+    () => charts.find((chart) => chart.year === selectedYear) ?? charts[0],
+    [charts, selectedYear],
   );
 
-  const [previewImageUrl, setPreviewImageUrl] = useState(selectedCalendar?.imageUrl ?? "");
+  const [previewImageUrl, setPreviewImageUrl] = useState(selectedChart?.imageUrl ?? "");
   const [fileName, setFileName] = useState(
-    selectedCalendar ? getReadableFileName(selectedCalendar) : "",
+    selectedChart ? getReadableFileName(selectedChart) : "",
   );
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (!selectedCalendar) {
+    if (!selectedChart) {
       return;
     }
 
-    setPreviewImageUrl(selectedCalendar.imageUrl);
-    setFileName(getReadableFileName(selectedCalendar));
-  }, [selectedCalendar]);
+    setPreviewImageUrl(selectedChart.imageUrl);
+    setFileName(getReadableFileName(selectedChart));
+  }, [selectedChart]);
 
   const handleUploadClick = () => {
     inputRef.current?.click();
@@ -77,18 +77,18 @@ export const EditSchoolCalendarModal = ({
   };
 
   const handleSave = () => {
-    if (!selectedCalendar) {
+    if (!selectedChart) {
       return;
     }
 
     onSave({
-      ...selectedCalendar,
-      imageUrl: previewImageUrl || selectedCalendar.imageUrl,
+      ...selectedChart,
+      imageUrl: previewImageUrl || selectedChart.imageUrl,
       fileName,
     });
   };
 
-  if (!selectedCalendar) {
+  if (!selectedChart) {
     return null;
   }
 
@@ -96,34 +96,33 @@ export const EditSchoolCalendarModal = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Edit Calendar"
+      title="Edit Organizational Chart"
       contentClassName="max-w-3xl"
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-lg font-semibold">School Year</p>
+        <div className="flex items-center gap-4">
           <select
             value={selectedYear}
             onChange={(event) => onSelectYear(event.target.value)}
-            className="rounded-md border-2 border-black bg-white px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-(--button-green)"
+            className="w-full rounded-md border-2 border-black bg-white px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-(--button-green)"
           >
-            {calendars.map((calendar) => (
-              <option key={calendar.year} value={calendar.year}>
-                {calendar.label}
+            {charts.map((chart) => (
+              <option key={chart.year} value={chart.year}>
+                {chart.year}
               </option>
             ))}
           </select>
         </div>
 
         <div className="space-y-2 text-center">
-          <h3 className="text-2xl font-semibold">Old Calendar</h3>
+          <p className="text-lg font-semibold">Current File</p>
           <p className="text-lg">{fileName}</p>
         </div>
 
         <div className="mx-auto max-h-[40vh] overflow-hidden rounded-md border-2 border-black/20 bg-white">
           <img
             src={previewImageUrl}
-            alt={`School calendar ${selectedCalendar.label}`}
+            alt={`Organizational chart ${selectedChart.year}`}
             className="max-h-[40vh] w-full object-contain"
           />
         </div>
@@ -136,13 +135,13 @@ export const EditSchoolCalendarModal = ({
           className="hidden"
         />
 
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <Button
             type="button"
             onClick={handleUploadClick}
             className="h-auto rounded-md bg-(--navbar-bg) px-8 py-3 text-lg font-medium text-black hover:bg-yellow-300"
           >
-            Upload New Calendar
+            Picture Upload
             <Plus className="ml-2 h-6 w-6 text-black" strokeWidth={3} />
           </Button>
         </div>
