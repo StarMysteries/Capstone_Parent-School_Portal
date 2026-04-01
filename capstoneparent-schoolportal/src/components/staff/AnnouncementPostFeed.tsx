@@ -73,6 +73,7 @@ export interface AnnouncementPostItem {
 interface AnnouncementPostFeedProps {
   posts: AnnouncementPostItem[];
   isLoading?: boolean;
+  emptyMessage?: string;
   onAdd?: () => void;
   onEdit?: (post: AnnouncementPostItem) => void;
   /** If set with onEdit, edit is shown only when this returns true (e.g. author or admin). */
@@ -135,6 +136,7 @@ const AnnouncementAuthorAvatar = ({ post }: { post: AnnouncementPostItem }) => {
 export const AnnouncementPostFeed = ({
   posts,
   isLoading,
+  emptyMessage = "No announcements available in this category yet.",
   onAdd,
   onEdit,
   canEditPost,
@@ -172,7 +174,12 @@ export const AnnouncementPostFeed = ({
 
   return (
     <section className="mx-auto w-full max-w-330 px-3 py-6 text-left sm:px-5 lg:px-6">
-      <div className="space-y-5 sm:space-y-6">
+      {posts.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center text-base text-gray-600 sm:text-lg">
+          {emptyMessage}
+        </div>
+      ) : (
+        <div className="space-y-5 sm:space-y-6">
         {posts.map((post) => {
           const mayEditPost =
             onEdit != null &&
@@ -252,7 +259,8 @@ export const AnnouncementPostFeed = ({
           </article>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {onAdd && (
         <button

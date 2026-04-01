@@ -26,6 +26,11 @@ const VIEW_OPTIONS: { id: AnnouncementCategory; label: string }[] = [
   { id: "staffs", label: "STAFFS" },
   { id: "memorandum", label: "MEMORANDUM" },
 ];
+const CATEGORY_LABELS: Record<AnnouncementCategory, string> = {
+  general: "General",
+  staffs: "Staffs",
+  memorandum: "Memorandum",
+};
 
 export const Announcements = () => {
   const authUser = getAuthUser();
@@ -114,6 +119,7 @@ export const Announcements = () => {
       <AnnouncementPostFeed
         posts={posts}
         isLoading={isLoading}
+        emptyMessage={`No announcements have been posted for ${CATEGORY_LABELS[effectiveCategory]} yet.`}
         {...(isSchoolStaff
           ? {
               onAdd: () => setIsCreateModalOpen(true),

@@ -2,7 +2,7 @@ const express = require("express");
 const { body, param, query } = require("express-validator");
 const authController = require("../controllers/auth.controller");
 const validate = require("../middlewares/validation");
-const { authenticate } = require("../middlewares/auth");
+const { authenticate, authorize } = require("../middlewares/auth");
 const multer = require("multer");
 
 const upload = multer({ dest: process.env.UPLOAD_PATH || "uploads/" });
@@ -46,6 +46,8 @@ router.post(
 //http://localhost:5000/api/auth/register/employee
 router.post(
   "/register/employee",
+  authenticate,
+  authorize("Admin", "Principal", "Vice_Principal"),
   upload.array("attachments", 10), // Even if they don't upload attachments, multer handles it
   [
     body("email").isEmail().normalizeEmail(),
