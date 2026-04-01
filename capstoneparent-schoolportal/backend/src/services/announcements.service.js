@@ -153,7 +153,9 @@ const announcementsService = {
     }
 
     // Upload incoming attachment files (if any), then use their file IDs
-    const uploadedFiles = await usersService.createFiles(files || [], announced_by);
+    const uploadedFiles = await usersService.createFiles(files || [], announced_by, {
+      storageTarget: "announcements",
+    });
     const uploadedFileIds = uploadedFiles.map((file) => file.file_id);
     const finalFileIds = [...new Set([...parsedFileIds, ...uploadedFileIds])];
 
@@ -254,7 +256,9 @@ const announcementsService = {
 
     let uploadedFiles = [];
     if (hasNewUploads) {
-      uploadedFiles = await usersService.createFiles(files, updated_by);
+      uploadedFiles = await usersService.createFiles(files, updated_by, {
+        storageTarget: "announcements",
+      });
     }
 
     const uploadedFileIds = uploadedFiles.map((f) => f.file_id);

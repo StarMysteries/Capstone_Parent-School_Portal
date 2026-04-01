@@ -18,7 +18,9 @@ const parentsController = {
 
       let file_ids = undefined;
       if (files.length > 0) {
-        const createdFiles = await usersService.createFiles(files, parent_id);
+        const createdFiles = await usersService.createFiles(files, parent_id, {
+          storageTarget: "parent_docs",
+        });
         file_ids = createdFiles.map((f) => f.file_id);
       }
 

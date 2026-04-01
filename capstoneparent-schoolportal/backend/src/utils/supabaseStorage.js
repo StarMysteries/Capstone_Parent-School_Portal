@@ -7,7 +7,9 @@ const crypto = require("crypto");
  * HOW TO SET UP THE BUCKET (one-time manual step):
  *
  *   1. Supabase Dashboard → Storage → New Bucket
- *   2. Name it to match SUPABASE_BUCKET in your .env (default: "parent-docs")
+ *   2. Name buckets to match your dedicated env vars:
+ *      SUPABASE_BUCKET_PARENT, SUPABASE_BUCKET_ANNOUNCEMENTS,
+ *      SUPABASE_BUCKET_PFP, SUPABASE_BUCKET_EVENTS, SUPABASE_BUCKET_ABOUT_US
  *   3. Leave it PRIVATE (do NOT toggle "Public bucket")
  *   4. Click Create
  *
@@ -15,7 +17,9 @@ const crypto = require("crypto");
  * Not Allowed when you call createBucket() even with a service role key.
  * The bucket must exist before the server starts uploading.
  *
- * ALLOWED FILE TYPES: jpg, jpeg, png, pdf
+ * ALLOWED FILE TYPES:
+ *   - parent docs + announcements: jpg, jpeg, png, pdf
+ *   - profile photo + events + about-us assets: jpg, jpeg, png
  *
  * SIGNED URLS:
  *   Private buckets require a signed URL for every file read. We generate one
@@ -23,13 +27,56 @@ const crypto = require("crypto");
  *   extra Supabase call. Supabase caps signed URLs at 2 years max.
  */
 
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
-const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
+const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg"];
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+const PDF_MIME_TYPES = ["application/pdf"];
+const PDF_EXTENSIONS = [".pdf"];
+
+const STORAGE_TARGETS = {
+  parent_docs: {
+    envVar: "SUPABASE_BUCKET_PARENT",
+    fallbackBucket: process.env.SUPABASE_BUCKET || "parent-docs",
+    allowedMimeTypes: [...IMAGE_MIME_TYPES, ...PDF_MIME_TYPES],
+    allowedExtensions: [...IMAGE_EXTENSIONS, ...PDF_EXTENSIONS],
+    displayName: "parent docs",
+  },
+  announcements: {
+    envVar: "SUPABASE_BUCKET_ANNOUNCEMENTS",
+    fallbackBucket: "announcements-files",
+    allowedMimeTypes: [...IMAGE_MIME_TYPES, ...PDF_MIME_TYPES],
+    allowedExtensions: [...IMAGE_EXTENSIONS, ...PDF_EXTENSIONS],
+    displayName: "announcements",
+  },
+  profile_photo: {
+    envVar: "SUPABASE_BUCKET_PFP",
+    fallbackBucket: "user-pfp",
+    allowedMimeTypes: [...IMAGE_MIME_TYPES],
+    allowedExtensions: [...IMAGE_EXTENSIONS],
+    displayName: "profile photo",
+  },
+  events: {
+    envVar: "SUPABASE_BUCKET_EVENTS",
+    fallbackBucket: "events-pics",
+    allowedMimeTypes: [...IMAGE_MIME_TYPES],
+    allowedExtensions: [...IMAGE_EXTENSIONS],
+    displayName: "events",
+  },
+  about_us: {
+    envVar: "SUPABASE_BUCKET_ABOUT_US",
+    fallbackBucket: "about-us-pics",
+    allowedMimeTypes: [...IMAGE_MIME_TYPES],
+    allowedExtensions: [...IMAGE_EXTENSIONS],
+    displayName: "about us",
+  },
+};
 
 // Supabase's maximum allowed expiry for signed URLs is 2 years
 const TWO_YEARS_IN_SECONDS = 2 * 365 * 24 * 60 * 60; // 63,072,000
 
-const _parsed = parseInt(process.env.SIGNED_URL_EXPIRES_IN, 10);
+const _parsed = parseInt(
+  process.env.SUPABASE_SIGNED_URL_EXPIRES_IN ?? process.env.SIGNED_URL_EXPIRES_IN,
+  10,
+);
 const expiresIn =
   Number.isInteger(_parsed) && _parsed > 0
     ? Math.min(_parsed, TWO_YEARS_IN_SECONDS)
@@ -101,21 +148,43 @@ const parseSupabaseStorageUrl = (fileUrl) => {
  * @param {{ path: string, originalname: string, mimetype: string, size: number }} file
  * @returns {Promise<string>} signed URL
  */
-const uploadFile = async (file) => {
+const resolveStorageTarget = (targetKey = "parent_docs") => {
+  const target = STORAGE_TARGETS[targetKey];
+  if (!target) {
+    throw new Error(`Invalid storage target: ${targetKey}`);
+  }
+
+  const bucket = process.env[target.envVar] || target.fallbackBucket;
+  if (!bucket) {
+    throw new Error(
+      `Missing bucket config for ${target.displayName}. Set ${target.envVar} in .env.`,
+    );
+  }
+
+  return { ...target, bucket };
+};
+
+const isValidFileType = (file, target) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  return (
+    target.allowedExtensions.includes(ext) &&
+    target.allowedMimeTypes.includes(file.mimetype)
+  );
+};
+
+const uploadFile = async (file, targetKey = "parent_docs") => {
   const supabase = getClient();
-  const BUCKET = process.env.SUPABASE_BUCKET || "parent-docs";
+  const target = resolveStorageTarget(targetKey);
 
   // Validate file type before touching Supabase
   const ext = path.extname(file.originalname).toLowerCase();
-  if (
-    !ALLOWED_EXTENSIONS.includes(ext) ||
-    !ALLOWED_MIME_TYPES.includes(file.mimetype)
-  ) {
+  if (!isValidFileType(file, target)) {
     try {
       fs.unlinkSync(file.path);
     } catch (_) {}
+    const allowed = target.allowedExtensions.join(", ");
     throw new Error(
-      `Invalid file type: ${file.originalname}. Only JPG, JPEG, PNG, and PDF files are allowed.`,
+      `Invalid file type for ${target.displayName}: ${file.originalname}. Allowed extensions: ${allowed}.`,
     );
   }
 
@@ -125,7 +194,7 @@ const uploadFile = async (file) => {
   const fileBuffer = fs.readFileSync(file.path);
 
   const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
+    .from(target.bucket)
     .upload(storageKey, fileBuffer, {
       contentType: file.mimetype,
       upsert: false,
@@ -142,7 +211,7 @@ const uploadFile = async (file) => {
 
   // Math.floor guarantees a whole integer is passed — Supabase rejects floats
   const { data: signedData, error: signedError } = await supabase.storage
-    .from(BUCKET)
+    .from(target.bucket)
     .createSignedUrl(storageKey, Math.floor(expiresIn));
 
   if (signedError || !signedData?.signedUrl) {
@@ -164,9 +233,9 @@ const uploadFile = async (file) => {
  * @param {{ path: string, originalname: string, mimetype: string, size: number }[]} files
  * @returns {Promise<string[]>} array of signed URLs in the same order as input files
  */
-const uploadFiles = async (files) => {
+const uploadFiles = async (files, targetKey = "parent_docs") => {
   if (!files || files.length === 0) return [];
-  return Promise.all(files.map((file) => uploadFile(file)));
+  return Promise.all(files.map((file) => uploadFile(file, targetKey)));
 };
 
 const deleteFileByUrl = async (fileUrl) => {
@@ -187,4 +256,9 @@ const deleteFileByUrl = async (fileUrl) => {
   return true;
 };
 
-module.exports = { uploadFile, uploadFiles, deleteFileByUrl };
+module.exports = {
+  uploadFile,
+  uploadFiles,
+  deleteFileByUrl,
+  STORAGE_TARGETS,
+};

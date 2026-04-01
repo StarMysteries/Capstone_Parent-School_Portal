@@ -19,7 +19,7 @@ const usersService = {
    * @param {number} uploaded_by  user_id of the owning user
    * @returns {Promise<Array>} created File records (file_path = signed URL)
    */
-  async createFiles(files, uploaded_by) {
+  async createFiles(files, uploaded_by, options = {}) {
     if (!files || files.length === 0) return [];
 
     await findOrThrow(
@@ -28,7 +28,10 @@ const usersService = {
     );
 
     // Upload all files to Supabase in parallel — returns signed URLs in input order
-    const signedUrls = await uploadFiles(files);
+    const signedUrls = await uploadFiles(
+      files,
+      options.storageTarget || "parent_docs",
+    );
 
     // Persist all File rows using createMany for a single DB round-trip
     const fileData = files.map((f, i) => ({
@@ -169,7 +172,7 @@ const usersService = {
     }
 
     const oldPhotoPath = existingUser.photo_path;
-    const newPhotoPath = await uploadFile(file);
+    const newPhotoPath = await uploadFile(file, "profile_photo");
 
     const updatedUser = await prisma.user.update({
       where: { user_id: userId },

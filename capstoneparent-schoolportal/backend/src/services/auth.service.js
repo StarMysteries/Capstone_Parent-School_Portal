@@ -286,6 +286,7 @@ const authService = {
         const created = await usersService.createFiles(
           pending.filePaths,
           user.user_id,
+          { storageTarget: "parent_docs" },
         );
         file_ids = created.map((f) => f.file_id);
       }
