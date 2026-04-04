@@ -216,6 +216,7 @@ model PageSection {
   content_type ContentType
   content      String?     @db.Text
   file_path    String?     @db.Text
+  file_name    String?     @db.Text
   start_year   Int?
   end_year     Int?
   updated_at   DateTime    @updatedAt
@@ -229,6 +230,8 @@ model PageSection {
 model OrgChart {
   chart_id    Int      @id @default(autoincrement())
   school_year Int
+  file_path   String?  @db.Text
+  file_name   String?  @db.Text
   uploaded_at DateTime @default(now())
   uploaded_by Int
 

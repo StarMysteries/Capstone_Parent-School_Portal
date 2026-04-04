@@ -1,24 +1,21 @@
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { getAuthUser } from "@/lib/auth";
-import {
-  getSchoolCalendars,
-  type SchoolCalendarItem,
-} from "@/lib/schoolCalendarContent";
+import { type SchoolCalendarItem } from "@/lib/schoolCalendarContent";
+import { pagesApi } from "@/lib/api/pagesApi";
+import { resolveMediaUrl } from "@/lib/api/base";
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-const CalendarPreview = ({ imageUrl, label }: { imageUrl: string; label: string }) => {
+const CalendarPreview = ({ imageUrl }: { imageUrl: string }) => {
   const [hasImageError, setHasImageError] = useState(false);
 
-  if (hasImageError) {
+  if (hasImageError || !imageUrl) {
     return (
       <div className="flex min-h-130 w-full items-center justify-center rounded-sm bg-white p-8 text-center">
         <div>
           <p className="text-2xl font-bold text-gray-700">Calendar file not found</p>
-          <p className="mt-2 text-lg text-gray-600">
-            Add the file for School Year {label} in `public/` to display it here.
-          </p>
+          <p className="mt-2 text-lg text-gray-600">No calendar image has been uploaded yet.</p>
         </div>
       </div>
     );
@@ -26,8 +23,8 @@ const CalendarPreview = ({ imageUrl, label }: { imageUrl: string; label: string 
 
   return (
     <img
-      src={imageUrl}
-      alt={`School Calendar ${label}`}
+      src={resolveMediaUrl(imageUrl)}
+      alt="School calendar"
       onError={() => setHasImageError(true)}
       className="h-auto w-full rounded-sm bg-white object-contain"
     />
@@ -36,72 +33,61 @@ const CalendarPreview = ({ imageUrl, label }: { imageUrl: string; label: string 
 
 export const SchoolCalendar = () => {
   const user = getAuthUser();
-  const isAdmin = user?.role === "admin";
-  const schoolCalendars = getSchoolCalendars();
+  const isAdmin = user?.role === "admin" || user?.role === "principal";
 
-  const [selectedYear, setSelectedYear] = useState(schoolCalendars[0]?.year ?? "2025");
-  const selectedCalendar =
-    schoolCalendars.find((calendar) => calendar.year === selectedYear) ?? schoolCalendars[0];
+  const [schoolCalendars, setSchoolCalendars] = useState<SchoolCalendarItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!selectedCalendar) {
-    return (
-      <div>
-        <RoleAwareNavbar />
-        <div className="mx-auto max-w-7xl px-4 py-12">
-          <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>
-          <p>No school calendar data available.</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    pagesApi
+      .getSchoolCalendars()
+      .then((data) => {
+        setSchoolCalendars(data);
+      })
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  /** API returns calendars ordered by start year descending — show only the latest. */
+  const calendar = schoolCalendars[0];
 
   return (
     <div>
       <RoleAwareNavbar />
-      <div className="max-w-7xl mx-auto py-12 px-4">
-        <h1 className="text-4xl font-bold mb-8">School Calendar ({selectedCalendar.label})</h1>
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        {isLoading ? (
+          <div className="p-8 text-center">Loading...</div>
+        ) : !calendar ? (
+          <>
+            <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>
+            <p>No school calendar data available.</p>
+            {isAdmin && (
+              <Link
+                to="/editschoolcalendar"
+                className="mt-4 inline-flex items-center justify-center rounded-md bg-(--button-green) px-4 py-2 text-white"
+              >
+                Add Calendar
+              </Link>
+            )}
+          </>
+        ) : (
+          <>
+            <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
             <div className="w-full rounded-sm bg-gray-300 p-8">
-              <CalendarPreview
-                imageUrl={selectedCalendar.imageUrl}
-                label={selectedCalendar.label}
-              />
+              <CalendarPreview imageUrl={calendar.imageUrl} />
             </div>
-            <p className="text-center font-bold mt-4">School Year {selectedCalendar.label}</p>
-          </div>
 
-          <div className="lg:col-span-1 flex lg:block lg:w-full w-fit mx-auto">
-            <div>
-              <h3 className="font-bold text-lg mb-4">Year</h3>
-              <div className="space-y-2">
-                {schoolCalendars.map((calendar: SchoolCalendarItem) => (
-                  <button
-                    key={calendar.year}
-                    onClick={() => setSelectedYear(calendar.year)}
-                    className={`block w-full text-left py-2 px-3 rounded transition ${
-                      selectedYear === calendar.year
-                        ? "bg-blue-500 text-white font-semibold"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                  >
-                    {calendar.year}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {isAdmin && (
-          <Link
-            to={`/editschoolcalendar?year=${selectedYear}`}
-            className="fixed bottom-8 right-8 inline-flex h-20 w-20 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105"
-            aria-label="Edit School Calendar"
-          >
-            <Pencil className="h-10 w-10" />
-          </Link>
+            {isAdmin && (
+              <Link
+                to="/editschoolcalendar"
+                className="fixed bottom-8 right-8 inline-flex h-20 w-20 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105"
+                aria-label="Edit School Calendar"
+              >
+                <Pencil className="h-10 w-10" />
+              </Link>
+            )}
+          </>
         )}
       </div>
     </div>

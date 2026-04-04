@@ -1,21 +1,29 @@
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { resolveMediaUrl } from "@/lib/api/base";
 import type { SchoolCalendarItem } from "@/lib/schoolCalendarContent";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+export type CalendarModalMode = "add" | "edit";
+
 interface EditSchoolCalendarModalProps {
   isOpen: boolean;
   onClose: () => void;
+  mode: CalendarModalMode;
   calendars: SchoolCalendarItem[];
-  selectedYear: string;
-  onSelectYear: (year: string) => void;
-  onSave: (updatedCalendar: SchoolCalendarItem) => void;
+  /** School year of the calendar being edited (edit mode only) */
+  editYear?: string;
+  onSave: (updatedCalendar: SchoolCalendarItem, file?: File) => void | Promise<void>;
 }
 
 function getReadableFileName(calendar: SchoolCalendarItem): string {
   if (calendar.fileName) {
     return calendar.fileName;
+  }
+
+  if (!calendar.imageUrl) {
+    return "No file selected";
   }
 
   if (calendar.imageUrl.startsWith("data:")) {
@@ -26,34 +34,57 @@ function getReadableFileName(calendar: SchoolCalendarItem): string {
   return filePart || `SchoolCalendar-${calendar.year}.png`;
 }
 
+const currentYearString = () => String(new Date().getFullYear());
+
 export const EditSchoolCalendarModal = ({
   isOpen,
   onClose,
+  mode,
   calendars,
-  selectedYear,
-  onSelectYear,
+  editYear,
   onSave,
 }: EditSchoolCalendarModalProps) => {
-  const selectedCalendar = useMemo(
-    () => calendars.find((calendar) => calendar.year === selectedYear) ?? calendars[0],
-    [calendars, selectedYear],
-  );
-
-  const [previewImageUrl, setPreviewImageUrl] = useState(selectedCalendar?.imageUrl ?? "");
-  const [fileName, setFileName] = useState(
-    selectedCalendar ? getReadableFileName(selectedCalendar) : "",
-  );
+  const [yearInput, setYearInput] = useState(currentYearString());
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [fileName, setFileName] = useState("No file selected");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const calendarForEdit = useMemo(() => {
+    if (mode !== "edit" || !editYear) {
+      return null;
+    }
+    return calendars.find((c) => c.year === editYear) ?? null;
+  }, [mode, editYear, calendars]);
+
   useEffect(() => {
-    if (!selectedCalendar) {
+    if (!isOpen) {
       return;
     }
 
-    setPreviewImageUrl(selectedCalendar.imageUrl);
-    setFileName(getReadableFileName(selectedCalendar));
-  }, [selectedCalendar]);
+    if (mode === "add") {
+      setYearInput(currentYearString());
+      setPreviewImageUrl("");
+      setFileName("No file selected");
+      setSelectedFile(null);
+      return;
+    }
+
+    if (mode === "edit" && editYear) {
+      const c =
+        calendars.find((ch) => ch.year === editYear) ?? ({
+          year: editYear,
+          label: "",
+          imageUrl: "",
+          fileName: "",
+        } as SchoolCalendarItem);
+      setYearInput(c.year);
+      setPreviewImageUrl(c.imageUrl ? resolveMediaUrl(c.imageUrl) : "");
+      setFileName(getReadableFileName(c));
+      setSelectedFile(null);
+    }
+  }, [isOpen, mode, editYear, calendars]);
 
   const handleUploadClick = () => {
     inputRef.current?.click();
@@ -64,6 +95,8 @@ export const EditSchoolCalendarModal = ({
     if (!file) {
       return;
     }
+
+    setSelectedFile(file);
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -76,56 +109,80 @@ export const EditSchoolCalendarModal = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    if (!selectedCalendar) {
+  const handleSave = async () => {
+    const base: SchoolCalendarItem = {
+      year: yearInput,
+      label: calendarForEdit?.label || "",
+      imageUrl: previewImageUrl || calendarForEdit?.imageUrl || "",
+      fileName,
+    };
+
+    if (mode === "add" && !selectedFile) {
       return;
     }
 
-    onSave({
-      ...selectedCalendar,
-      imageUrl: previewImageUrl || selectedCalendar.imageUrl,
-      fileName,
-    });
+    await onSave(
+      {
+        ...base,
+        imageUrl: selectedFile ? previewImageUrl : base.imageUrl,
+      },
+      selectedFile || undefined,
+    );
   };
 
-  if (!selectedCalendar) {
-    return null;
-  }
+  const title =
+    mode === "add" ? "Add school calendar" : "Edit school calendar";
+
+  const canSubmit =
+    mode === "edit" ? true : Boolean(selectedFile);
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Edit Calendar"
-      contentClassName="max-w-3xl"
-    >
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-lg font-semibold">School Year</p>
-          <select
-            value={selectedYear}
-            onChange={(event) => onSelectYear(event.target.value)}
-            className="rounded-md border-2 border-black bg-white px-3 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-(--button-green)"
-          >
-            {calendars.map((calendar) => (
-              <option key={calendar.year} value={calendar.year}>
-                {calendar.label}
-              </option>
-            ))}
-          </select>
-        </div>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} contentClassName="max-w-3xl">
+      <div className="space-y-6">
+        {mode === "add" ? (
+          <p className="text-lg text-black/80">
+            Choose the school year and upload a calendar image. Only image files (JPEG, PNG) are accepted.
+          </p>
+        ) : (
+          <p className="text-lg text-black/80">
+            Update the image for this school year, or replace the file below.
+          </p>
+        )}
 
-        <div className="space-y-2 text-center">
-          <h3 className="text-2xl font-semibold">Old Calendar</h3>
-          <p className="text-lg">{fileName}</p>
-        </div>
-
-        <div className="mx-auto max-h-[40vh] overflow-hidden rounded-md border-2 border-black/20 bg-white">
-          <img
-            src={previewImageUrl}
-            alt={`School calendar ${selectedCalendar.label}`}
-            className="max-h-[40vh] w-full object-contain"
+        <div className="flex flex-col gap-2">
+          <label htmlFor="school-calendar-year" className="text-lg font-semibold">
+            School year
+          </label>
+          <input
+            id="school-calendar-year"
+            type="number"
+            value={yearInput}
+            onChange={(event) => setYearInput(event.target.value)}
+            className="w-full rounded-md border-2 border-black bg-white px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-(--button-green)"
+            min={1900}
+            max={2100}
           />
+        </div>
+
+        <div
+          className={`mx-auto flex min-h-[200px] max-h-[40vh] w-full items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-black/25 bg-white ${
+            previewImageUrl ? "border-solid border-black/20" : ""
+          }`}
+        >
+          {previewImageUrl ? (
+            <img
+              src={previewImageUrl}
+              alt="School calendar preview"
+              className="max-h-[40vh] w-full object-contain"
+            />
+          ) : (
+            <p className="px-4 text-center text-lg text-black/50">No image selected yet</p>
+          )}
+        </div>
+
+        <div className="space-y-1 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-black/60">File</p>
+          <p className="text-lg">{fileName}</p>
         </div>
 
         <input
@@ -136,24 +193,23 @@ export const EditSchoolCalendarModal = ({
           className="hidden"
         />
 
-        <div className="flex justify-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
           <Button
             type="button"
             onClick={handleUploadClick}
             className="h-auto rounded-md bg-(--navbar-bg) px-8 py-3 text-lg font-medium text-black hover:bg-yellow-300"
           >
-            Upload New Calendar
+            Picture upload
             <Plus className="ml-2 h-6 w-6 text-black" strokeWidth={3} />
           </Button>
-        </div>
 
-        <div className="flex justify-end">
           <Button
             type="button"
             onClick={handleSave}
-            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full"
+            disabled={!canSubmit}
+            className="bg-(--button-green) hover:bg-(--button-hover-green) rounded-full px-8 py-3 text-lg text-white disabled:opacity-50"
           >
-            Save Changes
+            Save
           </Button>
         </div>
       </div>

@@ -7,6 +7,7 @@ const studentsRoutes = require("./students.routes");
 const parentsRoutes = require("./parents.routes");
 const classesRoutes = require("./classes.routes");
 const libraryRoutes = require("./library.routes");
+const pagesRoutes = require("./pages.routes");
 const {
   globalLimiter,
   authLimiter,
@@ -72,5 +73,6 @@ router.use("/students", studentsRoutes);
 router.use("/parents", parentsRoutes);
 router.use("/classes", classesRoutes);
 router.use("/library", libraryRoutes);
+router.use("/pages", pagesRoutes);
 
 module.exports = router;

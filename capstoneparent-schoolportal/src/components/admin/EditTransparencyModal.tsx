@@ -8,12 +8,16 @@ interface EditTransparencyModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialContent: TransparencyContent;
-  onSave: (content: TransparencyContent) => void;
+  onSave: (content: TransparencyContent, file?: File) => void;
 }
 
 function getReadableFileName(content: TransparencyContent): string {
   if (content.fileName) {
     return content.fileName;
+  }
+
+  if (!content.imageUrl) {
+    return "No file selected";
   }
 
   if (content.imageUrl.startsWith("data:")) {
@@ -32,6 +36,7 @@ export const EditTransparencyModal = ({
 }: EditTransparencyModalProps) => {
   const [previewImageUrl, setPreviewImageUrl] = useState(initialContent.imageUrl);
   const [fileName, setFileName] = useState(getReadableFileName(initialContent));
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -48,6 +53,8 @@ export const EditTransparencyModal = ({
     if (!file) {
       return;
     }
+    
+    setSelectedFile(file);
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -64,7 +71,7 @@ export const EditTransparencyModal = ({
     onSave({
       imageUrl: previewImageUrl || initialContent.imageUrl,
       fileName,
-    });
+    }, selectedFile || undefined);
   };
 
   return (
