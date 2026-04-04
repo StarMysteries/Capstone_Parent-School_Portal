@@ -75,13 +75,13 @@ export function mapBackendRole(backendRole: string): UserRole {
 }
 
 const DEFAULT_ROUTES: Record<UserRole, string> = {
-  admin: "/adminview",
-  principal: "/manageclasslists",
-  vice_principal: "/manageclasslists",
-  teacher: "/teacherview",
-  librarian: "/librarianview",
-  parent: "/parentview",
-  staff: "/staffview",
+  admin: "/homepage",
+  principal: "/homepage",
+  vice_principal: "/homepage",
+  teacher: "/homepage",
+  librarian: "/homepage",
+  parent: "/homepage",
+  staff: "/homepage",
 };
 
 export function getDefaultRouteForRole(role: UserRole): string {

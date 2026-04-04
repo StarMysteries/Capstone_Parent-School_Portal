@@ -35,7 +35,6 @@ import { LibraryRecords } from "./Pages/parent-pages/LibraryRecords";
 {
   /*Admin Sub Pages */
 }
-import { AdminView } from "./Pages/admin-pages/AdminView";
 import { ManageParentVerification } from "./Pages/admin-pages/ManageParentVerification";
 import { ManageSection } from "./Pages/admin-pages/ManageSection";
 import { ManageStaffAccounts } from "./Pages/admin-pages/ManageStaffAccounts";
@@ -46,18 +45,15 @@ import { EditHistory } from "./Pages/admin-pages/edit-pages/EditHistory";
 {
   /*Teacher Sub Pages */
 }
-import { TeacherView } from "./Pages/teacher-pages/TeacherView";
 import { ClassList } from "./Pages/teacher-pages/ClassList";
 
 {
   /*Staff Sub Pages */
 }
-import { StaffView } from "./Pages/staff-pages/StaffView";
 
 {
   /*Librarian Sub Pages */
 }
-import { LibrarianView } from "./Pages/librarian-pages/LibrarianView";
 import { ManageBooks } from "./Pages/librarian-pages/ManageBooks";
 import { ManageLearningResources } from "./Pages/librarian-pages/ManageLearningResources";
 import { BorrowedResources } from "./Pages/librarian-pages/BorrowedResources";
@@ -147,14 +143,6 @@ const App = () => {
 
       {/*Admin Sub Pages */}
       <Route
-        path="/adminview"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminView />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         // Also acessible by teachers
         path="/manageparentverification"
         element={
@@ -211,14 +199,6 @@ const App = () => {
 
       {/*Teacher Sub Pages (Some routes are in admin)*/}
       <Route
-        path="/teacherview"
-        element={
-          <ProtectedRoute allowedRoles={["teacher"]}>
-            <TeacherView />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/classlist"
         element={
           <ProtectedRoute allowedRoles={["teacher"]}>
@@ -228,24 +208,8 @@ const App = () => {
       />
 
       {/*Staff Sub Pages */}
-      <Route
-        path="/staffview"
-        element={
-          <ProtectedRoute allowedRoles={["staff"]}>
-            <StaffView />
-          </ProtectedRoute>
-        }
-      />
 
       {/*Librarian Sub Pages */}
-      <Route
-        path="/librarianview"
-        element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <LibrarianView />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/managebooks"
         element={

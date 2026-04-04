@@ -100,8 +100,8 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
   staff: {
     announcementPath: "/announcements",
     announcementActivePaths: ANNOUNCEMENT_PATHS,
-    recordsItems: [{ label: "Staff Dashboard", to: "/staffview" }],
-    recordsActivePaths: ["/staffview"],
+    recordsItems: [],
+    recordsActivePaths: [],
     logoAlt: LOGO_ALT,
   },
 
