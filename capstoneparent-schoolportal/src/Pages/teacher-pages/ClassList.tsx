@@ -448,6 +448,13 @@ export const ClassList = () => {
                             </p>
                           </div>
                           <div className="text-right">
+                            <p className={`text-sm font-medium transition-colors ${
+                              selectedSubject?.srecord_id === subjectItem.srecord_id
+                                ? 'text-white'
+                                : 'text-gray-700 group-hover:text-white'
+                            }`}>
+                              {subjectItem.studentCount ?? 0} Students
+                            </p>
                             <p className={`text-sm transition-colors ${
                               selectedSubject?.srecord_id === subjectItem.srecord_id 
                                 ? 'text-(--tab-subtext)' 

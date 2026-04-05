@@ -6,10 +6,10 @@ import type { GradeLevel, StudentStatus } from "@/lib/api/types";
 export interface StudentFormData {
   firstName: string;
   lastName: string;
-  sex: "M" | "F";
+  sex: "" | "M" | "F";
   lrn: string;
   gradeLevelId: string;
-  status: StudentStatus;
+  status: "" | StudentStatus;
   schoolYearStart: string;
   schoolYearEnd: string;
 }
@@ -63,10 +63,11 @@ export const StudentFormModal = ({
         <select
           value={formData.sex}
           onChange={(e) =>
-            setFormData({ ...formData, sex: e.target.value as "M" | "F" })
+            setFormData({ ...formData, sex: e.target.value as "" | "M" | "F" })
           }
           className="w-full rounded-md border-2 border-black px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-(--button-green)"
         >
+          <option value="">Select sex</option>
           <option value="M">Male</option>
           <option value="F">Female</option>
         </select>
@@ -126,12 +127,13 @@ export const StudentFormModal = ({
           onChange={(e) =>
             setFormData({
               ...formData,
-              status: e.target.value as StudentStatus,
+              status: e.target.value as "" | StudentStatus,
             })
           }
           disabled={!canEditStatus}
           className="w-full rounded-md border-2 border-black px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-(--button-green) disabled:cursor-not-allowed disabled:bg-gray-100"
         >
+          <option value="">Select status</option>
           <option value="ENROLLED">ENROLLED</option>
           <option value="TRANSFERRED">TRANSFERRED</option>
           <option value="GRADUATED">GRADUATED</option>

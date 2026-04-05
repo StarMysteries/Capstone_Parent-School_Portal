@@ -19,7 +19,20 @@ export const fetchClasses = async (): Promise<ClassItem[]> => {
 export const fetchSubjects = async (): Promise<SubjectItem[]> => {
   try {
     const response = await apiFetch<{ data: any[] }>('/classes/subjects/teacher');
-    return response.data;
+    return response.data.map((item) => {
+      const firstClass = item.class_lists && item.class_lists.length > 0
+        ? item.class_lists[0].class_list
+        : null;
+
+      return {
+        ...item,
+        studentCount: item.students?.length ?? 0,
+        grade: firstClass?.grade_level?.grade_level || '',
+        section: firstClass?.section?.section_name || '',
+        syear_start: firstClass?.syear_start ?? undefined,
+        syear_end: firstClass?.syear_end ?? undefined,
+      };
+    });
   } catch (error) {
     console.error('Error fetching subjects:', error);
     return [];
@@ -35,6 +48,7 @@ export const fetchStudents = async (clist_id?: number): Promise<Student[]> => {
       name: `${item.fname} ${item.lname}`,
       lrn: item.lrn_number,
       schoolYear: `${item.syear_start} - ${item.syear_end}`,
+      clist_id: item.clist_id ?? null,
       // Add other mappings as needed
     }));
   } catch (error) {
@@ -61,4 +75,4 @@ export const fetchGradeLevels = async (): Promise<any[]> => {
     console.error('Error fetching grade levels:', error);
     return [];
   }
-};
+};

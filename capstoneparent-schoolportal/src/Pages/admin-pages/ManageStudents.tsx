@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Upload,
+} from "lucide-react";
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { Button } from "../../components/ui/button";
 import { StatusDropdown } from "../../components/general/StatusDropdown";
@@ -7,7 +13,8 @@ import {
   StudentFormModal,
   type StudentFormData,
 } from "../../components/admin/StudentFormModal";
-import { studentsApi } from "@/lib/api/studentsApi";
+import { StudentBatchUploadModal } from "../../components/admin/StudentBatchUploadModal";
+import { studentsApi, type StudentPayload } from "@/lib/api/studentsApi";
 import type {
   GradeLevel,
   PaginationMeta,
@@ -17,18 +24,16 @@ import type {
 import { useAuthStore } from "@/lib/store/authStore";
 
 const ITEMS_PER_PAGE = 10;
-const DEFAULT_SCHOOL_YEAR_START = String(new Date().getFullYear());
-const DEFAULT_SCHOOL_YEAR_END = String(new Date().getFullYear() + 1);
 
 const emptyForm = (): StudentFormData => ({
   firstName: "",
   lastName: "",
-  sex: "M",
+  sex: "",
   lrn: "",
   gradeLevelId: "",
-  status: "ENROLLED",
-  schoolYearStart: DEFAULT_SCHOOL_YEAR_START,
-  schoolYearEnd: DEFAULT_SCHOOL_YEAR_END,
+  status: "",
+  schoolYearStart: "",
+  schoolYearEnd: "",
 });
 
 const formatSchoolYear = (student: StudentRecord) =>
@@ -55,7 +60,9 @@ const getStatusColor = (status: StudentStatus) => {
 
 export const ManageStudents = () => {
   const role = useAuthStore((state) => state.user?.role);
-  const canAddStudents = role === "admin" || role === "teacher";
+  const canManageStudents = role === "admin" || role === "teacher";
+  const canCreateStudents = canManageStudents;
+  const canBatchAddStudents = canManageStudents;
 
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [gradeLevels, setGradeLevels] = useState<GradeLevel[]>([]);
@@ -76,6 +83,7 @@ export const ManageStudents = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [formData, setFormData] = useState<StudentFormData>(emptyForm);
   const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
 
@@ -116,7 +124,9 @@ export const ManageStudents = () => {
         setGradeLevels(gradeLevelsResponse.data);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to fetch grade levels",
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch student form options",
         );
       }
     };
@@ -149,6 +159,7 @@ export const ManageStudents = () => {
   const resetForm = () => setFormData(emptyForm());
 
   const openAddModal = () => {
+    setEditingStudent(null);
     resetForm();
     setIsAddModalOpen(true);
   };
@@ -157,8 +168,10 @@ export const ManageStudents = () => {
     if (
       !formData.firstName.trim() ||
       !formData.lastName.trim() ||
+      !formData.sex ||
       !formData.lrn.trim() ||
       !formData.gradeLevelId ||
+      !formData.status ||
       !formData.schoolYearStart ||
       !formData.schoolYearEnd
     ) {
@@ -183,15 +196,15 @@ export const ManageStudents = () => {
     return null;
   };
 
-  const toPayload = () => ({
+  const toPayload = (): StudentPayload => ({
     fname: formData.firstName.trim(),
     lname: formData.lastName.trim(),
-    sex: toApiSex(formData.sex),
+    sex: toApiSex(formData.sex as "M" | "F"),
     lrn_number: formData.lrn.trim(),
     gl_id: Number(formData.gradeLevelId),
     syear_start: Number(formData.schoolYearStart),
     syear_end: Number(formData.schoolYearEnd),
-    status: formData.status,
+    status: formData.status as StudentStatus,
   });
 
   const handleAddStudent = async () => {
@@ -252,6 +265,23 @@ export const ManageStudents = () => {
     }
   };
 
+  const handleBatchUpload = async (file: File) => {
+    setIsSubmitting(true);
+    try {
+      await studentsApi.import(file);
+      setIsBatchModalOpen(false);
+      await loadStudents(1);
+      setCurrentPage(1);
+      alert("Student CSV uploaded successfully.");
+    } catch (err) {
+      throw (err instanceof Error
+        ? err
+        : new Error("Failed to upload student CSV"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const totalPages = pagination.totalPages;
   const showingStart =
     filteredStudents.length === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
@@ -271,21 +301,33 @@ export const ManageStudents = () => {
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold">Manage Students</h1>
-              {!canAddStudents && (
+              {!canManageStudents && (
                 <p className="mt-2 text-sm text-gray-500">
                   Student records are managed here through updates to student
-                  details and status. Deletion is disabled because records are
-                  soft-managed instead of permanently removed.
+                  details and status.
                 </p>
               )}
             </div>
-            {canAddStudents && (
-              <Button
-                className="bg-(--button-green) px-6 py-2 text-white hover:bg-(--button-hover-green)"
-                onClick={openAddModal}
-              >
-                Add New Student
-              </Button>
+            {canManageStudents && (
+              <div className="flex flex-col gap-3 sm:flex-row">
+                {canBatchAddStudents && (
+                  <Button
+                    className="bg-white px-6 py-2 text-(--button-green) ring-1 ring-(--button-green) hover:bg-green-50"
+                    onClick={() => setIsBatchModalOpen(true)}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Batch Add Students
+                  </Button>
+                )}
+                {canCreateStudents && (
+                  <Button
+                    className="bg-(--button-green) px-6 py-2 text-white hover:bg-(--button-hover-green)"
+                    onClick={openAddModal}
+                  >
+                    Add New Student
+                  </Button>
+                )}
+              </div>
             )}
           </div>
 
@@ -510,6 +552,13 @@ export const ManageStudents = () => {
         setFormData={setFormData}
         gradeLevels={gradeLevels}
         isSubmitting={isSubmitting}
+      />
+
+      <StudentBatchUploadModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        onUpload={handleBatchUpload}
+        isUploading={isSubmitting}
       />
     </div>
   );

@@ -53,12 +53,15 @@ export const filterStudents = (
 export const getStudentCountByClass = (students: Student[]): Record<number, number> => {
   const counts: Record<number, number> = {};
   students.forEach(student => {
-    const classId = student.gl_id; // Using gl_id as class grouping for now if no specific clist_id in Student
+    const classId = (student as Student & { clist_id?: number | null }).clist_id;
+    if (!classId) return;
     counts[classId] = (counts[classId] || 0) + 1;
   });
   return counts;
 };
 
 export const getStudentsForClass = (students: Student[], classId: number): Student[] => {
-  return students.filter(student => student.gl_id === classId);
-};
+  return students.filter(
+    student => (student as Student & { clist_id?: number | null }).clist_id === classId
+  );
+};

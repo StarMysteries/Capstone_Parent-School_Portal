@@ -6,26 +6,19 @@ import {
   ArrowUp,
   ArrowDown,
   Plus,
+  Loader2,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
 import { Button } from "../../components/ui/button";
 import { SectionFormModal } from "../../components/admin/SectionFormModal";
 import { SectionDeleteModal } from "../../components/admin/SectionDeleteModal";
-
-interface Section {
-  id: number;
-  name: string;
-}
+import { classesApi, type Section } from "../../lib/api/classesApi";
 
 export const ManageSection = () => {
-  // Temporary local state until API integration is added.
-  const [sections, setSections] = useState<Section[]>([
-    { id: 1, name: "Section A" },
-    { id: 2, name: "Section B" },
-    { id: 3, name: "Section C" },
-    { id: 4, name: "Section D" },
-  ]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -41,6 +34,23 @@ export const ManageSection = () => {
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [deletingSection, setDeletingSection] = useState<Section | null>(null);
 
+  const fetchSections = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await classesApi.getSections();
+      setSections(response.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch sections");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSections();
+  }, []);
+
   const handleSort = (field: keyof Section) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -53,7 +63,7 @@ export const ManageSection = () => {
 
   const filteredSections = useMemo(() => {
     let filtered = sections.filter((section) =>
-      section.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      section.section_name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     if (sortField) {
@@ -78,46 +88,61 @@ export const ManageSection = () => {
     return filtered;
   }, [sections, searchQuery, sortField, sortDirection]);
 
-  const handleAddSection = () => {
+  const validateFormat = (name: string) => {
+    const regex = /^Section .+$/i;
+    if (!regex.test(name)) {
+      return "Format must be 'Section [Name]' (e.g., Section A)";
+    }
+    return null;
+  };
+
+  const handleAddSection = async () => {
     if (!formData.name.trim()) return;
 
-    const newSection: Section = {
-      id: Math.max(...sections.map((s) => s.id), 0) + 1,
-      name: formData.name,
-    };
+    const formatError = validateFormat(formData.name);
+    if (formatError) {
+      alert(formatError);
+      return;
+    }
 
-    setSections([...sections, newSection]);
-    setFormData({ name: "" });
-    setIsAddModalOpen(false);
+    try {
+      await classesApi.createSection(formData.name);
+      setFormData({ name: "" });
+      setIsAddModalOpen(false);
+      fetchSections();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to add section");
+    }
   };
 
   const handleEditClick = (section: Section) => {
     setEditingSection(section);
     setFormData({
-      name: section.name,
+      name: section.section_name,
     });
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateSection = () => {
+  const handleUpdateSection = async () => {
     if (!editingSection || !formData.name.trim()) {
       return;
     }
 
-    setSections(
-      sections.map((section) =>
-        section.id === editingSection.id
-          ? {
-              ...section,
-              name: formData.name,
-            }
-          : section,
-      ),
-    );
+    const formatError = validateFormat(formData.name);
+    if (formatError) {
+      alert(formatError);
+      return;
+    }
 
-    setFormData({ name: "" });
-    setEditingSection(null);
-    setIsEditModalOpen(false);
+    try {
+      await classesApi.updateSection(editingSection.section_id, formData.name);
+      setFormData({ name: "" });
+      setEditingSection(null);
+      setIsEditModalOpen(false);
+      fetchSections();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update section");
+    }
   };
 
   const handleDeleteClick = (section: Section) => {
@@ -125,12 +150,17 @@ export const ManageSection = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteSection = () => {
+  const handleDeleteSection = async () => {
     if (!deletingSection) return;
 
-    setSections(sections.filter((section) => section.id !== deletingSection.id));
-    setDeletingSection(null);
-    setIsDeleteModalOpen(false);
+    try {
+      await classesApi.deleteSection(deletingSection.section_id);
+      setDeletingSection(null);
+      setIsDeleteModalOpen(false);
+      fetchSections();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete section");
+    }
   };
 
   const openAddSectionModal = () => {
@@ -167,7 +197,7 @@ export const ManageSection = () => {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search section or adviser..."
+                placeholder="Search section..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-gray-800 placeholder:text-gray-400 focus:border-(--button-green) focus:outline-none"
@@ -177,6 +207,7 @@ export const ManageSection = () => {
             <Button
               className="hidden bg-(--button-green) text-white hover:bg-(--button-hover-green) sm:inline-flex"
               onClick={openAddSectionModal}
+              disabled={isLoading}
             >
               <Plus className="h-4 w-4" />
               Add Section
@@ -185,20 +216,35 @@ export const ManageSection = () => {
 
           <div className="mt-4 flex flex-wrap gap-2">
             <button
-              onClick={() => handleSort("name")}
+              onClick={() => handleSort("section_name")}
               className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                sortField === "name"
+                sortField === "section_name"
                   ? "border-(--button-green) bg-(--button-green) text-white"
                   : "border-gray-200 bg-white text-gray-700 hover:border-(--button-green) hover:text-(--button-green)"
               }`}
             >
               Section Name
-              {getSortIcon("name")}
+              {getSortIcon("section_name")}
             </button>
           </div>
 
           <div className="mt-5">
-            {filteredSections.length === 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                <Loader2 className="h-8 w-8 animate-spin text-(--button-green) mb-2" />
+                <p>Loading sections...</p>
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-center text-red-600">
+                <p>{error}</p>
+                <button
+                  onClick={fetchSections}
+                  className="mt-2 text-sm font-semibold underline hover:text-red-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : filteredSections.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-gray-500">
                 No sections found.
               </div>
@@ -206,13 +252,13 @@ export const ManageSection = () => {
               <ul className="space-y-3">
                 {filteredSections.map((section) => (
                   <li
-                    key={section.id}
+                    key={section.section_id}
                     className="rounded-2xl border border-gray-200 bg-gray-50/80 px-4 py-3 transition hover:border-(--button-green) hover:bg-white hover:shadow-sm"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-lg font-semibold text-gray-900">
-                          {section.name}
+                          {section.section_name}
                         </p>
                       </div>
 
@@ -275,7 +321,7 @@ export const ManageSection = () => {
           setDeletingSection(null);
         }}
         onConfirm={handleDeleteSection}
-        sectionName={deletingSection?.name}
+        sectionName={deletingSection?.section_name}
       />
     </div>
   );

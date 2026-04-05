@@ -79,6 +79,17 @@ export const studentsApi = {
     });
   },
 
+  import(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return apiFetch<{ message: string; data: StudentRecord[] }>("/students/import", {
+      method: "POST",
+      headers: bearerHeaders(),
+      body: formData,
+    });
+  },
+
   update(
     id: number,
     payload: Partial<StudentPayload> & { status?: StudentStatus },

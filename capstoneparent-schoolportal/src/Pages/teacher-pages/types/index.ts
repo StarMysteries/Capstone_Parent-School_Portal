@@ -18,6 +18,7 @@ export interface SubjectItem {
   time_start: string;
   time_end: string;
   subject_teacher?: number | null;
+  studentCount?: number;
   // For UI list filtering
   grade?: string; 
   section?: string;
