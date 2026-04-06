@@ -274,37 +274,38 @@ const libraryService = {
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     // Create borrow record
-    const record = await prisma.materialBorrowRecord.create({
-      data: {
-        copy_id,
-        student_id,
-        user_id,
-        due_at: dueDate,
-      },
-      include: {
-        copy: {
-          include: {
-            item: true,
+    return prisma.$transaction(async (tx) => {
+      const record = await tx.materialBorrowRecord.create({
+        data: {
+          copy_id,
+          student_id,
+          user_id,
+          due_at: dueDate,
+        },
+        include: {
+          copy: {
+            include: {
+              item: true,
+            },
+          },
+          student: true,
+          user: {
+            select: {
+              user_id: true,
+              fname: true,
+              lname: true,
+            },
           },
         },
-        student: true,
-        user: {
-          select: {
-            user_id: true,
-            fname: true,
-            lname: true,
-          },
-        },
-      },
-    });
+      });
 
-    // Update copy status to BORROWED
-    await prisma.materialCopy.update({
-      where: { copy_id },
-      data: { status: "BORROWED" },
-    });
+      await tx.materialCopy.update({
+        where: { copy_id },
+        data: { status: "BORROWED" },
+      });
 
-    return record;
+      return record;
+    });
   },
 
   async returnMaterial(borrowId, returnData) {
@@ -323,33 +324,34 @@ const libraryService = {
       throw new Error("Material has already been returned");
     }
 
-    const record = await prisma.materialBorrowRecord.update({
-      where: { mbr_id: borrowId },
-      data: {
-        returned_at: new Date(),
-        penalty_cost: penalty_cost || 0,
-        remarks,
-      },
-      include: {
-        copy: true,
-        student: true,
-        user: {
-          select: {
-            user_id: true,
-            fname: true,
-            lname: true,
+    return prisma.$transaction(async (tx) => {
+      const record = await tx.materialBorrowRecord.update({
+        where: { mbr_id: borrowId },
+        data: {
+          returned_at: new Date(),
+          penalty_cost: penalty_cost || 0,
+          remarks,
+        },
+        include: {
+          copy: true,
+          student: true,
+          user: {
+            select: {
+              user_id: true,
+              fname: true,
+              lname: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Update copy status back to AVAILABLE
-    await prisma.materialCopy.update({
-      where: { copy_id: record.copy_id },
-      data: { status: "AVAILABLE" },
-    });
+      await tx.materialCopy.update({
+        where: { copy_id: record.copy_id },
+        data: { status: "AVAILABLE" },
+      });
 
-    return record;
+      return record;
+    });
   },
 
   async getBorrowHistory({ page, limit, student_id, user_id, status }) {

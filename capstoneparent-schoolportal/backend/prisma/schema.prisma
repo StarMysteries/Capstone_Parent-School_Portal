@@ -153,6 +153,7 @@ model UserRole_Model {
 
   user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 
+  @@index([user_id])
   @@map("user_roles")
 }
 
@@ -167,6 +168,7 @@ model Announcement {
   user  User                @relation(fields: [announced_by], references: [user_id])
   files AnnouncementFile[]
 
+  @@index([announced_by, created_at])
   @@map("announcements")
 }
 
@@ -183,6 +185,7 @@ model File {
   announcements        AnnouncementFile[]
   parent_child_files   ParentChildFile[]
 
+  @@index([uploaded_by])
   @@map("files")
 }
 
@@ -194,6 +197,8 @@ model AnnouncementFile {
   announcement Announcement @relation(fields: [announcement_id], references: [announcement_id], onDelete: Cascade)
   file         File         @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
 
+  @@index([announcement_id])
+  @@index([file_id])
   @@map("announcement_files")
 }
 
@@ -208,6 +213,8 @@ model Event {
 
   user User @relation(fields: [created_by], references: [user_id])
 
+  @@index([created_by])
+  @@index([event_date])
   @@map("events")
 }
 
@@ -224,6 +231,8 @@ model PageSection {
 
   user User @relation(fields: [updated_by], references: [user_id])
 
+  @@index([content_type, updated_at])
+  @@index([content_type, start_year])
   @@map("page_sections")
 }
 
@@ -237,6 +246,8 @@ model OrgChart {
 
   user User @relation(fields: [uploaded_by], references: [user_id])
 
+  @@index([school_year])
+  @@index([uploaded_by])
   @@map("org_charts")
 }
 
@@ -262,6 +273,8 @@ model Student {
   material_borrow_records  MaterialBorrowRecord[]
 
   @@unique([lrn_number, syear_start])
+  @@index([status, gl_id, syear_start])
+  @@index([created_at])
   @@map("students")
 }
 
@@ -280,6 +293,8 @@ model ParentRegistration {
   students ParentRegistrationStudent[]
   files    ParentChildFile[]
 
+  @@index([parent_id, status])
+  @@index([verified_by])
   @@map("parent_registrations")
 }
 
@@ -291,6 +306,8 @@ model ParentRegistrationStudent {
   registration ParentRegistration @relation(fields: [pr_id], references: [pr_id], onDelete: Cascade)
   student      Student            @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
+  @@index([pr_id])
+  @@index([student_id])
   @@map("parent_registration_students")
 }
 
@@ -302,6 +319,8 @@ model ParentChildFile {
   registration ParentRegistration @relation(fields: [pr_id], references: [pr_id], onDelete: Cascade)
   file         File               @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
 
+  @@index([pr_id])
+  @@index([file_id])
   @@map("parent_child_files")
 }
 
@@ -341,6 +360,9 @@ model ClassList {
   students        ClassListStudent[]
   subject_records ClassListSubjectRecord[]
 
+  @@index([class_adviser, syear_start])
+  @@index([gl_id, section_id, syear_start])
+  @@index([section_id])
   @@map("class_lists")
 }
 
@@ -367,6 +389,7 @@ model SubjectRecord {
   class_lists ClassListSubjectRecord[]
   students    SubjectRecordStudent[]
 
+  @@index([subject_teacher])
   @@map("subject_records")
 }
 
@@ -380,6 +403,7 @@ model AttendanceRecord {
 
   student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
+  @@index([student_id, month])
   @@map("attendance_records")
 }
 
@@ -391,6 +415,8 @@ model ClassListSubjectRecord {
   class_list     ClassList     @relation(fields: [clist_id], references: [clist_id], onDelete: Cascade)
   subject_record SubjectRecord @relation(fields: [srecord_id], references: [srecord_id], onDelete: Cascade)
 
+  @@index([clist_id])
+  @@index([srecord_id])
   @@map("class_list_subject_records")
 }
 
@@ -409,6 +435,7 @@ model SubjectRecordStudent {
   student        Student       @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
   @@unique([srecord_id, student_id])
+  @@index([student_id])
   @@map("subject_record_students")
 }
 
@@ -437,6 +464,8 @@ model LearningMaterial {
   uploader      User             @relation(fields: [uploaded_by], references: [user_id])
   copies        MaterialCopy[]
 
+  @@index([item_type, category_id, gl_id])
+  @@index([uploaded_by])
   @@map("learning_materials")
 }
 
@@ -452,6 +481,8 @@ model MaterialCopy {
   item            LearningMaterial       @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
   borrow_records  MaterialBorrowRecord[]
 
+  @@index([item_id])
+  @@index([copy_code])
   @@map("material_copies")
 }
 
@@ -470,5 +501,9 @@ model MaterialBorrowRecord {
   student Student?     @relation(fields: [student_id], references: [student_id])
   user    User?        @relation(fields: [user_id], references: [user_id])
 
+  @@index([copy_id])
+  @@index([student_id])
+  @@index([user_id])
+  @@index([returned_at, due_at])
   @@map("material_borrow_records")
 }

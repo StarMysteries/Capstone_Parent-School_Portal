@@ -19,21 +19,17 @@ const syncStudentIntoClassSubjects = async (db, classId, studentId) => {
     select: { srecord_id: true },
   });
 
-  for (const subject of classSubjects) {
-    await db.subjectRecordStudent.upsert({
-      where: {
-        srecord_id_student_id: {
-          srecord_id: subject.srecord_id,
-          student_id: studentId,
-        },
-      },
-      update: {},
-      create: {
-        srecord_id: subject.srecord_id,
-        student_id: studentId,
-      },
-    });
+  if (classSubjects.length === 0) {
+    return;
   }
+
+  await db.subjectRecordStudent.createMany({
+    data: classSubjects.map((subject) => ({
+      srecord_id: subject.srecord_id,
+      student_id: studentId,
+    })),
+    skipDuplicates: true,
+  });
 };
 
 const removeStudentFromClassSubjects = async (db, classId, studentId) => {
@@ -340,41 +336,37 @@ const classesService = {
       );
     }
 
-    const subjectRecord = await prisma.subjectRecord.create({
-      data: {
-        subject_name,
-        time_start: new Date(`1970-01-01T${time_start || "07:00"}:00`),
-        time_end: new Date(`1970-01-01T${time_end || "08:00"}:00`),
-        subject_teacher: subject_teacher ?? null,
-      },
-    });
-
-    await prisma.classListSubjectRecord.create({
-      data: { clist_id: classId, srecord_id: subjectRecord.srecord_id },
-    });
-
-    const classStudents = await prisma.classListStudent.findMany({
-      where: { clist_id: classId },
-      select: { student_id: true },
-    });
-
-    for (const classStudent of classStudents) {
-      await prisma.subjectRecordStudent.upsert({
-        where: {
-          srecord_id_student_id: {
-            srecord_id: subjectRecord.srecord_id,
-            student_id: classStudent.student_id,
-          },
-        },
-        update: {},
-        create: {
-          srecord_id: subjectRecord.srecord_id,
-          student_id: classStudent.student_id,
+    return prisma.$transaction(async (tx) => {
+      const subjectRecord = await tx.subjectRecord.create({
+        data: {
+          subject_name,
+          time_start: new Date(`1970-01-01T${time_start || "07:00"}:00`),
+          time_end: new Date(`1970-01-01T${time_end || "08:00"}:00`),
+          subject_teacher: subject_teacher ?? null,
         },
       });
-    }
 
-    return subjectRecord;
+      await tx.classListSubjectRecord.create({
+        data: { clist_id: classId, srecord_id: subjectRecord.srecord_id },
+      });
+
+      const classStudents = await tx.classListStudent.findMany({
+        where: { clist_id: classId },
+        select: { student_id: true },
+      });
+
+      if (classStudents.length > 0) {
+        await tx.subjectRecordStudent.createMany({
+          data: classStudents.map((classStudent) => ({
+            srecord_id: subjectRecord.srecord_id,
+            student_id: classStudent.student_id,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      return subjectRecord;
+    });
   },
 
   async getClassSubjects(classId) {
@@ -709,8 +701,13 @@ const classesService = {
           ? "PASSED"
           : "FAILED";
 
-    const existingRecord = await prisma.subjectRecordStudent.findFirst({
-      where: { srecord_id: subject_id, student_id },
+    const existingRecord = await prisma.subjectRecordStudent.findUnique({
+      where: {
+        srecord_id_student_id: {
+          srecord_id: subject_id,
+          student_id,
+        },
+      },
     });
 
     if (existingRecord) {
@@ -776,28 +773,138 @@ const classesService = {
   },
 
   async importGrades(srecord_id, rows) {
-    const results = [];
-    for (const row of rows) {
-      const { lrn, q1, q2, q3, q4 } = row;
-      if (!lrn) continue;
+    await findOrThrow(
+      () => prisma.subjectRecord.findUnique({ where: { srecord_id } }),
+      "Subject record not found",
+    );
 
-      const student = await prisma.student.findFirst({
-        where: { lrn_number: String(lrn) },
-      });
+    const normalizedRows = rows
+      .map((row) => ({
+        lrn: row?.lrn ? String(row.lrn).trim() : "",
+        q1_grade: Number.parseInt(row?.q1, 10) || null,
+        q2_grade: Number.parseInt(row?.q2, 10) || null,
+        q3_grade: Number.parseInt(row?.q3, 10) || null,
+        q4_grade: Number.parseInt(row?.q4, 10) || null,
+      }))
+      .filter((row) => row.lrn);
 
-      if (student) {
-        const updated = await this.updateStudentGrades({
-          subject_id: srecord_id,
-          student_id: student.student_id,
-          q1_grade: parseInt(q1) || null,
-          q2_grade: parseInt(q2) || null,
-          q3_grade: parseInt(q3) || null,
-          q4_grade: parseInt(q4) || null,
+    if (normalizedRows.length === 0) {
+      return [];
+    }
+
+    const uniqueLrns = [...new Set(normalizedRows.map((row) => row.lrn))];
+    const students = await prisma.student.findMany({
+      where: { lrn_number: { in: uniqueLrns } },
+      select: { student_id: true, lrn_number: true },
+    });
+
+    if (students.length === 0) {
+      return [];
+    }
+
+    const studentIdByLrn = new Map(
+      students.map((student) => [String(student.lrn_number), student.student_id]),
+    );
+    const targetStudentIds = students.map((student) => student.student_id);
+
+    const existingRecords = await prisma.subjectRecordStudent.findMany({
+      where: {
+        srecord_id,
+        student_id: { in: targetStudentIds },
+      },
+      select: {
+        srs_id: true,
+        student_id: true,
+      },
+    });
+
+    const existingRecordByStudentId = new Map(
+      existingRecords.map((record) => [record.student_id, record.srs_id]),
+    );
+
+    const createPayloads = [];
+    const updatePayloads = [];
+    const touchedStudentIds = new Set();
+
+    for (const row of normalizedRows) {
+      const student_id = studentIdByLrn.get(row.lrn);
+      if (!student_id) continue;
+
+      const grades = [row.q1_grade, row.q2_grade, row.q3_grade, row.q4_grade].filter(
+        (grade) => grade !== null,
+      );
+      const avg_grade =
+        grades.length > 0
+          ? Math.round(grades.reduce((sum, grade) => sum + grade, 0) / grades.length)
+          : null;
+      const remarks =
+        avg_grade === null
+          ? "IN_PROGRESS"
+          : avg_grade >= 75
+            ? "PASSED"
+            : "FAILED";
+
+      const payload = {
+        q1_grade: row.q1_grade,
+        q2_grade: row.q2_grade,
+        q3_grade: row.q3_grade,
+        q4_grade: row.q4_grade,
+        avg_grade,
+        remarks,
+      };
+
+      touchedStudentIds.add(student_id);
+
+      const existingId = existingRecordByStudentId.get(student_id);
+      if (existingId) {
+        updatePayloads.push({
+          srs_id: existingId,
+          data: payload,
         });
-        results.push(updated);
+      } else {
+        createPayloads.push({
+          srecord_id,
+          student_id,
+          ...payload,
+        });
       }
     }
-    return results;
+
+    await prisma.$transaction(async (tx) => {
+      if (createPayloads.length > 0) {
+        await tx.subjectRecordStudent.createMany({
+          data: createPayloads,
+          skipDuplicates: true,
+        });
+      }
+
+      if (updatePayloads.length > 0) {
+        await Promise.all(
+          updatePayloads.map((updatePayload) =>
+            tx.subjectRecordStudent.update({
+              where: { srs_id: updatePayload.srs_id },
+              data: updatePayload.data,
+            }),
+          ),
+        );
+      }
+    });
+
+    if (touchedStudentIds.size === 0) {
+      return [];
+    }
+
+    return prisma.subjectRecordStudent.findMany({
+      where: {
+        srecord_id,
+        student_id: { in: [...touchedStudentIds] },
+      },
+      include: {
+        student: true,
+        subject_record: true,
+      },
+      orderBy: { student_id: "asc" },
+    });
   },
 
   async importAttendance(rows, classId) {
@@ -933,22 +1040,118 @@ const classesService = {
       "Class not found",
     );
 
-    const results = [];
-    for (const row of rows) {
-      const { fname, lname, sex, lrn, syear_start, syear_end } = row;
-      if (!lrn || !fname || !lname) continue;
+    const normalizedRows = rows
+      .map((row) => ({
+        fname: row?.fname ? String(row.fname).trim() : "",
+        lname: row?.lname ? String(row.lname).trim() : "",
+        sex: normalizeSex(row?.sex),
+        lrn_number: row?.lrn ? String(row.lrn).trim() : "",
+        syear_start: Number.parseInt(row?.syear_start, 10) || classData.syear_start,
+        syear_end: Number.parseInt(row?.syear_end, 10) || classData.syear_end,
+      }))
+      .filter((row) => row.lrn_number && row.fname && row.lname);
 
-      const student = await this.addStudentToClass(classId, {
-        fname,
-        lname,
-        sex,
-        lrn_number: String(lrn),
-        syear_start: parseInt(syear_start) || classData.syear_start,
-        syear_end: parseInt(syear_end) || classData.syear_end,
-      });
-      results.push(student);
+    if (normalizedRows.length === 0) {
+      return [];
     }
-    return results;
+
+    const existingStudents = await prisma.student.findMany({
+      where: {
+        OR: normalizedRows.map((row) => ({
+          lrn_number: row.lrn_number,
+          syear_start: row.syear_start,
+        })),
+      },
+      select: {
+        student_id: true,
+        lrn_number: true,
+        syear_start: true,
+        gl_id: true,
+      },
+    });
+
+    const existingStudentByKey = new Map(
+      existingStudents.map((student) => [
+        `${student.lrn_number}:${student.syear_start}`,
+        student,
+      ]),
+    );
+
+    existingStudents.forEach((student) =>
+      ensureStudentMatchesClassGrade(student, classData),
+    );
+
+    const classSubjects = await prisma.classListSubjectRecord.findMany({
+      where: { clist_id: classId },
+      select: { srecord_id: true },
+    });
+
+    return prisma.$transaction(async (tx) => {
+      const enrolledStudents = [];
+
+      for (const row of normalizedRows) {
+        const key = `${row.lrn_number}:${row.syear_start}`;
+        const existingStudent = existingStudentByKey.get(key);
+
+        if (existingStudent) {
+          const updatedStudent = await tx.student.update({
+            where: { student_id: existingStudent.student_id },
+            data: {
+              fname: row.fname,
+              lname: row.lname,
+              sex: row.sex,
+              syear_start: row.syear_start,
+              syear_end: row.syear_end,
+              status: "ENROLLED",
+            },
+          });
+          enrolledStudents.push(updatedStudent);
+          continue;
+        }
+
+        const createdStudent = await tx.student.create({
+          data: {
+            fname: row.fname,
+            lname: row.lname,
+            sex: row.sex,
+            lrn_number: row.lrn_number,
+            gl_id: classData.gl_id,
+            syear_start: row.syear_start,
+            syear_end: row.syear_end,
+            status: "ENROLLED",
+          },
+        });
+        enrolledStudents.push(createdStudent);
+      }
+
+      if (enrolledStudents.length === 0) {
+        return [];
+      }
+
+      const studentIds = enrolledStudents.map((student) => student.student_id);
+
+      await tx.classListStudent.createMany({
+        data: studentIds.map((student_id) => ({
+          clist_id: classId,
+          student_id,
+        })),
+        skipDuplicates: true,
+      });
+
+      if (classSubjects.length > 0) {
+        await tx.subjectRecordStudent.createMany({
+          data: studentIds.flatMap((student_id) =>
+            classSubjects.map((subject) => ({
+              srecord_id: subject.srecord_id,
+              student_id,
+            })),
+          ),
+          skipDuplicates: true,
+        });
+      }
+
+      return enrolledStudents;
+    });
   },
 };
 

@@ -127,7 +127,18 @@ const studentsService = {
         where,
         skip,
         take,
-        include: {
+        select: {
+          student_id: true,
+          fname: true,
+          lname: true,
+          sex: true,
+          lrn_number: true,
+          gl_id: true,
+          syear_start: true,
+          syear_end: true,
+          status: true,
+          created_at: true,
+          updated_at: true,
           grade_level: true,
           class_lists: {
             select: {
@@ -144,16 +155,26 @@ const studentsService = {
             },
           },
           subject_records: {
-            include: {
+            select: {
+              srs_id: true,
+              srecord_id: true,
+              student_id: true,
+              q1_grade: true,
+              q2_grade: true,
+              q3_grade: true,
+              q4_grade: true,
+              avg_grade: true,
+              remarks: true,
               subject_record: {
-                include: {
+                select: {
+                  subject_name: true,
                   class_lists: {
                     select: { clist_id: true }
-                  }
-                }
-              }
+                  },
+                },
+              },
             }
-          }
+          },
         },
         orderBy: {
           created_at: "desc",
@@ -278,65 +299,116 @@ const studentsService = {
       ]),
     );
 
-    const results = [];
+    const normalizedRows = rows
+      .map((row) => {
+        const normalizedGradeLevel = normalizeGradeLevelName(row?.grade_level);
+        const gl_id = normalizedGradeLevel
+          ? gradeLevelMap.get(normalizedGradeLevel.toLowerCase())
+          : undefined;
 
-    for (const row of rows) {
-      const {
-        fname,
-        lname,
-        sex,
-        lrn,
-        grade_level,
-        syear_start,
-        syear_end,
-      } = row;
+        return {
+          fname: row?.fname ? String(row.fname).trim() : "",
+          lname: row?.lname ? String(row.lname).trim() : "",
+          sex: normalizeSex(String(row?.sex || "M").trim()),
+          lrn_number: row?.lrn ? String(row.lrn).trim() : "",
+          gl_id,
+          syear_start: Number.parseInt(row?.syear_start, 10),
+          syear_end: Number.parseInt(row?.syear_end, 10),
+        };
+      })
+      .filter(
+        (row) =>
+          row.fname &&
+          row.lname &&
+          row.lrn_number &&
+          row.gl_id &&
+          Number.isFinite(row.syear_start) &&
+          Number.isFinite(row.syear_end),
+      );
 
-      if (!fname || !lname || !lrn || !grade_level || !syear_start || !syear_end) {
-        continue;
+    const invalidRow = rows.find((row) => {
+      if (!row?.fname || !row?.lname || !row?.lrn || !row?.grade_level) {
+        return false;
       }
 
-      const normalizedGradeLevel = normalizeGradeLevelName(grade_level);
-      const gl_id = normalizedGradeLevel
-        ? gradeLevelMap.get(normalizedGradeLevel.toLowerCase())
-        : undefined;
+      const normalizedGradeLevel = normalizeGradeLevelName(row.grade_level);
+      return !normalizedGradeLevel
+        || !gradeLevelMap.get(normalizedGradeLevel.toLowerCase());
+    });
 
-      if (!gl_id) {
-        throw new Error(`Invalid grade level for LRN ${lrn}`);
-      }
-
-      const payload = {
-        fname: String(fname).trim(),
-        lname: String(lname).trim(),
-        sex: normalizeSex(String(sex).trim() || "M"),
-        lrn_number: String(lrn).trim(),
-        gl_id,
-        syear_start: parseInt(syear_start, 10),
-        syear_end: parseInt(syear_end, 10),
-        status: "ENROLLED",
-      };
-
-      const existingStudent = await prisma.student.findFirst({
-        where: { lrn_number: payload.lrn_number },
-      });
-
-      if (existingStudent) {
-        const updatedStudent = await prisma.student.update({
-          where: { student_id: existingStudent.student_id },
-          data: payload,
-          include: { grade_level: true },
-        });
-        results.push(updatedStudent);
-        continue;
-      }
-
-      const createdStudent = await prisma.student.create({
-        data: payload,
-        include: { grade_level: true },
-      });
-      results.push(createdStudent);
+    if (invalidRow?.lrn) {
+      throw new Error(`Invalid grade level for LRN ${invalidRow.lrn}`);
     }
 
-    return results;
+    if (normalizedRows.length === 0) {
+      return [];
+    }
+
+    const existingStudents = await prisma.student.findMany({
+      where: {
+        OR: normalizedRows.map((row) => ({
+          lrn_number: row.lrn_number,
+          syear_start: row.syear_start,
+        })),
+      },
+      select: {
+        student_id: true,
+        lrn_number: true,
+        syear_start: true,
+      },
+    });
+
+    const existingStudentByKey = new Map(
+      existingStudents.map((student) => [
+        `${student.lrn_number}:${student.syear_start}`,
+        student.student_id,
+      ]),
+    );
+
+    const savedStudentIds = await prisma.$transaction(async (tx) => {
+      const ids = [];
+
+      for (const row of normalizedRows) {
+        const payload = {
+          fname: row.fname,
+          lname: row.lname,
+          sex: row.sex,
+          lrn_number: row.lrn_number,
+          gl_id: row.gl_id,
+          syear_start: row.syear_start,
+          syear_end: row.syear_end,
+          status: "ENROLLED",
+        };
+
+        const existingStudentId = existingStudentByKey.get(
+          `${row.lrn_number}:${row.syear_start}`,
+        );
+
+        if (existingStudentId) {
+          const updatedStudent = await tx.student.update({
+            where: { student_id: existingStudentId },
+            data: payload,
+            select: { student_id: true },
+          });
+          ids.push(updatedStudent.student_id);
+          continue;
+        }
+
+        const createdStudent = await tx.student.create({
+          data: payload,
+          select: { student_id: true },
+        });
+        ids.push(createdStudent.student_id);
+      }
+
+      return ids;
+    });
+
+    return prisma.student.findMany({
+      where: { student_id: { in: savedStudentIds } },
+      include: { grade_level: true },
+      orderBy: [{ lname: "asc" }, { fname: "asc" }],
+    });
   },
 
   async updateStudent(studentId, updateData) {
