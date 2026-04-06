@@ -1,6 +1,7 @@
 const express = require("express");
 const { body, param, query } = require("express-validator");
 const parentsController = require("../controllers/parents.controller");
+const prisma = require("../config/database");
 const validate = require("../middlewares/validation");
 const { authenticate, authorize } = require("../middlewares/auth");
 
@@ -11,6 +12,41 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+// Parent-facing routes should only be accessible after their registration has
+// been verified by staff. Admin/teacher review routes remain available below.
+const requireVerifiedParentRegistration = async (req, res, next) => {
+  try {
+    const userRoles = (req.user.roles || []).map((r) => r.role);
+
+    if (!userRoles.includes("Parent")) {
+      return next();
+    }
+
+    if (req.user.account_status !== "Active") {
+      return res.status(403).json({
+        message: "Parent account is pending verification",
+      });
+    }
+
+    const verifiedRegistration = await prisma.parentRegistration.findFirst({
+      where: {
+        parent_id: req.user.user_id,
+        status: "VERIFIED",
+      },
+    });
+
+    if (!verifiedRegistration) {
+      return res.status(403).json({
+        message: "Parent registration is pending verification",
+      });
+    }
+
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+};
 
 // Submit parent registration (accept file uploads)
 router.post(
@@ -60,11 +96,12 @@ router.patch(
 );
 
 // Get my children (for parents)
-router.get("/my-children", parentsController.getMyChildren);
+router.get("/my-children", requireVerifiedParentRegistration, parentsController.getMyChildren);
 
 // Get child grades
 router.get(
   "/children/:studentId/grades",
+  requireVerifiedParentRegistration,
   param("studentId").isInt(),
   validate,
   parentsController.getChildGrades,
@@ -73,6 +110,7 @@ router.get(
 // Get child attendance
 router.get(
   "/children/:studentId/attendance",
+  requireVerifiedParentRegistration,
   param("studentId").isInt(),
   validate,
   parentsController.getChildAttendance,

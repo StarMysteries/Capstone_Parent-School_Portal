@@ -1,104 +1,106 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { StatusDropdown } from "../../components/general/StatusDropdown";
 import {
   ParentsVerificationModal,
   type ParentVerificationRecord,
 } from "@/components/admin/ParentsVerificationModal";
+import {
+  parentsApi,
+  normalizeRegistration,
+  type ParentRegistrationStatus,
+} from "@/lib/api/parentsApi";
 
 type VerificationStatus = ParentVerificationRecord["status"];
 
-export const ManageParentVerification = () => {
-  const [verifications, setVerifications] = useState<ParentVerificationRecord[]>([
-    {
-      id: 1,
-      parentName: "Jane Doe",
-      contactNumber: "09687831826",
-      address: "123 Mabolo Street, Barangay Banilad, Mandaue City, Cebu 6014, Philippines",
-      studentNames: [
-        "Lorenzo Castillo (501142400724)",
-        "Sophia Dizon (501142400725)",
-        "Ethan Navarro (501142400722)",
-      ],
-      status: "PENDING",
-      submittedAt: "03/12/2025",
-      remarks: "Waiting for registrar review.",
-      uploadedFiles: [
-        { name: "Parent Birth Certificate.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-        { name: "Lorenzo Castillo.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-        { name: "Sophia Dizon.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-        { name: "Ethan Navarro.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-      ],
-    },
-    {
-      id: 2,
-      parentName: "John Bramble",
-      contactNumber: "09171234567",
-      address: "78 Acacia Road, Poblacion, Cebu City, Cebu",
-      studentNames: ["Mika Bramble (501142400726)"],
-      status: "DENIED",
-      submittedAt: "03/12/2025",
-      remarks: "Please upload a clearer copy of the parent birth certificate.",
-      uploadedFiles: [
-        { name: "Parent Birth Certificate.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-        { name: "Child Birth Certificate.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-      ],
-    },
-    {
-      id: 3,
-      parentName: "Jina Ling",
-      contactNumber: "09221234567",
-      address: "14 Mango Avenue, Guadalupe, Cebu City, Cebu",
-      studentNames: ["Aiden Ling (501142400727)"],
-      status: "VERIFIED",
-      submittedAt: "03/07/2025",
-      remarks: "Verified and ready for parent account access.",
-      uploadedFiles: [
-        { name: "Government-issued ID.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-        { name: "Child Birth Certificate.pdf", filePath: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" },
-      ],
-    },
-  ]);
+const isVerificationStatus = (
+  value: ParentRegistrationStatus | "all",
+): value is VerificationStatus => value !== "all";
 
+export const ManageParentVerification = () => {
+  const [verifications, setVerifications] = useState<ParentVerificationRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateSort, setDateSort] = useState<"asc" | "desc" | null>(null);
-  const [selectedVerification, setSelectedVerification] = useState<ParentVerificationRecord | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ParentRegistrationStatus | "all">("all");
+  const [dateFilterDays, setDateFilterDays] = useState<3 | 7 | null>(null);
+  const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
   const [modalRemarks, setModalRemarks] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const selectedVerification = useMemo(
+    () =>
+      verifications.find((verification) => verification.id === selectedVerificationId) ??
+      null,
+    [selectedVerificationId, verifications],
+  );
 
   const formatDate = (value: string) => {
     const parsedDate = new Date(value);
     if (Number.isNaN(parsedDate.getTime())) return value;
 
     return new Intl.DateTimeFormat("en-US", {
-      month: "2-digit",
-      day: "2-digit",
+      month: "long",
+      day: "numeric",
       year: "numeric",
     }).format(parsedDate);
   };
 
-  // Filtered and sorted verifications
-  const filteredVerifications = useMemo(() => {
-    let filtered = verifications.filter((verification) =>
-      verification.parentName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const loadRegistrations = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage("");
 
-    // Filter by status
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((v) => v.status === statusFilter);
+    try {
+      const response = await parentsApi.getRegistrations(statusFilter);
+      setVerifications(response.data.map(normalizeRegistration));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to load parent registrations",
+      );
+    } finally {
+      setIsLoading(false);
     }
+  }, [statusFilter]);
 
-    // Sort by date if applicable
-    if (dateSort) {
-      filtered = [...filtered].sort((a, b) => {
-        const dateA = new Date(a.submittedAt);
-        const dateB = new Date(b.submittedAt);
-        return dateSort === "asc" ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+  useEffect(() => {
+    void loadRegistrations();
+  }, [loadRegistrations]);
+
+  useEffect(() => {
+    if (selectedVerificationId !== null && !selectedVerification) {
+      setSelectedVerificationId(null);
+      setModalRemarks("");
+    }
+  }, [selectedVerification, selectedVerificationId]);
+
+  const filteredVerifications = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const now = Date.now();
+    const cutoffMs =
+      dateFilterDays !== null ? now - dateFilterDays * 24 * 60 * 60 * 1000 : null;
+
+    let filtered = verifications.filter((verification) => {
+      if (!query) return true;
+
+      return [
+        verification.parentName,
+        verification.contactNumber,
+        verification.address,
+        verification.studentNames.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    });
+
+    if (cutoffMs !== null) {
+      filtered = filtered.filter((verification) => {
+        const submittedAt = new Date(verification.submittedAt).getTime();
+        return !Number.isNaN(submittedAt) && submittedAt >= cutoffMs;
       });
     }
 
     return filtered;
-  }, [verifications, searchQuery, statusFilter, dateSort]);
+  }, [verifications, searchQuery, dateFilterDays]);
 
   const getStatusColor = (status: VerificationStatus) => {
     switch (status) {
@@ -114,46 +116,52 @@ export const ManageParentVerification = () => {
   };
 
   const openVerification = (verification: ParentVerificationRecord) => {
-    setSelectedVerification(verification);
+    setSelectedVerificationId(verification.id);
     setModalRemarks(verification.remarks ?? "");
   };
 
   const closeVerification = () => {
-    setSelectedVerification(null);
+    setSelectedVerificationId(null);
     setModalRemarks("");
   };
 
-  const updateVerification = (nextStatus: VerificationStatus) => {
+  const updateVerification = async (nextStatus: "VERIFIED" | "DENIED") => {
     if (!selectedVerification) return;
 
-    setVerifications((current) =>
-      current.map((verification) =>
-        verification.id === selectedVerification.id
-          ? { ...verification, status: nextStatus, remarks: modalRemarks }
-          : verification
-      )
-    );
-    closeVerification();
+    try {
+      await parentsApi.verifyRegistration(selectedVerification.id, {
+        status: nextStatus,
+        remarks: modalRemarks.trim() || undefined,
+      });
+      await loadRegistrations();
+      closeVerification();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to update verification",
+      );
+    }
   };
 
   return (
     <div className="min-h-screen">
       <RoleAwareNavbar />
-      <div className="max-w-6xl mx-auto py-12 px-4">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <div className="flex justify-between items-center mb-8">
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <div className="mb-8 flex items-center justify-between gap-4">
             <h1 className="text-3xl font-bold">Manage Parent Verification</h1>
-            <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-4">
               <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 rounded-md border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
               <StatusDropdown
-                value={statusFilter}
-                onChange={setStatusFilter}
+                value={isVerificationStatus(statusFilter) ? statusFilter : "all"}
+                onChange={(value) =>
+                  setStatusFilter(value === "all" ? "all" : (value as ParentRegistrationStatus))
+                }
                 options={[
                   { value: "all", label: "Status" },
                   {
@@ -173,32 +181,62 @@ export const ManageParentVerification = () => {
                   },
                 ]}
               />
-              <button
-              onClick={() => setDateSort(dateSort === "asc" ? "desc" : "asc")}
-              className="bg-(--button-green) text-white font-semibold px-6 py-2 rounded-md hover:bg-(--button-hover-green) transition-colors"
-            >
-              Date
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDateFilterDays((current) => (current === 7 ? null : 7))}
+                  className={`rounded-md px-4 py-2 font-semibold text-white transition-colors ${
+                    dateFilterDays === 7
+                      ? "bg-[#d8d42f] text-black hover:bg-[#e3df44]"
+                      : "bg-(--button-green) hover:bg-(--button-hover-green)"
+                  }`}
+                >
+                  7 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDateFilterDays((current) => (current === 3 ? null : 3))}
+                  className={`rounded-md px-4 py-2 font-semibold text-white transition-colors ${
+                    dateFilterDays === 3
+                      ? "bg-[#d8d42f] text-black hover:bg-[#e3df44]"
+                      : "bg-(--button-green) hover:bg-(--button-hover-green)"
+                  }`}
+                >
+                  3 Days
+                </button>
+              </div>
             </div>
           </div>
+
+          {errorMessage ? (
+            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left py-4 px-6 font-semibold text-gray-700">
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-6 py-4 text-left font-semibold text-gray-700">
                     Parent Name
                   </th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-700">
+                  <th className="px-6 py-4 text-left font-semibold text-gray-700">
                     Status
                   </th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-700">
+                  <th className="px-6 py-4 text-left font-semibold text-gray-700">
                     Date Submitted
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredVerifications.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-gray-500">
+                      Loading parent registrations...
+                    </td>
+                  </tr>
+                ) : filteredVerifications.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="py-8 text-center text-gray-500">
                       No verifications found
@@ -211,11 +249,13 @@ export const ManageParentVerification = () => {
                       className="cursor-pointer border-b border-gray-200 hover:bg-gray-50"
                       onClick={() => openVerification(verification)}
                     >
-                      <td className="py-4 px-6">{verification.parentName}</td>
-                      <td className={`py-4 px-6 font-bold ${getStatusColor(verification.status)}`}>
-                        {verification.status === "PENDING" ? "Pending Verification" : verification.status}
+                      <td className="px-6 py-4">{verification.parentName}</td>
+                      <td className={`px-6 py-4 font-bold ${getStatusColor(verification.status)}`}>
+                        {verification.status === "PENDING"
+                          ? "Pending Verification"
+                          : verification.status}
                       </td>
-                      <td className="py-4 px-6">{formatDate(verification.submittedAt)}</td>
+                      <td className="px-6 py-4">{formatDate(verification.submittedAt)}</td>
                     </tr>
                   ))
                 )}
@@ -230,8 +270,8 @@ export const ManageParentVerification = () => {
         verification={selectedVerification}
         remarks={modalRemarks}
         onRemarksChange={setModalRemarks}
-        onApprove={() => updateVerification("VERIFIED")}
-        onDeny={() => updateVerification("DENIED")}
+        onApprove={() => void updateVerification("VERIFIED")}
+        onDeny={() => void updateVerification("DENIED")}
         onClose={closeVerification}
       />
     </div>

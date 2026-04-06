@@ -1,5 +1,6 @@
 const prisma = require("../config/database");
 const { findOrThrow } = require("../utils/findOrThrow");
+const { deleteFileByUrl, refreshSignedUrl } = require("../utils/supabaseStorage");
 
 /**
  * File → User relationship (from schema):
@@ -21,6 +22,48 @@ const { findOrThrow } = require("../utils/findOrThrow");
  */
 
 const parentsService = {
+  async refreshRegistrationFileUrls(registration) {
+    const refreshedFiles = await Promise.all(
+      (registration.files || []).map(async (entry) => ({
+        ...entry,
+        file: {
+          ...entry.file,
+          file_path: await refreshSignedUrl(entry.file.file_path),
+        },
+      })),
+    );
+
+    return {
+      ...registration,
+      files: refreshedFiles,
+    };
+  },
+
+  async deleteRegistrationFiles(fileRecords = []) {
+    if (!fileRecords.length) return;
+
+    await prisma.file.deleteMany({
+      where: {
+        file_id: {
+          in: fileRecords.map((entry) => entry.file_id),
+        },
+      },
+    });
+
+    await Promise.all(
+      fileRecords.map(async (entry) => {
+        try {
+          await deleteFileByUrl(entry.file.file_path);
+        } catch (error) {
+          console.error(
+            `[parents.service] Failed deleting parent file from Supabase: ${entry.file.file_path}`,
+            error,
+          );
+        }
+      }),
+    );
+  },
+
   async submitRegistration({ parent_id, student_ids, file_ids }) {
     const parsedStudentIds = (student_ids || []).map((id) => parseInt(id, 10));
     const parsedFileIds = (file_ids || []).map((id) => parseInt(id, 10));
@@ -98,6 +141,7 @@ const parentsService = {
               lname: true,
               email: true,
               contact_num: true,
+              address: true,
             },
           },
           students: {
@@ -111,8 +155,14 @@ const parentsService = {
       prisma.parentRegistration.count({ where }),
     ]);
 
+    const refreshedRegistrations = await Promise.all(
+      registrations.map((registration) =>
+        parentsService.refreshRegistrationFileUrls(registration),
+      ),
+    );
+
     return {
-      registrations,
+      registrations: refreshedRegistrations,
       pagination: {
         total,
         page: parseInt(page),
@@ -133,6 +183,7 @@ const parentsService = {
             lname: true,
             email: true,
             contact_num: true,
+            address: true,
           },
         },
         students: {
@@ -144,12 +195,28 @@ const parentsService = {
     });
 
     if (!registration) throw new Error("Registration not found");
-    return registration;
+    return parentsService.refreshRegistrationFileUrls(registration);
   },
 
   async verifyRegistration({ pr_id, status, remarks, verified_by }) {
     const existingRegistration = await prisma.parentRegistration.findUnique({
       where: { pr_id },
+      include: {
+        parent: {
+          select: {
+            user_id: true,
+            fname: true,
+            lname: true,
+            email: true,
+            account_status: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
     });
     if (!existingRegistration) throw new Error("Registration not found");
     if (existingRegistration.status !== "PENDING") {
@@ -183,6 +250,10 @@ const parentsService = {
         where: { user_id: registration.parent.user_id },
         data: { account_status: "Active" },
       });
+    }
+
+    if (status === "VERIFIED" || status === "DENIED") {
+      await parentsService.deleteRegistrationFiles(existingRegistration.files || []);
     }
 
     return registration;

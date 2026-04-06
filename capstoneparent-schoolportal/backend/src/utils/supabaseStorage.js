@@ -143,6 +143,36 @@ const parseSupabaseStorageUrl = (fileUrl) => {
   }
 };
 
+const refreshSignedUrl = async (fileUrl) => {
+  const supabase = getClient();
+  const parsedStorageRef = parseSupabaseStorageUrl(fileUrl);
+
+  if (!parsedStorageRef?.bucket || !parsedStorageRef?.key) {
+    return fileUrl || null;
+  }
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(parsedStorageRef.bucket)
+      .createSignedUrl(parsedStorageRef.key, Math.floor(expiresIn));
+
+    if (error || !data?.signedUrl) {
+      console.error(
+        `[supabaseStorage] Failed to refresh signed URL for ${fileUrl}: ${error?.message ?? "no URL returned"}`,
+      );
+      return fileUrl || null;
+    }
+
+    return data.signedUrl;
+  } catch (error) {
+    console.error(
+      `[supabaseStorage] Exception while refreshing signed URL for ${fileUrl}`,
+      error,
+    );
+    return fileUrl || null;
+  }
+};
+
 /**
  * Upload a single multer file object to Supabase Storage and return a signed URL.
  *
@@ -272,5 +302,6 @@ module.exports = {
   uploadFile,
   uploadFiles,
   deleteFileByUrl,
+  refreshSignedUrl,
   STORAGE_TARGETS,
 };
