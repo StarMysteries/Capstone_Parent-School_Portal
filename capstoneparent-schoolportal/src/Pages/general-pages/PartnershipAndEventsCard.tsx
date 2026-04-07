@@ -30,7 +30,7 @@ const DetailImage = ({ src, alt }: { src: string; alt: string }) => {
 
 export const PartnershipAndEventsCard = () => {
 	const { eventSlug } = useParams<{ eventSlug: string }>();
-	const { events: partnershipEvents } = usePartnershipEvents();
+	const { events: partnershipEvents, isLoading } = usePartnershipEvents();
 
 	if (!eventSlug) {
 		return <Navigate to="/partnership&events" replace />;
@@ -46,9 +46,22 @@ export const PartnershipAndEventsCard = () => {
 		return partnershipEvents
 			.filter((item) => item.id !== event.id)
 			.slice(0, 5);
-	}, [event]);
+	}, [event, partnershipEvents]);
 
 	const hashtagsText = event?.hashtags.join(" ") ?? "";
+
+	if (isLoading) {
+		return (
+			<div className="min-h-screen bg-white">
+				<RoleAwareNavbar />
+				<main className="mx-auto max-w-3xl px-4 py-16">
+					<section className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+						<p className="text-gray-600">Loading event...</p>
+					</section>
+				</main>
+			</div>
+		);
+	}
 
 	if (!event) {
 		return (

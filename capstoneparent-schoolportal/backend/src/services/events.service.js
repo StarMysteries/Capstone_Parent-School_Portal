@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const { uploadFile, deleteFileByUrl } = require("../utils/supabaseStorage");
 
 const eventsService = {
   async getAllEvents({ page, limit }) {
@@ -19,7 +20,7 @@ const eventsService = {
           }
         },
         orderBy: {
-          event_date: 'desc'
+          created_at: 'desc'
         }
       }),
       prisma.event.count()
@@ -58,7 +59,7 @@ const eventsService = {
   },
 
   async createEvent(eventData) {
-    const { event_title, event_desc, event_date, created_by, photo_path } = eventData;
+    const { event_title, event_desc, event_date, created_by, file, photo_path } = eventData;
 
     // Check if creator exists
     const creator = await prisma.user.findUnique({
@@ -68,13 +69,21 @@ const eventsService = {
       throw new Error('User not found');
     }
 
+    const resolvedPhotoPath = file
+      ? await uploadFile(file, "events")
+      : photo_path;
+
+    if (!resolvedPhotoPath) {
+      throw new Error("Event photo is required");
+    }
+
     const event = await prisma.event.create({
       data: {
         event_title,
         event_desc,
-        event_date: new Date(event_date),
+        event_date: event_date ? new Date(event_date) : new Date(),
         created_by,
-        photo_path
+        photo_path: resolvedPhotoPath
       },
       include: {
         user: {
@@ -99,13 +108,19 @@ const eventsService = {
       throw new Error('Event not found');
     }
 
-    if (updateData.event_date) {
-      updateData.event_date = new Date(updateData.event_date);
+    const { file, ...restUpdateData } = updateData;
+
+    if (file) {
+      restUpdateData.photo_path = await uploadFile(file, "events");
+    }
+
+    if (restUpdateData.event_date) {
+      restUpdateData.event_date = new Date(restUpdateData.event_date);
     }
 
     const event = await prisma.event.update({
       where: { event_id: eventId },
-      data: updateData,
+      data: restUpdateData,
       include: {
         user: {
           select: {
@@ -116,6 +131,21 @@ const eventsService = {
         }
       }
     });
+
+    if (
+      file &&
+      existingEvent.photo_path &&
+      existingEvent.photo_path !== event.photo_path
+    ) {
+      try {
+        await deleteFileByUrl(existingEvent.photo_path);
+      } catch (error) {
+        console.error(
+          `[events.service] Failed deleting old event asset: ${existingEvent.photo_path}`,
+          error,
+        );
+      }
+    }
 
     return event;
   },

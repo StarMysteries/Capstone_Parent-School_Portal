@@ -36,6 +36,7 @@ const eventsController = {
       const eventData = {
         ...req.body,
         created_by: req.user.user_id,
+        file: req.file,
       };
 
       const event = await eventsService.createEvent(eventData);
@@ -55,7 +56,10 @@ const eventsController = {
   async updateEvent(req, res, next) {
     try {
       const { id } = req.params;
-      const updateData = req.body;
+      const updateData = {
+        ...req.body,
+        file: req.file,
+      };
 
       const event = await eventsService.updateEvent(parseInt(id), updateData);
 

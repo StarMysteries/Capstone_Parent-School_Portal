@@ -1,72 +1,119 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  createEvent as createEventRequest,
+  deleteEvent as deleteEventRequest,
+  getEvents,
+  updateEvent as updateEventRequest,
+} from "@/lib/api/eventsApi";
 import type { PartnershipEventItem } from "@/lib/partnershipEvents";
-import { partnershipEvents as initialEvents } from "@/lib/partnershipEvents";
+import { mapBackendEventToPartnershipEvent } from "@/lib/partnershipEvents";
 
-const STORAGE_KEY = "partnership_events";
+const toIsoDate = (value?: string) => {
+  const candidate = value?.trim();
+  if (!candidate) {
+    return undefined;
+  }
+
+  const parsed = new Date(candidate);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  return parsed.toISOString().slice(0, 10);
+};
 
 export const usePartnershipEvents = () => {
   const [events, setEvents] = useState<PartnershipEventItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Load events from localStorage or use initial events
-    const storedEvents = localStorage.getItem(STORAGE_KEY);
-    
-    if (storedEvents) {
-      try {
-        setEvents(JSON.parse(storedEvents));
-      } catch (error) {
-        console.error("Failed to parse stored events:", error);
-        setEvents(initialEvents);
-      }
-    } else {
-      // Initialize with default events
-      setEvents(initialEvents);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialEvents));
+  const reload = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      const response = await getEvents({ limit: 100 });
+      setEvents(response.data.map(mapBackendEventToPartnershipEvent));
+    } catch (error) {
+      console.error("Failed to fetch partnership events:", error);
+      setEvents([]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }, []);
 
-  const updateEvents = (newEvents: PartnershipEventItem[]) => {
-    setEvents(newEvents);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newEvents));
-  };
+  useEffect(() => {
+    void reload();
+  }, [reload]);
 
-  const addEvent = (event: Omit<PartnershipEventItem, "id" | "slug">) => {
-    const newId = Math.max(...events.map((e) => e.id), 0) + 1;
-    const slug = event.title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]/g, "");
-    
-    const newEvent: PartnershipEventItem = {
-      ...event,
-      id: newId,
-      slug,
-    };
-    
-    const updated = [newEvent, ...events];
-    updateEvents(updated);
-    return newEvent;
-  };
+  const addEvent = useCallback(
+    async (event: Omit<PartnershipEventItem, "id" | "slug">) => {
+      const response = await createEventRequest({
+        event_title: event.title.trim(),
+        event_desc: event.description.trim(),
+        ...(event.imageFile
+          ? { asset: event.imageFile }
+          : event.imageUrl.trim()
+            ? { photo_path: event.imageUrl.trim() }
+            : {}),
+      });
 
-  const updateEvent = (id: number, updates: Partial<PartnershipEventItem>) => {
-    const updated = events.map((event) =>
-      event.id === id ? { ...event, ...updates } : event
-    );
-    updateEvents(updated);
-  };
+      const createdEvent = mapBackendEventToPartnershipEvent(response.data);
+      setEvents((prev) => [createdEvent, ...prev]);
+      return createdEvent;
+    },
+    [],
+  );
 
-  const deleteEvent = (id: number) => {
-    const updated = events.filter((event) => event.id !== id);
-    updateEvents(updated);
-  };
+  const updateEvent = useCallback(
+    async (id: number, updates: Partial<PartnershipEventItem>) => {
+      const payload: {
+        event_title?: string;
+        event_desc?: string;
+        event_date?: string;
+        photo_path?: string;
+        asset?: File;
+      } = {};
+
+      if (updates.title !== undefined) {
+        payload.event_title = updates.title.trim();
+      }
+      if (updates.description !== undefined) {
+        payload.event_desc = updates.description.trim();
+      }
+      if (updates.eventDate !== undefined) {
+        const isoDate = toIsoDate(updates.eventDate);
+        if (isoDate) {
+          payload.event_date = isoDate;
+        }
+      }
+      if (updates.imageUrl !== undefined) {
+        payload.photo_path = updates.imageUrl.trim();
+      }
+      if (updates.imageFile !== undefined) {
+        payload.asset = updates.imageFile;
+        if (updates.imageFile) {
+          delete payload.photo_path;
+        }
+      }
+
+      const response = await updateEventRequest(id, payload);
+      const normalizedEvent = mapBackendEventToPartnershipEvent(response.data);
+      setEvents((prev) =>
+        prev.map((event) => (event.id === id ? normalizedEvent : event)),
+      );
+      return normalizedEvent;
+    },
+    [],
+  );
+
+  const deleteEvent = useCallback(async (id: number) => {
+    await deleteEventRequest(id);
+    setEvents((prev) => prev.filter((event) => event.id !== id));
+  }, []);
 
   return {
     events,
     isLoading,
-    updateEvents,
+    reload,
     addEvent,
     updateEvent,
     deleteEvent,

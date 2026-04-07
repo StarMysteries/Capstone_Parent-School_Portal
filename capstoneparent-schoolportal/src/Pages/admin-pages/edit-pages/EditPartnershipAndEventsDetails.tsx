@@ -1,7 +1,8 @@
 import { NavbarAdmin } from "@/components/admin/NavbarAdmin";
 import { EditPartnershipAndEventsDetailsModal } from "@/components/admin/EditPartnershipAndEventsDetailsModal";
 import { usePartnershipEvents } from "@/hooks/usePartnershipEvents";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import { useState } from "react";
 import type { PartnershipEventItem } from "@/lib/partnershipEvents";
@@ -25,7 +26,7 @@ const DetailImage = ({ src, alt }: { src: string; alt: string }) => {
       src={src}
       alt={alt}
       onError={() => setImageFailed(true)}
-      className="aspect-video w-full rounded-2xl object-cover ring-1 ring-black/5"
+      className="aspect-[16/8.5] w-full rounded-2xl object-cover ring-1 ring-black/5"
     />
   );
 };
@@ -33,14 +34,28 @@ const DetailImage = ({ src, alt }: { src: string; alt: string }) => {
 export const EditPartnershipAndEventsDetails = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const { events, updateEvent } = usePartnershipEvents();
+  const { events, updateEvent, deleteEvent, isLoading } = usePartnershipEvents();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   if (!eventId) {
     return <Navigate to="/managepartnershipandevents" replace />;
   }
 
   const event = events.find((e) => e.id === parseInt(eventId));
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <NavbarAdmin />
+        <main className="mx-auto max-w-3xl px-4 py-16">
+          <section className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5">
+            <p className="text-gray-600">Loading event...</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -65,11 +80,14 @@ export const EditPartnershipAndEventsDetails = () => {
     );
   }
 
-  const hashtagsText = event.hashtags.join(" ");
-
   const handleSaveEvent = async (updatedEvent: PartnershipEventItem) => {
-    updateEvent(event.id, updatedEvent);
+    await updateEvent(event.id, updatedEvent);
     setIsEditModalOpen(false);
+  };
+
+  const handleDeleteEvent = async () => {
+    await deleteEvent(event.id);
+    navigate("/managepartnershipandevents");
   };
 
   return (
@@ -77,27 +95,33 @@ export const EditPartnershipAndEventsDetails = () => {
       <NavbarAdmin />
 
       <main className="mx-auto max-w-7xl px-4 py-10">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate("/managepartnershipandevents")}
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-black/10 transition-colors hover:bg-gray-50"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Partnerships & Events
-          </button>
-        </div>
-
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <article className="space-y-6">
-            <header className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8 relative">
+            <header className="bg-white relative">
               <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="absolute top-6 right-6 inline-flex items-center gap-2 rounded-full bg-(--button-green) p-3 text-white hover:shadow-lg transition-shadow"
-                title="Edit event"
+                onClick={() => navigate("/managepartnershipandevents")}
+                className="mb-4 inline-flex items-center gap-2 rounded-lg bg-(--button-green) px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-(--button-green)"
               >
-                <Pencil className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4" />
+                Back
               </button>
-              <h1 className="text-3xl font-bold leading-tight text-gray-900 md:text-5xl pr-14">
+              <div className="absolute top-6 right-6 flex items-center gap-3">
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-(--button-green) p-3 text-white hover:shadow-lg transition-shadow"
+                  title="Edit event"
+                >
+                  <Pencil className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-red-500 p-3 text-white hover:shadow-lg transition-shadow"
+                  title="Delete event"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              </div>
+              <h1 className="pr-24 text-3xl font-bold leading-tight text-gray-900 md:text-5xl">
                 {event.title}
               </h1>
             </header>
@@ -105,55 +129,33 @@ export const EditPartnershipAndEventsDetails = () => {
             <DetailImage src={event.imageUrl} alt={event.title} />
 
             <section className="rounded-2xl bg-(--button-green) p-6 text-white shadow-sm ring-1 ring-black/5 md:p-8">
-              <p className="text-3xl leading-snug md:text-4xl">{event.description}</p>
-              <div className="mt-6 space-y-4 text-lg leading-relaxed text-white/95">
+              <div className="space-y-4 text-lg leading-relaxed text-white/95">
                 {event.details.map((paragraph, idx) => (
                   <p key={idx}>{paragraph}</p>
                 ))}
-                <p className="pt-2 text-base font-semibold text-(--tab-subtext)">{hashtagsText}</p>
               </div>
-            </section>
-
-            <section className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 md:p-8">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Date</h3>
-                <p className="mt-1 text-gray-700">{event.dateLabel}</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Location</h3>
-                <p className="mt-1 text-gray-700">{event.location}</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Organizer</h3>
-                <p className="mt-1 text-gray-700">{event.organizer}</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Audience</h3>
-                <p className="mt-1 text-gray-700">{event.audience}</p>
-              </div>
-              {event.highlights.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Highlights</h3>
-                  <ul className="mt-2 list-inside list-disc space-y-1">
-                    {event.highlights.map((highlight, idx) => (
-                      <li key={idx} className="text-gray-700">
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </section>
           </article>
 
           <aside>
             <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <h2 className="text-xl font-bold text-gray-900">Event Info</h2>
-              <div className="mt-4 space-y-3 text-sm">
-                <div>
-                  <p className="font-semibold text-gray-600">Year</p>
-                  <p className="text-gray-900">{event.year}</p>
-                </div>
+              <h2 className="text-xl font-bold text-gray-900">Other Posts</h2>
+              <div className="mt-4 space-y-2">
+                {events
+                  .filter((item) => item.id !== event.id)
+                  .slice(0, 5)
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => navigate(`/admin-edit-event/${item.id}`)}
+                      className="block w-full text-left text-lg text-gray-900 hover:text-gray-700"
+                    >
+                      <span className={item.id === event.id ? "font-bold" : ""}>
+                        {item.title}
+                      </span>
+                    </button>
+                  ))}
               </div>
             </section>
           </aside>
@@ -167,6 +169,29 @@ export const EditPartnershipAndEventsDetails = () => {
         event={event}
         onSave={handleSaveEvent}
       />
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-w-sm rounded-lg bg-white p-6 shadow-lg">
+            <h2 className="mb-2 text-xl font-bold text-gray-900">Delete Event?</h2>
+            <p className="mb-6 text-gray-600">
+              Are you sure you want to delete this partnership and event? This action cannot be
+              undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button onClick={() => setIsDeleteModalOpen(false)} variant="outline">
+                Cancel
+              </Button>
+              <Button
+                onClick={() => void handleDeleteEvent()}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,42 +1,12 @@
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import EventCard from "@/components/general/EventCard";
+import { usePartnershipEvents } from "@/hooks/usePartnershipEvents";
 import { Link } from "react-router-dom";
 
-interface Event {
-  id: number;
-  title: string;
-  description: string;
-  imageUrl?: string;
-}
-
-const events: Event[] = [
-  {
-    id: 1,
-    title: "United Nations Day",
-    description:
-      "On UNITED NATIONS DAY, let's celebrate our global community by exploring the world of books.🌍 Happy reading! 📚📖",
-  },
-  {
-    id: 2,
-    title: "Reading Month Celebration",
-    description:
-      "Share a book, Share a story, Share the joy of reading! This Reading Month, sharing books nurtures kindness and inspires a love for learning from everyone 📚✨",
-  },
-  {
-    id: 3,
-    title: "Science Magic PH",
-    description:
-      "A Spellbinding Success! ✨ Pagsabungan Elementary School was captivated by the Science Magic Philippines Team with a spectacular show that brought science to life!",
-  },
-  {
-    id: 4,
-    title: "Career Day",
-    description:
-      "Grade 1-SPS: Little Community Helpers! 🦸‍♀️👩‍🌾 As future community heroes, our young learners explored the library on Career Day discovering books that inspire their dreams! 📚🎓✨",
-  },
-];
-
 export const HomePage = () => {
+  const { events, isLoading } = usePartnershipEvents();
+  const featuredEvents = events.slice(0, 4);
+
   return (
     <div>
       <RoleAwareNavbar />
@@ -49,21 +19,32 @@ export const HomePage = () => {
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Partnerships and Events</h2>
-            <a href="#" className="text-blue-600 font-semibold hover:underline">
+            <Link to="/partnership&events" className="text-blue-600 font-semibold hover:underline">
               View more...
-            </a>
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                title={event.title}
-                description={event.description}
-                imageUrl={event.imageUrl}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="rounded-xl bg-white p-10 text-center text-gray-500 shadow-sm ring-1 ring-black/5">
+              Loading events...
+            </div>
+          ) : featuredEvents.length === 0 ? (
+            <div className="rounded-xl bg-white p-10 text-center text-gray-500 shadow-sm ring-1 ring-black/5">
+              Partnership and events does not have a posts.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredEvents.map((event) => (
+                <Link key={event.id} to={`/partnership&events/${event.slug}`} className="block h-full">
+                  <EventCard
+                    title={event.title}
+                    description={event.description}
+                    imageUrl={event.imageUrl}
+                  />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

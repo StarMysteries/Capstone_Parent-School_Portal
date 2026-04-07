@@ -23,6 +23,11 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
   admin: {
     announcementPath: "/announcements",
     announcementActivePaths: ANNOUNCEMENT_PATHS,
+    partnershipPath: "/managepartnershipandevents",
+    partnershipActivePaths: [
+      "/managepartnershipandevents",
+      "/admin-edit-event",
+    ],
     recordsItems: [
       { label: "Manage Parent Verification", to: "/manageparentverification" },
       { label: "Manage Sections", to: "/managesections" },

@@ -1,14 +1,9 @@
-import {
-  Search,
-  Plus,
-} from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { NavbarAdmin } from "@/components/admin/NavbarAdmin";
 import { Button } from "@/components/ui/button";
 import type { PartnershipEventFormData } from "@/components/admin/EditPartnershipAndEventsModal";
-import {
-  EditPartnershipAndEventsModal,
-} from "@/components/admin/EditPartnershipAndEventsModal";
+import { EditPartnershipAndEventsModal } from "@/components/admin/EditPartnershipAndEventsModal";
 import { usePartnershipEvents } from "@/hooks/usePartnershipEvents";
 import { useNavigate } from "react-router-dom";
 
@@ -42,18 +37,20 @@ const EventCardImage = ({ src, alt }: { src: string; alt: string }) => {
 };
 
 export const ManagePartnershipAndEvents = () => {
-  const { events, isLoading, addEvent, deleteEvent } = usePartnershipEvents();
+  const { events, isLoading, addEvent } = usePartnershipEvents();
   const navigate = useNavigate();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [deletingEventId, setDeletingEventId] = useState<number | null>(null);
   const itemsPerPage = 6;
 
   const years = useMemo(
-    () => Array.from(new Set(events.map((event) => event.year))).sort((a, b) => b - a),
+    () =>
+      Array.from(new Set(events.map((event) => event.year))).sort(
+        (a, b) => b - a,
+      ),
     [events],
   );
 
@@ -68,7 +65,10 @@ export const ManagePartnershipAndEvents = () => {
     });
   }, [searchQuery, selectedYear, events]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredEvents.length / itemsPerPage),
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -83,16 +83,10 @@ export const ManagePartnershipAndEvents = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleDeleteEvent = (eventId: number) => {
-    deleteEvent(eventId);
-    setDeletingEventId(null);
-  };
-
   const handleSaveEvent = async (data: PartnershipEventFormData) => {
     if (!data.id) {
-      // Create new event - remove id since addEvent generates it
       const { id, ...eventData } = data;
-      addEvent(eventData);
+      await addEvent(eventData);
       setIsAddModalOpen(false);
     }
   };
@@ -131,7 +125,12 @@ export const ManagePartnershipAndEvents = () => {
             <section>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {paginatedEvents.map((event) => (
-                  <div key={event.id} className="group block h-full">
+                  <button
+                    key={event.id}
+                    type="button"
+                    onClick={() => navigate(`/admin-edit-event/${event.id}`)}
+                    className="group block h-full text-left"
+                  >
                     <article className="flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition-transform group-hover:-translate-y-0.5 group-hover:shadow-md relative">
                       <EventCardImage src={event.imageUrl} alt={event.title} />
                       <div className="flex min-h-56 flex-1 flex-col bg-(--button-green) p-4 text-white">
@@ -142,39 +141,28 @@ export const ManagePartnershipAndEvents = () => {
                           {event.description}
                         </p>
                         <div className="mt-auto flex items-end justify-end gap-3 pt-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => navigate(`/admin-edit-event/${event.id}`)}
-                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-white transition-colors hover:bg-white/25"
-                              title="Edit event"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => setDeletingEventId(event.id)}
-                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-red-500/20 px-3 py-1 text-sm font-semibold text-white transition-colors hover:bg-red-500/40"
-                              title="Delete event"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-white transition-colors group-hover:bg-white/25">
+                            View post
+                          </span>
                         </div>
                       </div>
                     </article>
-                  </div>
+                  </button>
                 ))}
               </div>
 
               {paginatedEvents.length === 0 && (
                 <div className="rounded-xl bg-white p-10 text-center text-gray-500 shadow-sm ring-1 ring-black/5">
-                  No events found.
+                  <p>No partnership and event posts yet.</p>
                 </div>
               )}
 
               <div className="mt-8 flex items-center justify-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   className="rounded-md px-3 py-1.5 font-semibold text-white bg-(--button-green) disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -201,7 +189,9 @@ export const ManagePartnershipAndEvents = () => {
                 })}
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="rounded-md px-3 py-1.5 font-semibold text-white bg-(--button-green) disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -211,15 +201,8 @@ export const ManagePartnershipAndEvents = () => {
             </section>
 
             <aside className="h-fit rounded-xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <h3 className="text-2xl font-bold text-gray-900">By Year</h3>
-                <Button
-                  onClick={handleAddEvent}
-                  className="bg-(--button-green) hover:bg-(--button-green) text-white font-semibold inline-flex items-center gap-2"
-                >
-                  <Plus className="h-5 w-5" />
-                  Add Event
-                </Button>
               </div>
               <div className="space-y-2 text-3xl leading-none">
                 <button
@@ -253,39 +236,20 @@ export const ManagePartnershipAndEvents = () => {
         )}
       </main>
 
+      <Button
+        onClick={handleAddEvent}
+        className="fixed bottom-10 right-28 z-20 flex h-16 w-16 items-center justify-center rounded-full bg-(--button-green) p-0 text-white shadow-lg transition-colors hover:bg-(--button-green)"
+        title="Add Event"
+      >
+        <Plus className="h-14 w-14" strokeWidth={4.5} />
+      </Button>
+
       {/* Add Modal */}
       <EditPartnershipAndEventsModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSave={handleSaveEvent}
       />
-
-      {/* Delete Confirmation Modal */}
-      {deletingEventId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Event?</h2>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this partnership and event? This action cannot be
-              undone.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <Button
-                onClick={() => setDeletingEventId(null)}
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => handleDeleteEvent(deletingEventId)}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

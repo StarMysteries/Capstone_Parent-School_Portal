@@ -1,10 +1,18 @@
 const express = require("express");
 const { body, param, query } = require("express-validator");
+const multer = require("multer");
 const eventsController = require("../controllers/events.controller");
 const validate = require("../middlewares/validation");
 const { authenticate, authorize } = require("../middlewares/auth");
 
 const router = express.Router();
+const upload = multer({
+  dest: process.env.UPLOAD_PATH || "uploads/",
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    fieldSize: 50 * 1024 * 1024,
+  },
+});
 
 // Public route - get all events
 router.get(
@@ -32,11 +40,11 @@ router.use(authenticate);
 router.post(
   "/",
   authorize("Admin", "Principal", "Vice_Principal"),
+  upload.single("asset"),
   [
     body("event_title").notEmpty().trim(),
     body("event_desc").optional(),
-    body("event_date").isISO8601(),
-    body("photo_path").notEmpty(),
+    body("event_date").optional().isISO8601(),
   ],
   validate,
   eventsController.createEvent,
@@ -46,12 +54,12 @@ router.post(
 router.put(
   "/:id",
   authorize("Admin", "Principal", "Vice_Principal"),
+  upload.single("asset"),
   [
     param("id").isInt(),
     body("event_title").optional().trim(),
     body("event_desc").optional(),
     body("event_date").optional().isISO8601(),
-    body("photo_path").optional(),
   ],
   validate,
   eventsController.updateEvent,

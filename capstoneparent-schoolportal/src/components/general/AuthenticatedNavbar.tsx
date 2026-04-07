@@ -18,6 +18,8 @@ interface CustomNavLink {
 interface AuthenticatedNavbarProps {
   announcementPath: string;
   announcementActivePaths: string[];
+  partnershipPath?: string;
+  partnershipActivePaths?: string[];
   /** Standard Records dropdown. Omit when using customNavLink instead. */
   recordsItems?: NavDropdownItem[];
   recordsActivePaths?: string[];
@@ -30,6 +32,8 @@ interface AuthenticatedNavbarProps {
 export const AuthenticatedNavbar = ({
   announcementPath,
   announcementActivePaths,
+  partnershipPath = "/partnership&events",
+  partnershipActivePaths = ["/partnership&events"],
   recordsItems,
   recordsActivePaths = [],
   customNavLink,
@@ -44,8 +48,8 @@ export const AuthenticatedNavbar = ({
     location.pathname,
   );
   const isRecordsRoute = recordsActivePaths.includes(location.pathname);
-  const isPartnershipRoute = location.pathname.startsWith(
-    "/partnership&events",
+  const isPartnershipRoute = partnershipActivePaths.some((path) =>
+    location.pathname.startsWith(path),
   );
   const isCustomNavActive =
     customNavLink?.activePaths.some((p) => location.pathname.startsWith(p)) ??
@@ -112,7 +116,7 @@ export const AuthenticatedNavbar = ({
 
             {/* Partnership & Events */}
             <Link
-              to="/partnership&events"
+              to={partnershipPath}
               className={`text-gray-900 transition-colors hover:text-gray-700 ${
                 isPartnershipRoute ? "text-xl font-bold" : "text-lg font-medium"
               }`}

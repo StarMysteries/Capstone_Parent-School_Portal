@@ -42,7 +42,7 @@ export const PartnershipAndEvents = () => {
 
   const years = useMemo(
     () => Array.from(new Set(partnershipEvents.map((event) => event.year))).sort((a, b) => b - a),
-    [],
+    [partnershipEvents],
   );
 
   const filteredEvents = useMemo(() => {
@@ -54,7 +54,7 @@ export const PartnershipAndEvents = () => {
 
       return matchesSearch && matchesYear;
     });
-  }, [searchQuery, selectedYear]);
+  }, [partnershipEvents, searchQuery, selectedYear]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEvents.length / itemsPerPage));
 
