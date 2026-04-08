@@ -4,9 +4,19 @@ TO BE DELETED
 
 */
 
-import type { AnnouncementPostItem } from "@/components/staff/AnnouncementPostFeed";
+import type { AnnouncementPostItem as AnnouncementFeedPostItem } from "@/components/staff/AnnouncementPostFeed";
 
 export type AnnouncementCategory = "general" | "staffs" | "memorandum";
+
+interface AnnouncementPostItem {
+  id: string;
+  author: string;
+  role: string;
+  date: string;
+  title: string;
+  content: string;
+  attachments: string[];
+}
 
 interface AnnouncementPostStore {
   general: AnnouncementPostItem[];
@@ -139,9 +149,26 @@ const writeStore = (store: AnnouncementPostStore) => {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 };
 
+const mapStoredPostToFeedPost = (
+  post: AnnouncementPostItem,
+  category: AnnouncementCategory,
+  index: number,
+): AnnouncementFeedPostItem => ({
+  announcement_id: Number.parseInt(post.id.match(/\d+/)?.[0] ?? `${index + 1}`, 10),
+  announcement_title: post.title,
+  announcement_desc: post.content,
+  announcement_type:
+    category === "staffs"
+      ? "Staff_only"
+      : category === "memorandum"
+        ? "Memorandum"
+        : "General",
+  created_at: post.date,
+});
+
 export const getAnnouncementPosts = (category: AnnouncementCategory) => {
   const store = readStore();
-  return store[category];
+  return store[category].map((post, index) => mapStoredPostToFeedPost(post, category, index));
 };
 
 export const createAnnouncementPost = ({

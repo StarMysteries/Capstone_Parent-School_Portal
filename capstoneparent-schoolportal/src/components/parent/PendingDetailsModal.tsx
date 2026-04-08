@@ -25,11 +25,11 @@ export const PendingDetailsModal = ({
   if (!isOpen || !child) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-4 sm:items-center sm:py-6">
-      <div className="w-full max-w-5xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
-        <div className="mb-6 flex items-start justify-between gap-4 border-b border-gray-200 pb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-5xl rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+        <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Details</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Details</h2>
             <p className="mt-1 text-sm text-gray-600">Review submission status and preview uploaded PDFs.</p>
           </div>
           <button
@@ -99,10 +99,10 @@ export const PendingDetailsModal = ({
             {selectedPreviewUrl ? (
               <>
                 <p className="mb-2 truncate text-sm text-gray-600">{selectedPreviewName}</p>
-                <iframe src={selectedPreviewUrl} title="PDF Preview" className="h-64 w-full rounded-lg border border-gray-200 sm:h-80 lg:h-105" />
+                <iframe src={selectedPreviewUrl} title="PDF Preview" className="h-105 w-full rounded-lg border border-gray-200" />
               </>
             ) : (
-              <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500 sm:h-80 lg:h-105">
+              <div className="flex h-105 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
                 Select a file and click Preview to view the PDF.
               </div>
             )}

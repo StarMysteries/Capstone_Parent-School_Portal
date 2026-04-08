@@ -176,6 +176,14 @@ export const EditPartnershipAndEventsModal = ({
     }
   };
 
+  const hasChanges = isEditMode
+    ? formData.title.trim() !== (initialData?.title ?? "").trim() ||
+      formData.description.trim() !== (initialData?.description ?? "").trim() ||
+      formData.imageUrl !== (initialData?.imageUrl ?? "") ||
+      (formData.imageFileName ?? "") !== (inferFileName(initialData?.imageUrl, initialData?.imageFileName) ?? "") ||
+      Boolean(formData.imageFile)
+    : Boolean(formData.title.trim() || formData.description.trim() || formData.imageFileName);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -211,13 +219,13 @@ export const EditPartnershipAndEventsModal = ({
           <textarea
             value={formData.description}
             onChange={(e) => handleChange("description", e.target.value)}
-            className="min-h-[220px] max-h-[34vh] w-full resize-y border border-gray-500 bg-[#f3f3f3] px-5 py-4 text-lg leading-relaxed text-gray-900 focus:outline-none"
+            className="min-h-55 max-h-[34vh] w-full resize-y border border-gray-500 bg-[#f3f3f3] px-5 py-4 text-lg leading-relaxed text-gray-900 focus:outline-none"
             placeholder="Write your partnership/event post details"
             rows={8}
           />
 
-          <div className="relative min-h-[180px]">
-            <div className="max-w-[240px] space-y-2">
+          <div className="relative min-h-45">
+            <div className="max-w-60 space-y-2">
               <p className="text-sm text-gray-500">One file can be uploaded here</p>
               {formData.uploadError && (
                 <p className="text-sm font-medium text-red-600">{formData.uploadError}</p>
@@ -240,7 +248,7 @@ export const EditPartnershipAndEventsModal = ({
                 </label>
               ) : (
                 <div className="pt-2">
-                  <div className="relative w-[126px]">
+                  <div className="relative w-31.5">
                     <button
                       type="button"
                       onClick={handleRemoveImage}
@@ -250,8 +258,8 @@ export const EditPartnershipAndEventsModal = ({
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <div className="flex h-[126px] w-[126px] items-center justify-center rounded-lg bg-[#bebebe]">
-                      <div className="flex h-[78px] w-[62px] flex-col items-center justify-center rounded-2xl bg-[#ef2b2d] text-white shadow-sm">
+                    <div className="flex h-31.5 w-31.5 items-center justify-center rounded-lg bg-[#bebebe]">
+                      <div className="flex h-19.5 w-15.5 flex-col items-center justify-center rounded-2xl bg-[#ef2b2d] text-white shadow-sm">
                         <FileText className="h-8 w-8" />
                         <span className="mt-1 text-xs font-bold uppercase">PDF</span>
                       </div>
@@ -275,9 +283,10 @@ export const EditPartnershipAndEventsModal = ({
                   isLoading ||
                   !formData.title.trim() ||
                   !formData.description.trim() ||
-                  !formData.imageFileName
+                  !formData.imageFileName ||
+                  (isEditMode && !hasChanges)
                 }
-                className="h-14 min-w-[150px] rounded-3xl bg-(--button-green) px-8 text-xl font-medium text-white hover:bg-(--button-green)"
+                className="h-14 min-w-37.5 rounded-3xl bg-(--button-green) px-8 text-xl font-medium text-white hover:bg-(--button-green) disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
               >
                 {isSaving || isLoading
                   ? "Saving..."

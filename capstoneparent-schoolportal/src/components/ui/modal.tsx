@@ -26,11 +26,7 @@ export const Modal = ({ isOpen, onClose, title, children, contentClassName }: Mo
 
 	return (
 		<div
-<<<<<<< Updated upstream
 			className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 animate-in fade-in duration-200"
-=======
-			className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-4 animate-in fade-in duration-200 sm:items-center sm:py-6"
->>>>>>> Stashed changes
 			onClick={onClose}
 		>
 			{/* Backdrop with opacity */}
@@ -39,11 +35,7 @@ export const Modal = ({ isOpen, onClose, title, children, contentClassName }: Mo
 			{/* Modal Content */}
 			<div
 				className={cn(
-<<<<<<< Updated upstream
 					"relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-yellow-100 shadow-2xl animate-in zoom-in-95 duration-200",
-=======
-					"relative mx-4 w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg bg-yellow-100 shadow-2xl animate-in zoom-in-95 duration-200 sm:max-h-[calc(100dvh-3rem)]",
->>>>>>> Stashed changes
 					contentClassName
 				)}
 				onClick={(e) => e.stopPropagation()}

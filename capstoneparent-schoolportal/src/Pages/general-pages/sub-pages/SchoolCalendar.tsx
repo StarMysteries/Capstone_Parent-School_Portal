@@ -1,6 +1,5 @@
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { EditSchoolCalendarModal } from "@/components/admin/EditSchoolCalendarModal";
-import { Loader } from "@/components/ui/Loader";
 import { getAuthUser } from "@/lib/auth";
 import { type SchoolCalendarItem } from "@/lib/schoolCalendarContent";
 import { pagesApi } from "@/lib/api/pagesApi";
@@ -31,6 +30,18 @@ const CalendarPreview = ({ imageUrl }: { imageUrl: string }) => {
     />
   );
 };
+
+const SchoolCalendarSkeleton = ({ showEdit }: { showEdit: boolean }) => (
+  <>
+    <div className="mb-8 h-10 w-60 animate-pulse rounded bg-gray-200" />
+    <div className="w-full rounded-sm bg-gray-300 p-8">
+      <div className="h-136 w-full animate-pulse rounded bg-gray-200" />
+    </div>
+    {showEdit && (
+      <div className="fixed bottom-8 right-8 h-20 w-20 animate-pulse rounded-full bg-gray-200 shadow-lg" />
+    )}
+  </>
+);
 
 export const SchoolCalendar = () => {
   const user = getAuthUser();
@@ -66,7 +77,7 @@ export const SchoolCalendar = () => {
       <RoleAwareNavbar />
       <div className="mx-auto max-w-7xl px-4 py-12">
         {isLoading ? (
-          <Loader />
+          <SchoolCalendarSkeleton showEdit={isAdmin} />
         ) : !calendar ? (
           <>
             <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>
@@ -89,7 +100,7 @@ export const SchoolCalendar = () => {
             {isAdmin && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="fixed bottom-4 right-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105 sm:bottom-8 sm:right-8 sm:h-20 sm:w-20"
+                className="fixed bottom-8 right-8 inline-flex h-20 w-20 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105"
                 aria-label="Edit School Calendar"
               >
                 <Pencil className="h-10 w-10" />

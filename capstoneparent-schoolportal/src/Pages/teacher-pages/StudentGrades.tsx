@@ -42,21 +42,21 @@ export const StudentGrades = ({ student, onBack, isLoading = false }: StudentGra
   }, [student.attendance_records]);
 
   const totalSchoolDays = useMemo(() => 
-    Object.values(attendanceMap).reduce((sum, m) => sum + (m as any).school_days, 0)
+    Object.values(attendanceMap).reduce((sum, record) => sum + record.school_days, 0)
   , [attendanceMap]);
 
   const totalPresent = useMemo(() => 
-    Object.values(attendanceMap).reduce((sum, m) => sum + (m as any).days_present, 0)
+    Object.values(attendanceMap).reduce((sum, record) => sum + record.days_present, 0)
   , [attendanceMap]);
 
   const totalAbsent = useMemo(() => 
-    Object.values(attendanceMap).reduce((sum, m) => sum + (m as any).days_absent, 0)
+    Object.values(attendanceMap).reduce((sum, record) => sum + record.days_absent, 0)
   , [attendanceMap]);
 
   const generalAverage = useMemo(() => {
     const numericAverages = subjectRows
       .map((subject) => getNumericGrade(subject.avg_grade))
-      .filter((grade) => Number.isFinite(grade));
+      .filter((grade): grade is number => grade !== null);
 
     if (numericAverages.length === 0) return 'N/A';
 
@@ -71,7 +71,7 @@ export const StudentGrades = ({ student, onBack, isLoading = false }: StudentGra
   const generalRemarks = useMemo(() => {
     const numericAverages = subjectRows
       .map((subject) => getNumericGrade(subject.avg_grade))
-      .filter((grade) => Number.isFinite(grade));
+      .filter((grade): grade is number => grade !== null);
 
     if (numericAverages.length === 0) return 'N/A';
 
@@ -173,7 +173,7 @@ export const StudentGrades = ({ student, onBack, isLoading = false }: StudentGra
         {/* Grades Table */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
+            <table className="w-full min-w-200">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-6 py-3 text-center text-sm font-bold text-gray-900 border border-gray-300">
@@ -263,7 +263,7 @@ export const StudentGrades = ({ student, onBack, isLoading = false }: StudentGra
             <h3 className="text-lg font-bold text-center">Attendance Records</h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-225">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-center border border-gray-300"></th>

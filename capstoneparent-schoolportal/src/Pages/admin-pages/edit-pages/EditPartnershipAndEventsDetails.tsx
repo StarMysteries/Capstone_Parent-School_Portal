@@ -1,11 +1,11 @@
 import { NavbarAdmin } from "@/components/admin/NavbarAdmin";
 import { EditPartnershipAndEventsDetailsModal } from "@/components/admin/EditPartnershipAndEventsDetailsModal";
+import type { PartnershipEventFormData } from "@/components/admin/EditPartnershipAndEventsModal";
 import { usePartnershipEvents } from "@/hooks/usePartnershipEvents";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
 import { useState } from "react";
-import type { PartnershipEventItem } from "@/lib/partnershipEvents";
 
 const DetailImage = ({ src, alt }: { src: string; alt: string }) => {
   const [imageFailed, setImageFailed] = useState(false);
@@ -26,7 +26,7 @@ const DetailImage = ({ src, alt }: { src: string; alt: string }) => {
       src={src}
       alt={alt}
       onError={() => setImageFailed(true)}
-      className="aspect-[16/8.5] w-full rounded-2xl object-cover ring-1 ring-black/5"
+      className="aspect-16/8.5 w-full rounded-2xl object-cover ring-1 ring-black/5"
     />
   );
 };
@@ -80,7 +80,7 @@ export const EditPartnershipAndEventsDetails = () => {
     );
   }
 
-  const handleSaveEvent = async (updatedEvent: PartnershipEventItem) => {
+  const handleSaveEvent = async (updatedEvent: PartnershipEventFormData) => {
     await updateEvent(event.id, updatedEvent);
     setIsEditModalOpen(false);
   };
