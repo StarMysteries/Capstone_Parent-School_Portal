@@ -25,10 +25,6 @@ export const EditHistoryModal = ({
     setBody(initialContent.body);
   }, [initialContent]);
 
-  const hasChanges =
-    title.trim() !== initialContent.title.trim() ||
-    body.trim() !== initialContent.body.trim();
-
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -86,8 +82,8 @@ export const EditHistoryModal = ({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 inline-flex items-center gap-2"
+            disabled={isSaving}
+            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:opacity-50 inline-flex items-center gap-2"
           >
             {isSaving && (
               <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />

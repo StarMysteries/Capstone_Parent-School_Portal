@@ -106,20 +106,6 @@ export const EditAnnouncementModal = ({
     post.files?.filter(({ file }) => !removedFileIds.includes(file.file_id ?? -1)) ||
     [];
 
-  const initialAnnouncementType =
-    post.announcement_type === "Staff_only"
-      ? "staffs"
-      : post.announcement_type === "Memorandum"
-        ? "memorandum"
-        : "general";
-
-  const hasChanges =
-    title.trim() !== (post.announcement_title ?? "").trim() ||
-    content.trim() !== (post.announcement_desc ?? "").trim() ||
-    announcementType !== initialAnnouncementType ||
-    files.length > 0 ||
-    removedFileIds.length > 0;
-
   const handlePost = async () => {
     setError(null);
     if (!title.trim()) {
@@ -281,12 +267,7 @@ export const EditAnnouncementModal = ({
 
           {/* Bottom Row */}
           <div className="flex items-center justify-between pt-4">
-            <Select
-              value={announcementType}
-              onValueChange={(value) =>
-                setAnnouncementType(value as AnnouncementCategory)
-              }
-            >
+            <Select value={announcementType} onValueChange={setAnnouncementType}>
               <SelectTrigger className="w-48 bg-yellow-400 text-black font-semibold border-0">
                 <SelectValue />
               </SelectTrigger>
@@ -299,8 +280,8 @@ export const EditAnnouncementModal = ({
 
             <button
               onClick={handlePost}
-              disabled={submitting || !hasChanges}
-              className="bg-green-500 hover:bg-green-600 text-white px-10 py-3 rounded-full font-semibold text-lg transition-colors disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
+              disabled={submitting}
+              className="bg-green-500 hover:bg-green-600 text-white px-10 py-3 rounded-full font-semibold text-lg transition-colors"
             >
               {submitting ? "Updating..." : "Update"}
             </button>

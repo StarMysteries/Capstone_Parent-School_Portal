@@ -25,7 +25,6 @@ interface StudentFormModalProps {
   gradeLevels: GradeLevel[];
   isSubmitting?: boolean;
   canEditStatus?: boolean;
-  disableSubmit?: boolean;
 }
 
 export const StudentFormModal = ({
@@ -39,7 +38,6 @@ export const StudentFormModal = ({
   gradeLevels,
   isSubmitting = false,
   canEditStatus = true,
-  disableSubmit = false,
 }: StudentFormModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -145,8 +143,8 @@ export const StudentFormModal = ({
         <div className="flex justify-end">
           <Button
             onClick={onSubmit}
-            disabled={isSubmitting || disableSubmit}
-            className="rounded-full bg-(--button-green) px-8 py-3 text-lg text-white hover:bg-(--button-hover-green) disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
+            disabled={isSubmitting}
+            className="rounded-full bg-(--button-green) px-8 py-3 text-lg text-white hover:bg-(--button-hover-green)"
           >
             {isSubmitting ? "Saving..." : submitLabel}
           </Button>

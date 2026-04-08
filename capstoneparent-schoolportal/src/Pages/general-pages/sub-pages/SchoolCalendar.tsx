@@ -1,5 +1,6 @@
 import { RoleAwareNavbar } from "@/components/general/RoleAwareNavbar";
 import { EditSchoolCalendarModal } from "@/components/admin/EditSchoolCalendarModal";
+import { Loader } from "@/components/ui/Loader";
 import { getAuthUser } from "@/lib/auth";
 import { type SchoolCalendarItem } from "@/lib/schoolCalendarContent";
 import { pagesApi } from "@/lib/api/pagesApi";
@@ -30,18 +31,6 @@ const CalendarPreview = ({ imageUrl }: { imageUrl: string }) => {
     />
   );
 };
-
-const SchoolCalendarSkeleton = ({ showEdit }: { showEdit: boolean }) => (
-  <>
-    <div className="mb-8 h-10 w-60 animate-pulse rounded bg-gray-200" />
-    <div className="w-full rounded-sm bg-gray-300 p-8">
-      <div className="h-[34rem] w-full animate-pulse rounded bg-gray-200" />
-    </div>
-    {showEdit && (
-      <div className="fixed bottom-8 right-8 h-20 w-20 animate-pulse rounded-full bg-gray-200 shadow-lg" />
-    )}
-  </>
-);
 
 export const SchoolCalendar = () => {
   const user = getAuthUser();
@@ -77,7 +66,7 @@ export const SchoolCalendar = () => {
       <RoleAwareNavbar />
       <div className="mx-auto max-w-7xl px-4 py-12">
         {isLoading ? (
-          <SchoolCalendarSkeleton showEdit={isAdmin} />
+          <Loader />
         ) : !calendar ? (
           <>
             <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>

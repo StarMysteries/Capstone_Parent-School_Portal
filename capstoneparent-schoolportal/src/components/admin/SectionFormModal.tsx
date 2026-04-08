@@ -14,7 +14,6 @@ interface SectionFormModalProps {
   submitLabel: string;
   formData: SectionFormData;
   setFormData: React.Dispatch<React.SetStateAction<SectionFormData>>;
-  disableSubmit?: boolean;
 }
 
 export const SectionFormModal = ({
@@ -25,7 +24,6 @@ export const SectionFormModal = ({
   submitLabel,
   formData,
   setFormData,
-  disableSubmit = false,
 }: SectionFormModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -41,8 +39,7 @@ export const SectionFormModal = ({
           <Button
             type="button"
             onClick={onSubmit}
-            disabled={disableSubmit}
-            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
+            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full"
           >
             {submitLabel}
           </Button>

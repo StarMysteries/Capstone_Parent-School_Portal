@@ -333,13 +333,6 @@ export const ManageClassLists = () => {
   const selectedAddTeacher = teachers.find(
     (teacher) => teacher.id.toString() === addFormData.teacherId
   );
-  const editFormHasChanges = editingClass
-    ? editFormData.gradeLevel !== editingClass.grade ||
-      editFormData.section !== editingClass.section ||
-      editFormData.schoolYearStart !== editingClass.start_year.toString() ||
-      editFormData.schoolYearEnd !== editingClass.end_year.toString() ||
-      editFormData.teacherId !== (editingClass.teacher_id?.toString() || '')
-    : false;
 
   const isDetailView = selectedClass !== null;
 
@@ -975,8 +968,8 @@ export const ManageClassLists = () => {
             {/* Save Changes Button */}
             <Button
               onClick={handleSaveChanges}
-              disabled={isSubmitting || !editFormData.gradeLevel || !editFormData.section || !editFormData.teacherId || !editFormHasChanges}
-              className="w-full h-12 bg-(--button-green) hover:bg-green-700 text-white text-lg font-semibold mt-2 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
+              disabled={isSubmitting || !editFormData.gradeLevel || !editFormData.section || !editFormData.teacherId}
+              className="w-full h-12 bg-(--button-green) hover:bg-green-700 text-white text-lg font-semibold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>

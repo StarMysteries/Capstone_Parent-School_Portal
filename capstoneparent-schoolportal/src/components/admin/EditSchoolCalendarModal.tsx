@@ -137,11 +137,7 @@ export const EditSchoolCalendarModal = ({
   };
 
   const title = mode === "add" ? "Add school calendar" : "Edit school calendar";
-  const hasChanges =
-    mode === "edit"
-      ? yearInput !== (calendarForEdit?.year ?? "") || Boolean(selectedFile)
-      : Boolean(selectedFile);
-  const canSubmit = isSaving ? false : mode === "edit" ? hasChanges : Boolean(selectedFile);
+  const canSubmit = isSaving ? false : mode === "edit" ? true : Boolean(selectedFile);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} contentClassName="max-w-3xl">
@@ -215,7 +211,7 @@ export const EditSchoolCalendarModal = ({
             type="button"
             onClick={handleSave}
             disabled={!canSubmit}
-            className="bg-(--button-green) hover:bg-(--button-hover-green) rounded-full px-8 py-3 text-lg text-white disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 inline-flex items-center gap-2"
+            className="bg-(--button-green) hover:bg-(--button-hover-green) rounded-full px-8 py-3 text-lg text-white disabled:opacity-50 inline-flex items-center gap-2"
           >
             {isSaving && (
               <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />

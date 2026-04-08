@@ -21,8 +21,7 @@ export const ManageParentVerification = () => {
   const [verifications, setVerifications] = useState<ParentVerificationRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ParentRegistrationStatus | "all">("all");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [dateFilterDays, setDateFilterDays] = useState<3 | 7 | null>(null);
   const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
   const [modalRemarks, setModalRemarks] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -75,8 +74,9 @@ export const ManageParentVerification = () => {
 
   const filteredVerifications = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const fromDateMs = fromDate ? new Date(`${fromDate}T00:00:00`).getTime() : null;
-    const toDateMs = toDate ? new Date(`${toDate}T23:59:59.999`).getTime() : null;
+    const now = Date.now();
+    const cutoffMs =
+      dateFilterDays !== null ? now - dateFilterDays * 24 * 60 * 60 * 1000 : null;
 
     let filtered = verifications.filter((verification) => {
       if (!query) return true;
@@ -92,18 +92,15 @@ export const ManageParentVerification = () => {
         .includes(query);
     });
 
-    if (fromDateMs !== null || toDateMs !== null) {
+    if (cutoffMs !== null) {
       filtered = filtered.filter((verification) => {
         const submittedAt = new Date(verification.submittedAt).getTime();
-        if (Number.isNaN(submittedAt)) return false;
-        if (fromDateMs !== null && submittedAt < fromDateMs) return false;
-        if (toDateMs !== null && submittedAt > toDateMs) return false;
-        return true;
+        return !Number.isNaN(submittedAt) && submittedAt >= cutoffMs;
       });
     }
 
     return filtered;
-  }, [verifications, searchQuery, fromDate, toDate]);
+  }, [verifications, searchQuery, dateFilterDays]);
 
   const getStatusColor = (status: VerificationStatus) => {
     switch (status) {
@@ -128,13 +125,6 @@ export const ManageParentVerification = () => {
     setModalRemarks("");
   };
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setStatusFilter("all");
-    setFromDate("");
-    setToDate("");
-  };
-
   const updateVerification = async (nextStatus: "VERIFIED" | "DENIED") => {
     if (!selectedVerification) return;
 
@@ -157,9 +147,9 @@ export const ManageParentVerification = () => {
       <RoleAwareNavbar />
       <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="rounded-lg bg-white p-8 shadow-md">
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div className="mb-8 flex items-center justify-between gap-4">
             <h1 className="text-3xl font-bold">Manage Parent Verification</h1>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-4">
               <input
                 type="text"
                 placeholder="Search..."
@@ -191,33 +181,28 @@ export const ManageParentVerification = () => {
                   },
                 ]}
               />
-              <div className="flex flex-wrap items-center gap-3">
-                <label className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2">
-                  <span className="text-sm font-medium text-gray-700">From</span>
-                  <input
-                    type="date"
-                    value={fromDate}
-                    max={toDate || undefined}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    className="min-w-36 bg-transparent text-sm text-gray-900 focus:outline-none [color-scheme:light]"
-                  />
-                </label>
-                <label className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2">
-                  <span className="text-sm font-medium text-gray-700">To</span>
-                  <input
-                    type="date"
-                    value={toDate}
-                    min={fromDate || undefined}
-                    onChange={(e) => setToDate(e.target.value)}
-                    className="min-w-36 bg-transparent text-sm text-gray-900 focus:outline-none [color-scheme:light]"
-                  />
-                </label>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={clearFilters}
-                  className="rounded-md border border-red-300 bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600"
+                  onClick={() => setDateFilterDays((current) => (current === 7 ? null : 7))}
+                  className={`rounded-md px-4 py-2 font-semibold text-white transition-colors ${
+                    dateFilterDays === 7
+                      ? "bg-[#d8d42f] text-black hover:bg-[#e3df44]"
+                      : "bg-(--button-green) hover:bg-(--button-hover-green)"
+                  }`}
                 >
-                  Clear Filter
+                  7 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDateFilterDays((current) => (current === 3 ? null : 3))}
+                  className={`rounded-md px-4 py-2 font-semibold text-white transition-colors ${
+                    dateFilterDays === 3
+                      ? "bg-[#d8d42f] text-black hover:bg-[#e3df44]"
+                      : "bg-(--button-green) hover:bg-(--button-hover-green)"
+                  }`}
+                >
+                  3 Days
                 </button>
               </div>
             </div>
