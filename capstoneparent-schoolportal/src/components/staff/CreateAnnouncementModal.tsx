@@ -119,59 +119,59 @@ export const CreateAnnouncementModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
       <div
-        className="relative rounded-lg shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto bg-[#fff7b0]"
+        className="relative rounded-t-lg sm:rounded-lg shadow-2xl w-full max-w-2xl mx-3 sm:mx-4 max-h-[90vh] overflow-y-auto bg-[#fff7b0]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-6 sticky top-0 border-b border-yellow-200 bg-[#fff7b0]">
-          <h2 className="text-3xl font-bold text-black">Create Announcement</h2>
+        <div className="flex justify-between items-start p-4 sm:p-6 sticky top-0 border-b border-yellow-200 bg-[#fff7b0] gap-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-black">Create Announcement</h2>
           <button
             onClick={onClose}
             aria-label="Close create announcement modal"
-            className="text-red-600 hover:text-red-800 transition-colors text-4xl font-bold"
+            className="text-red-600 hover:text-red-800 transition-colors text-3xl sm:text-4xl font-bold shrink-0"
           >
             <X />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           <input
             type="text"
             placeholder="Enter announcement title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border-2 border-yellow-300 bg-[#fff7b0] text-lg placeholder:text-gray-600 focus:outline-none focus:border-yellow-500"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 border-yellow-300 bg-[#fff7b0] text-sm sm:text-lg placeholder:text-gray-600 focus:outline-none focus:border-yellow-500"
           />
 
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write the announcement details..."
-            className="w-full px-4 py-3 rounded-lg border-2 border-yellow-300 bg-[#fff7b0] min-h-[220px] resize-none text-base placeholder:text-gray-600 focus:outline-none focus:border-yellow-500"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 border-yellow-300 bg-[#fff7b0] min-h-37.5 sm:min-h-55 resize-none text-sm sm:text-base placeholder:text-gray-600 focus:outline-none focus:border-yellow-500"
           />
 
-          {error && <div className="text-sm text-red-600">{error}</div>}
+          {error && <div className="text-xs sm:text-sm text-red-600">{error}</div>}
 
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDragDrop}
-            className="border-2 border-dashed border-yellow-400 rounded-lg p-5 bg-[#fff7b0] text-left"
+            className="border-2 border-dashed border-yellow-400 rounded-lg p-3 sm:p-5 bg-[#fff7b0] text-left"
           >
-            <div className="flex items-center justify-between gap-4 mb-2">
-              <div>
-                <p className="text-sm font-medium text-gray-700">File Upload</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-2">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-700">File Upload</p>
                 <p className="text-xs text-gray-500">Multiple files can be uploaded here</p>
               </div>
               <label
                 htmlFor="create-announcement-file-input"
-                className="flex items-center gap-2 px-3 py-2 rounded-md border border-yellow-500 bg-yellow-300 cursor-pointer font-semibold text-sm text-black hover:bg-yellow-400"
+                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md border border-yellow-500 bg-yellow-300 cursor-pointer font-semibold text-xs sm:text-sm text-black hover:bg-yellow-400 shrink-0"
               >
-                <Upload size={16} />
+                <Upload size={14} />
                 Choose
               </label>
               <input
@@ -186,15 +186,15 @@ export const CreateAnnouncementModal = ({
 
           {/* File preview list should only show after upload */}
           {files.length > 0 && (
-            <div className="bg-white rounded-lg p-4 space-y-2">
+            <div className="bg-white rounded-lg p-3 sm:p-4 space-y-2">
               {files.map((file) => (
                 <div
                   key={file.id}
-                  className="flex items-center justify-between gap-4 border border-gray-200 rounded p-3"
+                  className="flex items-center justify-between gap-2 sm:gap-4 border border-gray-200 rounded p-2 sm:p-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileText size={18} className="text-red-500 shrink-0" />
-                    <span className="text-sm text-gray-800 truncate">{file.name}</span>
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <FileText size={16} className="text-red-500 shrink-0" />
+                    <span className="text-xs sm:text-sm text-gray-800 truncate">{file.name}</span>
                   </div>
                   <button
                     onClick={() => handleDeleteFile(file.id)}
@@ -209,9 +209,9 @@ export const CreateAnnouncementModal = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
             <Select value={category} onValueChange={(v) => setCategory(v as AnnouncementCategory)}>
-              <SelectTrigger className="w-52 bg-yellow-400 text-black font-semibold border-0">
+              <SelectTrigger className="w-full sm:w-52 bg-yellow-400 text-black font-semibold border-0 text-sm sm:text-base">
                 <SelectValue placeholder="Announcement Type" />
               </SelectTrigger>
               <SelectContent>
@@ -225,7 +225,7 @@ export const CreateAnnouncementModal = ({
               onClick={handlePost}
               type="button"
               disabled={submitting}
-              className="bg-green-500 hover:bg-green-600 text-white px-10 py-3 rounded-full font-semibold text-lg transition-colors disabled:opacity-60"
+              className="bg-green-500 hover:bg-green-600 text-white px-8 sm:px-10 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-lg transition-colors disabled:opacity-60 shrink-0"
             >
               {submitting ? "Posting..." : "Post"}
             </button>
