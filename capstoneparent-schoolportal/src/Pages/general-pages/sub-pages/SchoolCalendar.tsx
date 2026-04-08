@@ -100,7 +100,7 @@ export const SchoolCalendar = () => {
             {isAdmin && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="fixed bottom-8 right-8 inline-flex h-20 w-20 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105"
+                className="fixed bottom-4 right-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105 sm:bottom-8 sm:right-8 sm:h-20 sm:w-20"
                 aria-label="Edit School Calendar"
               >
                 <Pencil className="h-10 w-10" />

@@ -294,7 +294,7 @@ export const AnnouncementPostFeed = ({
           type="button"
           aria-label="Create announcement"
           onClick={onAdd}
-          className="fixed bottom-8 right-8 z-20 flex h-16 w-16 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-colors hover:bg-(--button-hover-green)"
+          className="fixed bottom-4 right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-colors hover:bg-(--button-hover-green) sm:bottom-8 sm:right-8 sm:h-16 sm:w-16"
         >
           <Plus size={32} strokeWidth={3} />
         </button>

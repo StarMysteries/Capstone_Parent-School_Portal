@@ -394,16 +394,16 @@ export const ManageClassLists = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
+    <div className="min-h-dvh w-full flex flex-col overflow-x-hidden bg-gray-50">
       <NavbarPrincipal />
 
       {/* Main Container */}
-      <div className="flex-1 flex overflow-hidden p-5 gap-5">
+      <div className="flex-1 flex overflow-hidden p-3 gap-3 sm:p-5 sm:gap-5">
         
         {/* LEFT PANEL */}
         <div className={`
           bg-(--div-bg) flex flex-col
-          w-full md:w-[500px] 
+          w-full md:w-125 
           h-full rounded-xl border border-gray-200 shadow-sm
           ${isDetailView ? 'hidden md:flex' : 'flex'}
         `}>
@@ -769,7 +769,7 @@ export const ManageClassLists = () => {
                   </div>
                 </div>
               ) : addTeacherSearchQuery ? (
-                <div className="max-h-[250px] overflow-y-auto rounded-lg border-2 border-gray-300 bg-white">
+                <div className="max-h-62.5 overflow-y-auto rounded-lg border-2 border-gray-300 bg-white">
                   {rankedTeachersForAddModal.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {rankedTeachersForAddModal.map((teacher, index) => (
@@ -946,7 +946,7 @@ export const ManageClassLists = () => {
                   </div>
                 </div>
               ) : editTeacherSearchQuery ? (
-                <div className="max-h-[250px] overflow-y-auto rounded-lg border-2 border-gray-300 bg-white">
+                <div className="max-h-62.5 overflow-y-auto rounded-lg border-2 border-gray-300 bg-white">
                   {rankedTeachersForEditModal.length > 0 ? (
                     <div className="divide-y divide-gray-200">
                       {rankedTeachersForEditModal.map((teacher, index) => (

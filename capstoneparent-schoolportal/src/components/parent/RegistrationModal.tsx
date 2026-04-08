@@ -29,11 +29,11 @@ export const ApplyRegistrationModal = ({
   if (!isOpen || !child) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-4xl rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
-        <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-4 sm:items-center sm:py-6">
+      <div className="w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
+        <div className="mb-6 flex items-start justify-between gap-4 border-b border-gray-200 pb-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Apply for Registration</h2>
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Apply for Registration</h2>
             <p className="mt-1 text-sm text-gray-600">Upload all required files before submitting.</p>
           </div>
           <button
@@ -192,7 +192,7 @@ export const ApplyRegistrationModal = ({
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-gray-600">
             Required to submit: Child Birth Certificate and either Parent Birth Certificate or Government-issued ID.
           </p>

@@ -8,7 +8,7 @@ import { Pencil, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const fabClassName =
-  "inline-flex h-20 w-20 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-(--button-green)/40";
+  "inline-flex h-14 w-14 items-center justify-center rounded-full bg-(--button-green) text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-(--button-green)/40 sm:h-20 sm:w-20";
 
 const ChartPreview = ({
   imageUrl,
@@ -155,7 +155,7 @@ export const OrginizationalChart = () => {
             <h1 className="mb-8 text-4xl font-bold">Organizational Chart</h1>
             <p>No organizational chart data available.</p>
             {isAdmin && (
-              <div className="fixed bottom-8 right-8 flex flex-col gap-3">
+              <div className="fixed bottom-4 right-4 flex flex-col gap-3 sm:bottom-8 sm:right-8">
                 <button
                   type="button"
                   className={fabClassName}
@@ -232,7 +232,7 @@ export const OrginizationalChart = () => {
             </div>
 
             {isAdmin && (
-              <div className="fixed bottom-8 right-8 flex flex-col gap-3">
+              <div className="fixed bottom-4 right-4 flex flex-col gap-3 sm:bottom-8 sm:right-8">
                 <button
                   type="button"
                   className={fabClassName}

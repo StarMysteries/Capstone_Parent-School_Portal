@@ -248,22 +248,22 @@ export const ClassList = () => {
 
   return (
     // ROOT CONTAINER
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50"> 
+    <div className="min-h-dvh w-full flex flex-col overflow-x-hidden bg-gray-50"> 
       <NavbarTeacher/>
 
       {/* CONTAINER: */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-5 gap-5">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-3 gap-3 sm:p-5 sm:gap-5">
         
         {/* LEFT PANEL */}
         <div className={`
             bg-(--div-bg) flex flex-col
-            w-full md:w-[500px] 
+            w-full md:w-125 
             h-full rounded-xl border border-gray-200 shadow-sm
             ${isDetailView ? 'hidden md:flex' : 'flex'}
         `}>
           <Tabs 
             defaultValue="class" 
-            className="w-full h-full flex flex-col"
+            className="w-full h-full flex flex-col min-h-0"
             onValueChange={(value) => setActiveTab(value)}
           >
              <TabsList className="w-full rounded-none rounded-t-xl bg-white p-0 border-b border-gray-200">
@@ -276,7 +276,7 @@ export const ClassList = () => {
              </TabsList>
 
              {/* CLASS TAB CONTENT */}
-             <TabsContent value="class" className="flex-1 p-4 space-y-4 mt-0 overflow-y-auto">
+             <TabsContent value="class" className="flex-1 p-4 space-y-4 mt-0 overflow-y-auto min-h-0">
                 <div className="flex flex-col md:flex-row gap-2">
                   <div className="flex gap-2 w-full min-w-0">
                       <Select value={classGradeLevel} onValueChange={setClassGradeLevel}>
@@ -555,7 +555,7 @@ export const ClassList = () => {
                           Back
                         </Button>
                         
-                        <div className="relative flex-1 md:flex-none w-full md:max-w-md min-w-[200px]">
+                        <div className="relative flex-1 md:flex-none w-full md:max-w-md min-w-50">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                           <Input
                             type="text"
@@ -567,10 +567,10 @@ export const ClassList = () => {
                         </div>
 
                         <Select value={remarksFilter} onValueChange={setRemarksFilter}>
-                          <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold w-[150px]">
+                          <SelectTrigger className="w-full min-w-0 bg-(--navbar-bg) border-none font-semibold sm:w-37.5">
                             <SelectValue placeholder="Remarks" />
                           </SelectTrigger>
-                          <SelectContent className="bg-(--navbar-bg) border-none font-semibold w-[150px]">
+                          <SelectContent className="bg-(--navbar-bg) border-none font-semibold sm:w-37.5">
                             <SelectItem value="all">All Remarks</SelectItem>
                             <SelectItem value="PASSED">Passed</SelectItem>
                             <SelectItem value="FAILED">Failed</SelectItem>
@@ -630,7 +630,7 @@ export const ClassList = () => {
 
                       <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[600px]">
+                          <table className="w-full min-w-150">
                             <thead className="bg-gray-100">
                               <tr>
                                 <th className="px-6 py-3 text-left text-sm font-bold text-gray-900 uppercase tracking-wider">
@@ -744,7 +744,7 @@ export const ClassList = () => {
                         Back
                       </Button>
                       
-                      <div className="relative flex-1 md:flex-none w-full md:max-w-md min-w-[200px]">
+                        <div className="relative flex-1 md:flex-none w-full md:max-w-md min-w-50">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                         <Input
                           type="text"
@@ -756,10 +756,10 @@ export const ClassList = () => {
                       </div>
 
                       <Select value={remarksFilter} onValueChange={setRemarksFilter}>
-                        <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold w-[150px]">
+                        <SelectTrigger className="w-full min-w-0 bg-(--navbar-bg) border-none font-semibold sm:w-37.5">
                           <SelectValue placeholder="Remarks" />
                         </SelectTrigger>
-                        <SelectContent className="bg-(--navbar-bg) border-none font-semibold w-[150px]">
+                        <SelectContent className="bg-(--navbar-bg) border-none font-semibold sm:w-37.5">
                           <SelectItem value="all">All Remarks</SelectItem>
                           <SelectItem value="PASSED">Passed</SelectItem>
                           <SelectItem value="FAILED">Failed</SelectItem>
@@ -798,7 +798,7 @@ export const ClassList = () => {
 
                     <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[600px]">
+                          <table className="w-full min-w-150">
                           <thead className="bg-gray-100">
                             <tr>
                               <th className="px-6 py-3 text-left text-sm font-bold text-gray-900 uppercase tracking-wider">

@@ -221,9 +221,9 @@ const App = () => {
       <Route
         path="/classlist"
         element={
-          <ProtectedRoute allowedRoles={["teacher"]}>
+          //<ProtectedRoute allowedRoles={["teacher"]}>
             <ClassList />
-          </ProtectedRoute>
+          //</ProtectedRoute>
         }
       />
 
@@ -273,6 +273,8 @@ const App = () => {
         }
       />
     </Routes>
+
+
   );
 };
 
