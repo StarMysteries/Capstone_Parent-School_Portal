@@ -34,7 +34,7 @@ const HistorySkeleton = ({ showEdit }: { showEdit: boolean }) => (
 
 export const History = () => {
   const user = getAuthUser();
-  const isAdmin = user?.role === "admin" || user?.role === "principal";
+  const isAdmin = user?.role === "admin";
   const content = useAboutUsStore((state) => state.history);
   const isLoading = useAboutUsStore((state) => state.loading.history);
   const feedback = useAboutUsStore((state) => state.feedback);
@@ -78,7 +78,7 @@ export const History = () => {
 
             <HistoryImage />
 
-            <div className="text-justify space-y-4 text-sm leading-relaxed">
+            <div className="space-y-5 text-justify text-base leading-8 md:text-lg">
               {content.body
                 ? content.body
                     .split(/\n\s*\n/)

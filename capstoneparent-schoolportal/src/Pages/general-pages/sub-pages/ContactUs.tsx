@@ -32,7 +32,7 @@ const ContactUsSkeleton = ({ showEdit }: { showEdit: boolean }) => (
 
 export const ContactUs = () => {
   const user = getAuthUser();
-  const isAdmin = user?.role === "admin" || user?.role === "principal";
+  const isAdmin = user?.role === "admin";
   const content = useAboutUsStore((state) => state.contactUs);
   const isLoading = useAboutUsStore((state) => state.loading.contactUs);
   const feedback = useAboutUsStore((state) => state.feedback);

@@ -73,7 +73,7 @@ const OrganizationalChartSkeleton = ({ showActions }: { showActions: boolean }) 
 
 export const OrginizationalChart = () => {
   const user = getAuthUser();
-  const isAdmin = user?.role === "admin" || user?.role === "principal";
+  const isAdmin = user?.role === "admin";
 
   const charts = useAboutUsStore((state) => state.orgCharts);
   const isLoading = useAboutUsStore((state) => state.loading.orgCharts);
@@ -190,21 +190,6 @@ export const OrginizationalChart = () => {
                         <p className="text-center font-medium text-gray-700 italic">
                           File: {chart.fileName || `Chart ${index + 1}`}
                         </p>
-                      )}
-                      {isAdmin && (
-                        <div className="flex justify-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedChartId(chart.id || null);
-                              setEditModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 rounded bg-gray-100 px-3 py-1 text-sm font-medium hover:bg-gray-200 transition"
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Edit this file
-                          </button>
-                        </div>
                       )}
                     </div>
                   ))}

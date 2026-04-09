@@ -48,7 +48,7 @@ const TransparencySkeleton = ({ showEdit }: { showEdit: boolean }) => (
 
 export const Transparency = () => {
   const user = getAuthUser();
-  const isAdmin = user?.role === "admin" || user?.role === "principal";
+  const isAdmin = user?.role === "admin";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const content = useAboutUsStore((state) => state.transparency);
   const isLoading = useAboutUsStore((state) => state.loading.transparency);

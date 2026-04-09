@@ -46,7 +46,7 @@ const SchoolCalendarSkeleton = ({ showEdit }: { showEdit: boolean }) => (
 
 export const SchoolCalendar = () => {
   const user = getAuthUser();
-  const isAdmin = user?.role === "admin" || user?.role === "principal";
+  const isAdmin = user?.role === "admin";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const schoolCalendars = useAboutUsStore((state) => state.schoolCalendars);
   const isLoading = useAboutUsStore((state) => state.loading.schoolCalendars);
@@ -93,7 +93,10 @@ export const SchoolCalendar = () => {
           </>
         ) : (
           <>
-            <h1 className="mb-8 text-4xl font-bold">School Calendar</h1>
+            <h1 className="mb-8 text-4xl font-bold">
+              School Calendar
+              {calendar.year ? ` (${calendar.year})` : ""}
+            </h1>
             <div className="w-full rounded-sm bg-gray-300 p-8">
               <CalendarPreview imageUrl={calendar.imageUrl} />
             </div>

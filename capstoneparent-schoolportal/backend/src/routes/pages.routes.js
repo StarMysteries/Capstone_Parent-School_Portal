@@ -12,7 +12,7 @@ const upload = multer({ dest: process.env.UPLOAD_PATH || "uploads/" });
 router.get('/contact-us', pagesController.getContactUs);
 router.put('/contact-us', 
   authenticate,
-  authorize('Admin', 'Principal'),
+  authorize('Admin'),
   [
     body('principalOffice').optional().isString(),
     body('libraryOffice').optional().isString(),
@@ -28,7 +28,7 @@ router.put('/contact-us',
 router.get('/history', pagesController.getHistory);
 router.put('/history', 
   authenticate,
-  authorize('Admin', 'Principal'),
+  authorize('Admin'),
   upload.single('asset'),
   [
     body('title').optional().isString(),
@@ -41,7 +41,7 @@ router.put('/history',
 router.get('/transparency', pagesController.getTransparency);
 router.put('/transparency', 
   authenticate,
-  authorize('Admin', 'Principal'),
+  authorize('Admin'),
   upload.single('asset'),
   pagesController.updateTransparency
 );
@@ -49,7 +49,7 @@ router.put('/transparency',
 router.get('/school-calendar', pagesController.getSchoolCalendars);
 router.put('/school-calendar',
   authenticate,
-  authorize('Admin', 'Principal'),
+  authorize('Admin'),
   upload.single('asset'),
   [
     body('year').notEmpty().isString(),
@@ -62,7 +62,7 @@ router.put('/school-calendar',
 router.get('/org-chart', pagesController.getOrgCharts);
 router.put('/org-chart',
   authenticate,
-  authorize('Admin', 'Principal'),
+  authorize('Admin'),
   upload.single('asset'),
   [
     body('year').notEmpty().isString()

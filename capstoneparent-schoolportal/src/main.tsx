@@ -211,9 +211,9 @@ const App = () => {
       <Route
         path="/edithistory"
         element={
-          //<ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin"]}>
             <EditHistory />
-          //</ProtectedRoute>
+          </ProtectedRoute>
         }
       />
 
