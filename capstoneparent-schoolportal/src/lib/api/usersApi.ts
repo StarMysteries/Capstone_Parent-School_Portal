@@ -8,6 +8,7 @@ export const usersApi = {
   updateProfile(userId: number, data: any) {
     return apiFetch<ApiData<AuthUser>>(`/users/${userId}`, {
       method: "PUT",
+      successMessage: "Profile updated successfully.",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -19,6 +20,7 @@ export const usersApi = {
 
     return apiFetch<ApiData<AuthUser>>(`/users/${userId}/photo`, {
       method: "POST",
+      successMessage: "Profile picture updated successfully.",
       body: formData,
     });
   },
@@ -30,6 +32,7 @@ export const usersApi = {
   ) {
     return apiFetch<ApiMessage>(`/users/${userId}/password`, {
       method: "PATCH",
+      successMessage: "Password changed successfully.",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword, newPassword }),
     });

@@ -71,6 +71,7 @@ export const studentsApi = {
   create(payload: StudentPayload) {
     return apiFetch<ApiData<StudentRecord>>("/students", {
       method: "POST",
+      successMessage: "Student added successfully.",
       headers: {
         ...bearerHeaders(),
         "Content-Type": "application/json",
@@ -85,6 +86,7 @@ export const studentsApi = {
 
     return apiFetch<{ message: string; data: StudentRecord[] }>("/students/import", {
       method: "POST",
+      successMessage: "Student CSV uploaded successfully.",
       headers: bearerHeaders(),
       body: formData,
     });
@@ -96,6 +98,7 @@ export const studentsApi = {
   ) {
     return apiFetch<ApiData<StudentRecord>>(`/students/${id}`, {
       method: "PUT",
+      successMessage: "Student updated successfully.",
       headers: {
         ...bearerHeaders(),
         "Content-Type": "application/json",
@@ -107,6 +110,7 @@ export const studentsApi = {
   delete(id: number) {
     return apiFetch<{ message: string }>(`/students/${id}`, {
       method: "DELETE",
+      successMessage: "Student deleted successfully.",
       headers: bearerHeaders(),
     });
   },

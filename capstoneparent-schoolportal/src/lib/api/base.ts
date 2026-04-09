@@ -3,6 +3,8 @@
  * Core fetch wrapper shared by every API module.
  */
 
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+
 function normalizeApiBaseUrl(url?: string): string {
   const fallback = import.meta.env.DEV ? "/api" : "http://localhost:5000/api";
   const trimmed = url?.trim();
@@ -53,6 +55,18 @@ export function bearerHeaders(): Record<string, string> {
   }
 }
 
+interface ApiFetchOptions extends RequestInit {
+  successMessage?: string;
+  errorMessage?: string;
+  skipSuccessFeedback?: boolean;
+  skipErrorFeedback?: boolean;
+}
+
+const isMutationMethod = (method?: string) => {
+  const normalizedMethod = method?.toUpperCase() ?? "GET";
+  return normalizedMethod !== "GET";
+};
+
 /**
  * Wraps fetch with base URL, cookie credentials, and unified error handling.
  * Throws an Error whose `.message` is the backend `message` field so
@@ -60,13 +74,22 @@ export function bearerHeaders(): Record<string, string> {
  */
 export async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: ApiFetchOptions = {},
 ): Promise<T> {
+  const {
+    successMessage,
+    errorMessage,
+    skipSuccessFeedback = false,
+    skipErrorFeedback = false,
+    ...requestInit
+  } = options;
+  const isMutation = isMutationMethod(requestInit.method);
+
   const res = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
+    ...requestInit,
     credentials: "include",
     headers: {
-      ...options.headers,
+      ...requestInit.headers,
     },
   });
 
@@ -77,7 +100,22 @@ export async function apiFetch<T>(
       (typeof data?.message === "string" && data.message) ||
       (typeof data?.error === "string" && data.error) ||
       `Request failed: ${res.status}`;
+
+    if (isMutation && !skipErrorFeedback) {
+      useApiFeedbackStore.getState().showError(errorMessage || msg);
+    }
+
     throw new Error(msg);
+  }
+
+  if (isMutation && !skipSuccessFeedback) {
+    const resolvedSuccessMessage =
+      successMessage ||
+      (typeof data?.message === "string" ? data.message : "");
+
+    if (resolvedSuccessMessage) {
+      useApiFeedbackStore.getState().showSuccess(resolvedSuccessMessage);
+    }
   }
 
   return data as T;

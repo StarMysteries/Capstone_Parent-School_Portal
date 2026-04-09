@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/api/base';
+
 const API_BASE_URL = '/api';
 
 // Download student list template
@@ -30,14 +32,11 @@ export const uploadStudentList = async (classId: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}/import-students`, {
+    return await apiFetch(`/classes/${classId}/import-students`, {
       method: 'POST',
+      successMessage: 'Student list uploaded successfully.',
       body: formData,
     });
-
-    if (!response.ok) throw new Error('Failed to upload student list');
-
-    return await response.json();
   } catch (error) {
     console.error('Error uploading student list:', error);
     throw error;

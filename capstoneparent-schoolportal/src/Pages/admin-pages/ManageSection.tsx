@@ -14,8 +14,10 @@ import { Button } from "../../components/ui/button";
 import { SectionFormModal } from "../../components/admin/SectionFormModal";
 import { SectionDeleteModal } from "../../components/admin/SectionDeleteModal";
 import { classesApi, type Section } from "../../lib/api/classesApi";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export const ManageSection = () => {
+  const showError = useApiFeedbackStore((state) => state.showError);
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +103,7 @@ export const ManageSection = () => {
 
     const formatError = validateFormat(formData.name);
     if (formatError) {
-      alert(formatError);
+      showError(formatError);
       return;
     }
 
@@ -110,9 +112,7 @@ export const ManageSection = () => {
       setFormData({ name: "" });
       setIsAddModalOpen(false);
       fetchSections();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to add section");
-    }
+    } catch {}
   };
 
   const handleEditClick = (section: Section) => {
@@ -130,7 +130,7 @@ export const ManageSection = () => {
 
     const formatError = validateFormat(formData.name);
     if (formatError) {
-      alert(formatError);
+      showError(formatError);
       return;
     }
 
@@ -140,9 +140,7 @@ export const ManageSection = () => {
       setEditingSection(null);
       setIsEditModalOpen(false);
       fetchSections();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update section");
-    }
+    } catch {}
   };
 
   const handleDeleteClick = (section: Section) => {
@@ -158,9 +156,7 @@ export const ManageSection = () => {
       setDeletingSection(null);
       setIsDeleteModalOpen(false);
       fetchSections();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete section");
-    }
+    } catch {}
   };
 
   const openAddSectionModal = () => {

@@ -68,211 +68,211 @@ import { ManageClassLists } from "./Pages/principal-pages/ManageClassLists";
 
 import { usePageTitle } from "./hooks/usePageTitle";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { GlobalApiFeedback } from "./components/ui/GlobalApiFeedback";
 import "./styles/index.css";
 
 const App = () => {
   usePageTitle();
 
   return (
-    <Routes>
-      {/*General Pages */}
-      <Route path="/" element={<Navigate to="/homepage" replace />} />
-      <Route path="/homepage" element={<HomePage />} />
-      <Route path="/announcements" element={<Announcements />} />
-      <Route
-        path="/generalannouncement"
-        element={<Navigate to="/announcements" replace />}
-      />
-      <Route
-        path="/staffannouncement"
-        element={<Navigate to="/announcements" replace />}
-      />
-      <Route
-        path="/memorandumannouncement"
-        element={<Navigate to="/announcements" replace />}
-      />
-      <Route path="/forgotpassword" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/partnership&events" element={<PartnershipAndEvents />} />
-      <Route
-        path="/partnership&events/:eventSlug"
-        element={<PartnershipAndEventsCard />}
-      />
+    <>
+      <GlobalApiFeedback />
+      <Routes>
+        {/*General Pages */}
+        <Route path="/" element={<Navigate to="/homepage" replace />} />
+        <Route path="/homepage" element={<HomePage />} />
+        <Route path="/announcements" element={<Announcements />} />
+        <Route
+          path="/generalannouncement"
+          element={<Navigate to="/announcements" replace />}
+        />
+        <Route
+          path="/staffannouncement"
+          element={<Navigate to="/announcements" replace />}
+        />
+        <Route
+          path="/memorandumannouncement"
+          element={<Navigate to="/announcements" replace />}
+        />
+        <Route path="/forgotpassword" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/partnership&events" element={<PartnershipAndEvents />} />
+        <Route
+          path="/partnership&events/:eventSlug"
+          element={<PartnershipAndEventsCard />}
+        />
 
-      {/*General Sub Pages */}
-      <Route path="/contactus" element={<ContactUs />} />
-      <Route path="/history" element={<History />} />
-      <Route path="/orginizationalchart" element={<OrginizationalChart />} />
-      <Route path="/schoolcalendar" element={<SchoolCalendar />} />
-      <Route path="/transparency" element={<Transparency />} />
-      <Route path="/visionandmission" element={<VisionAndMission />} />
+        {/*General Sub Pages */}
+        <Route path="/contactus" element={<ContactUs />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/orginizationalchart" element={<OrginizationalChart />} />
+        <Route path="/schoolcalendar" element={<SchoolCalendar />} />
+        <Route path="/transparency" element={<Transparency />} />
+        <Route path="/visionandmission" element={<VisionAndMission />} />
 
-      {/*Parent Pages */}
-      <Route
-        path="/parentview"
-        element={
-          <ProtectedRoute allowedRoles={["parent"]}>
-            <ParentView />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/classschedule"
-        element={
-          <ProtectedRoute allowedRoles={["parent"]}>
-            <ClassSchedule />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/quarterlygrades"
-        element={
-          <ProtectedRoute allowedRoles={["parent"]}>
-            <QuarterlyGrades />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/libraryrecords"
-        element={
-          <ProtectedRoute allowedRoles={["parent"]}>
-            <LibraryRecords />
-          </ProtectedRoute>
-        }
-      />
+        {/*Parent Pages */}
+        <Route
+          path="/parentview"
+          element={
+            <ProtectedRoute allowedRoles={["parent"]}>
+              <ParentView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/classschedule"
+          element={
+            <ProtectedRoute allowedRoles={["parent"]}>
+              <ClassSchedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quarterlygrades"
+          element={
+            <ProtectedRoute allowedRoles={["parent"]}>
+              <QuarterlyGrades />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/libraryrecords"
+          element={
+            <ProtectedRoute allowedRoles={["parent"]}>
+              <LibraryRecords />
+            </ProtectedRoute>
+          }
+        />
 
-      {/*Admin Sub Pages */}
-      <Route
-        // Also acessible by teachers
-        path="/manageparentverification"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "teacher"]}>
-            <ManageParentVerification />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        // Also acessible by teachers
-        path="/managestudents"
-        element={
-          <ProtectedRoute
-            allowedRoles={["admin", "teacher", "principal", "vice_principal"]}
-          >
-            <ManageStudents />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/managesections"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "principal", "vice_principal"]}>
-            <ManageSection />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/managestaffaccounts"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <ManageStaffAccounts />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/managepartnershipandevents"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <ManagePartnershipAndEvents />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin-edit-event/:eventId"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <EditPartnershipAndEventsDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/editcontactus"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <EditContactUs />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/add-org-chart"
-        element={<Navigate to="/orginizationalchart" replace />}
-      />
-      <Route
-        path="/edithistory"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <EditHistory />
-          </ProtectedRoute>
-        }
-      />
+        {/*Admin Sub Pages */}
+        <Route
+          path="/manageparentverification"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "teacher"]}>
+              <ManageParentVerification />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/managestudents"
+          element={
+            <ProtectedRoute
+              allowedRoles={["admin", "teacher", "principal", "vice_principal"]}
+            >
+              <ManageStudents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/managesections"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "principal", "vice_principal"]}>
+              <ManageSection />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/managestaffaccounts"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ManageStaffAccounts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/managepartnershipandevents"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ManagePartnershipAndEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-edit-event/:eventId"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditPartnershipAndEventsDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/editcontactus"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditContactUs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-org-chart"
+          element={<Navigate to="/orginizationalchart" replace />}
+        />
+        <Route
+          path="/edithistory"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditHistory />
+            </ProtectedRoute>
+          }
+        />
 
-      {/*Teacher Sub Pages (Some routes are in admin)*/}
-      <Route
-        path="/classlist"
-        element={
-          <ProtectedRoute allowedRoles={["teacher"]}>
-            <ClassList />
-          </ProtectedRoute>
-        }
-      />
+        {/*Teacher Sub Pages (Some routes are in admin)*/}
+        <Route
+          path="/classlist"
+          element={
+            <ProtectedRoute allowedRoles={["teacher"]}>
+              <ClassList />
+            </ProtectedRoute>
+          }
+        />
 
-      {/*Staff Sub Pages */}
+        {/*Librarian Sub Pages */}
+        <Route
+          path="/managebooks"
+          element={
+            <ProtectedRoute allowedRoles={["librarian"]}>
+              <ManageBooks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/managelearningresources"
+          element={
+            <ProtectedRoute allowedRoles={["librarian"]}>
+              <ManageLearningResources />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/borrowedresources"
+          element={
+            <ProtectedRoute allowedRoles={["librarian"]}>
+              <BorrowedResources />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/managecategories"
+          element={
+            <ProtectedRoute allowedRoles={["librarian"]}>
+              <ManageCategories />
+            </ProtectedRoute>
+          }
+        />
 
-      {/*Librarian Sub Pages */}
-      <Route
-        path="/managebooks"
-        element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <ManageBooks />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/managelearningresources"
-        element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <ManageLearningResources />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/borrowedresources"
-        element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <BorrowedResources />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/managecategories"
-        element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <ManageCategories />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Principal Pages */}
-      <Route
-        path="/manageclasslists"
-        element={
-          <ProtectedRoute allowedRoles={["principal", "vice_principal"]}>
-            <ManageClassLists />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+        {/* Principal Pages */}
+        <Route
+          path="/manageclasslists"
+          element={
+            <ProtectedRoute allowedRoles={["principal", "vice_principal"]}>
+              <ManageClassLists />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </>
   );
 };
 

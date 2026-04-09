@@ -32,8 +32,10 @@ import { NavbarPrincipal } from '@/components/principal/NavbarPrincipal';
 import { Subjects } from '@/Pages/principal-pages/Subjects';
 import { StudentList } from '@/Pages/principal-pages/StudentList';
 import { StudentAddModal } from '@/Pages/principal-pages/StudentAddModal';
+import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
 
 export const ManageClassLists = () => {
+  const showError = useApiFeedbackStore((state) => state.showError);
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
   
   // Filters
@@ -240,7 +242,7 @@ export const ManageClassLists = () => {
     const selectedTeacherId = addFormData.teacherId ? parseInt(addFormData.teacherId, 10) : undefined;
 
     if (!selectedGradeLevel || !selectedSection || !selectedTeacherId) {
-      alert('Please select a valid grade level, section, and class adviser.');
+      showError('Please select a valid grade level, section, and class adviser.');
       return;
     }
 
@@ -258,7 +260,6 @@ export const ManageClassLists = () => {
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Failed to add class:', error);
-      alert('Failed to add class. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -286,7 +287,6 @@ export const ManageClassLists = () => {
       setIsEditModalOpen(false);
     } catch (error) {
       console.error('Failed to update class:', error);
-      alert('Failed to update class. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -316,7 +316,6 @@ export const ManageClassLists = () => {
       ]);
     } catch (error) {
       console.error('Failed to remove student:', error);
-      alert('Failed to remove student. Please try again.');
     }
   };
 
@@ -353,10 +352,8 @@ export const ManageClassLists = () => {
     try {
       await addSubjects(selectedClass.id, subjectNames);
       await reloadSubjects();
-      alert(`Successfully added ${subjectNames.length} subject(s)!`);
     } catch (error) {
       console.error('Failed to add subjects:', error);
-      alert('Failed to add subjects. Please try again.');
     }
   };
 
@@ -366,10 +363,8 @@ export const ManageClassLists = () => {
     try {
       await assignClassAdviser(selectedClass.id, teacherId);
       await reloadClasses();
-      alert('Class adviser assigned successfully!');
     } catch (error) {
       console.error('Failed to assign class adviser:', error);
-      alert('Failed to assign class adviser. Please try again.');
     }
   };
 
@@ -377,10 +372,8 @@ export const ManageClassLists = () => {
     try {
       await assignTeacherToSubject(subject.id, teacherId);
       await reloadSubjects();
-      alert('Teacher assigned successfully!');
     } catch (error) {
       console.error('Failed to assign teacher:', error);
-      alert('Failed to assign teacher. Please try again.');
     }
   };
 

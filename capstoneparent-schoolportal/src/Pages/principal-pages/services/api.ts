@@ -8,6 +8,7 @@ import type {
   GradeLevelItem,
   PaginatedResponse,
 } from '@/Pages/principal-pages/types';
+import { apiFetch } from '@/lib/api/base';
 
 const API_BASE_URL = '/api';
 
@@ -172,18 +173,12 @@ export const addSubjects = async (
   try {
     const results = await Promise.all(
       subjectNames.map(async (subjectName) => {
-        const response = await fetch(`${API_BASE_URL}/classes/${classId}/subjects`, {
+        const result = await apiFetch<{ data: any }>(`/classes/${classId}/subjects`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          successMessage: `Subject ${subjectName} added successfully.`,
           body: JSON.stringify({ subject_name: subjectName }),
         });
-
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => null);
-          throw new Error(errorBody?.message || 'Failed to add subject');
-        }
-
-        const result = await response.json();
         return result.data;
       })
     );
@@ -205,13 +200,12 @@ export const addClass = async (classData: {
   syear_end: number;
 }): Promise<ClassItem> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/classes`, {
+    const result = await apiFetch<{ data: ClassItem }>(`/classes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      successMessage: 'Class added successfully.',
       body: JSON.stringify(classData), 
     });
-    if (!response.ok) throw new Error('Failed to add class');
-    const result = await response.json();
     return result.data;
   } catch (error) {
     console.error('Error adding class:', error);
@@ -230,13 +224,12 @@ export const updateClass = async (
   }
 ): Promise<ClassItem> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}`, {
+    const result = await apiFetch<{ data: ClassItem }>(`/classes/${classId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      successMessage: 'Class updated successfully.',
       body: JSON.stringify(classData),
     });
-    if (!response.ok) throw new Error('Failed to update class');
-    const result = await response.json();
     return result.data;
   } catch (error) {
     console.error('Error updating class:', error);
@@ -249,18 +242,12 @@ export const assignTeacherToSubject = async (
   teacherId: number
 ): Promise<SubjectItem> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/classes/subjects/${subjectId}/assign-teacher`, {
+    const result = await apiFetch<{ data: any }>(`/classes/subjects/${subjectId}/assign-teacher`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      successMessage: 'Teacher assigned successfully.',
       body: JSON.stringify({ teacher_id: teacherId }),
     });
-
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => null);
-      throw new Error(errorBody?.message || 'Failed to assign teacher');
-    }
-
-    const result = await response.json();
     const item = result.data;
     const firstClass = item.class_lists && item.class_lists.length > 0 ? item.class_lists[0].class_list : null;
 
@@ -282,10 +269,10 @@ export const assignTeacherToSubject = async (
 
 export const removeSubject = async (subjectId: number): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/subjects/${subjectId}`, {
+    await apiFetch<void>(`/subjects/${subjectId}`, {
       method: 'DELETE',
+      successMessage: 'Subject removed successfully.',
     });
-    if (!response.ok) throw new Error('Failed to remove subject');
   } catch (error) {
     console.error('Error removing subject:', error);
     throw error;
@@ -303,16 +290,12 @@ export const addStudentToClass = async (
   }
 ): Promise<Student> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}/students`, {
+    const result = await apiFetch<{ data: any }>(`/classes/${classId}/students`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      successMessage: 'Student added successfully.',
       body: JSON.stringify(studentData),
     });
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => null);
-      throw new Error(errorBody?.message || 'Failed to add student');
-    }
-    const result = await response.json();
     return {
       id: result.data.student_id,
       classId,
@@ -330,13 +313,10 @@ export const removeStudentFromClass = async (
   studentId: number
 ): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}/students/${studentId}`, {
+    await apiFetch<void>(`/classes/${classId}/students/${studentId}`, {
       method: 'DELETE',
+      successMessage: 'Student removed successfully.',
     });
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => null);
-      throw new Error(errorBody?.message || 'Failed to remove student');
-    }
   } catch (error) {
     console.error('Error removing student from class:', error);
     throw error;
@@ -348,13 +328,12 @@ export const assignClassAdviser = async (
   teacherId: number
 ): Promise<ClassItem> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}`, {
+    const result = await apiFetch<{ data: ClassItem }>(`/classes/${classId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      successMessage: 'Class adviser assigned successfully.',
       body: JSON.stringify({ class_adviser: teacherId }),
     });
-    if (!response.ok) throw new Error('Failed to assign class adviser');
-    const result = await response.json();
     return result.data;
   } catch (error) {
     console.error('Error assigning class adviser:', error);

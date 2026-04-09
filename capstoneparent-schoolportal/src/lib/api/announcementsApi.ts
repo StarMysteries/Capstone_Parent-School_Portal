@@ -54,6 +54,7 @@ export const createAnnouncement = (payload: CreateAnnouncementPayload) => {
 
   return apiFetch<AnnouncementPostItem>("/announcements", {
     method: "POST",
+    successMessage: "Announcement posted successfully.",
     headers: {
       ...bearerHeaders(),
     },
@@ -108,6 +109,7 @@ export const updateAnnouncement = (
 
     return apiFetch<AnnouncementPostItem>(`/announcements/${announcementId}`, {
       method: "PUT",
+      successMessage: "Announcement updated successfully.",
       headers: {
         ...bearerHeaders(),
       },
@@ -117,6 +119,7 @@ export const updateAnnouncement = (
 
   return apiFetch<AnnouncementPostItem>(`/announcements/${announcementId}`, {
     method: "PUT",
+    successMessage: "Announcement updated successfully.",
     headers: {
       ...bearerHeaders(),
       "Content-Type": "application/json",

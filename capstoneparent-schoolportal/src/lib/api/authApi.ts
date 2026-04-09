@@ -38,6 +38,7 @@ export const authApi = {
   login(email: string, password: string, deviceToken: string) {
     return apiFetch<ApiData<{ token: string; user: AuthUser }>>("/auth/login", {
       method: "POST",
+      successMessage: "Logged in successfully.",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, deviceToken }),
     });
@@ -58,6 +59,7 @@ export const authApi = {
       ApiData<{ token: string; user: AuthUser; deviceToken: string }>
     >("/auth/verify-otp", {
       method: "POST",
+      successMessage: "Logged in successfully.",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otpCode }),
     });
@@ -67,6 +69,7 @@ export const authApi = {
   logout() {
     return apiFetch<ApiMessage>("/auth/logout", {
       method: "POST",
+      successMessage: "Logged out successfully.",
       headers: { "Content-Type": "application/json" },
     });
   },

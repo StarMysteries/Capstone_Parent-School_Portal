@@ -67,6 +67,7 @@ export const createEvent = (payload: EventPayload) =>
 
     return apiFetch<EventResponse>("/events", {
       method: "POST",
+      successMessage: "Event created successfully.",
       headers: {
         ...bearerHeaders(),
       },
@@ -101,6 +102,7 @@ export const updateEvent = (
 
       return apiFetch<EventResponse>(`/events/${eventId}`, {
         method: "PUT",
+        successMessage: "Event updated successfully.",
         headers: {
           ...bearerHeaders(),
         },
@@ -110,6 +112,7 @@ export const updateEvent = (
 
     return apiFetch<EventResponse>(`/events/${eventId}`, {
       method: "PUT",
+      successMessage: "Event updated successfully.",
       headers: {
         ...bearerHeaders(),
         "Content-Type": "application/json",
@@ -121,5 +124,6 @@ export const updateEvent = (
 export const deleteEvent = (eventId: number) =>
   apiFetch<{ message: string }>(`/events/${eventId}`, {
     method: "DELETE",
+    successMessage: "Event deleted successfully.",
     headers: bearerHeaders(),
   });

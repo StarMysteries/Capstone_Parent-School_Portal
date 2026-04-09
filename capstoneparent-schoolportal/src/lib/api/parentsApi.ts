@@ -86,6 +86,7 @@ export const parentsApi = {
   verifyRegistration(id: number, payload: VerifyRegistrationPayload) {
     return apiFetch<ApiData<BackendParentRegistration>>(`/parents/registrations/${id}/verify`, {
       method: "PATCH",
+      successMessage: "Parent verification updated successfully.",
       headers: {
         ...bearerHeaders(),
         "Content-Type": "application/json",

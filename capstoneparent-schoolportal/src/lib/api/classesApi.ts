@@ -38,6 +38,7 @@ export const classesApi = {
   createSection: async (name: string) => {
     return apiFetch<{ data: Section }>("/classes/sections", {
       method: "POST",
+      successMessage: "Section added successfully.",
       headers: {
         ...bearerHeaders(),
         "Content-Type": "application/json",
@@ -49,6 +50,7 @@ export const classesApi = {
   updateSection: async (id: number, name: string) => {
     return apiFetch<{ data: Section }>(`/classes/sections/${id}`, {
       method: "PUT",
+      successMessage: "Section updated successfully.",
       headers: {
         ...bearerHeaders(),
         "Content-Type": "application/json",
@@ -60,6 +62,7 @@ export const classesApi = {
   deleteSection: async (id: number) => {
     return apiFetch<void>(`/classes/sections/${id}`, {
       method: "DELETE",
+      successMessage: "Section deleted successfully.",
       headers: bearerHeaders(),
     });
   },
@@ -72,6 +75,7 @@ export const classesApi = {
       `/classes/${classId}/import-students`,
       {
         method: "POST",
+        successMessage: "Student list uploaded successfully.",
         headers: bearerHeaders(),
         body: formData,
       },

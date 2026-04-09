@@ -12,6 +12,7 @@ export const pagesApi = {
   updateContactUs: async (data: ContactUsContent): Promise<ContactUsContent> => {
     return apiFetch<ContactUsContent>("/pages/contact-us", {
       method: "PUT",
+      successMessage: "Contact Us updated successfully.",
       headers: { 
         ...bearerHeaders(),
         "Content-Type": "application/json" 
@@ -31,6 +32,7 @@ export const pagesApi = {
     
     return apiFetch<HistoryContent>("/pages/history", {
       method: "PUT",
+      successMessage: "History updated successfully.",
       headers: bearerHeaders(),
       body: formData
     });
@@ -45,6 +47,7 @@ export const pagesApi = {
     
     return apiFetch<TransparencyContent>("/pages/transparency", {
       method: "PUT",
+      successMessage: "Transparency updated successfully.",
       headers: bearerHeaders(),
       body: formData
     });
@@ -61,6 +64,9 @@ export const pagesApi = {
     
     return apiFetch<SchoolCalendarItem>("/pages/school-calendar", {
       method: "PUT",
+      successMessage: data.year
+        ? `School Calendar ${data.year} saved successfully.`
+        : "School Calendar saved successfully.",
       headers: bearerHeaders(),
       body: formData
     });
@@ -90,6 +96,9 @@ export const pagesApi = {
     
     return apiFetch<OrganizationalChartItem>("/pages/org-chart", {
       method: "PUT",
+      successMessage: data.year
+        ? `Organizational Chart ${data.year} saved successfully.`
+        : "Organizational Chart saved successfully.",
       headers: bearerHeaders(),
       body: formData
     });

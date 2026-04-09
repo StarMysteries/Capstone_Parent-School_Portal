@@ -22,6 +22,7 @@ import type {
   StudentStatus,
 } from "@/lib/api/types";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -66,6 +67,7 @@ const getStatusColor = (status: StudentStatus) => {
 };
 
 export const ManageStudents = () => {
+  const showError = useApiFeedbackStore((state) => state.showError);
   const role = useAuthStore((state) => state.user?.role);
   const canManageStudents =
     role === "admin" ||
@@ -221,7 +223,7 @@ export const ManageStudents = () => {
   const handleAddStudent = async () => {
     const validationError = validateForm();
     if (validationError) {
-      alert(validationError);
+      showError(validationError);
       return;
     }
 
@@ -231,9 +233,7 @@ export const ManageStudents = () => {
       setIsAddModalOpen(false);
       resetForm();
       await loadStudents(currentPage);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to add student");
-    } finally {
+    } catch {} finally {
       setIsSubmitting(false);
     }
   };
@@ -258,7 +258,7 @@ export const ManageStudents = () => {
 
     const validationError = validateForm();
     if (validationError) {
-      alert(validationError);
+      showError(validationError);
       return;
     }
 
@@ -269,9 +269,7 @@ export const ManageStudents = () => {
       setEditingStudent(null);
       resetForm();
       await loadStudents(currentPage);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update student");
-    } finally {
+    } catch {} finally {
       setIsSubmitting(false);
     }
   };
@@ -283,7 +281,6 @@ export const ManageStudents = () => {
       setIsBatchModalOpen(false);
       await loadStudents(1);
       setCurrentPage(1);
-      alert("Student CSV uploaded successfully.");
     } catch (err) {
       throw (err instanceof Error
         ? err

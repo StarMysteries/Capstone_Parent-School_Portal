@@ -214,7 +214,6 @@ export const QuarterlyGrades = () => {
 										<th className="border border-gray-400 px-2 py-2 font-semibold">Jan</th>
 										<th className="border border-gray-400 px-2 py-2 font-semibold">Feb</th>
 										<th className="border border-gray-400 px-2 py-2 font-semibold">Mar</th>
-										<th className="border border-gray-400 px-2 py-2 font-semibold">Apr</th>
 										<th className="border border-gray-400 px-2 py-2 font-semibold">Total</th>
 									</tr>
 								</thead>
@@ -224,7 +223,6 @@ export const QuarterlyGrades = () => {
 											No. of School Days
 										</td>
 										<td className="border border-gray-400 px-2 py-2">22</td>
-										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
@@ -250,7 +248,6 @@ export const QuarterlyGrades = () => {
 										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
-										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2 font-semibold">22</td>
 									</tr>
 									<tr>
@@ -258,7 +255,6 @@ export const QuarterlyGrades = () => {
 											No. of Times Absent
 										</td>
 										<td className="border border-gray-400 px-2 py-2">0</td>
-										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
 										<td className="border border-gray-400 px-2 py-2"></td>
