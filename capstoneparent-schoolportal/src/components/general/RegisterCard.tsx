@@ -26,6 +26,32 @@ interface StudentRow {
   showDropdown: boolean;
 }
 
+const FieldLabel = ({
+  label,
+  required = false,
+  hint,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+}) => (
+  <div className="mb-2">
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-semibold uppercase tracking-wide text-gray-700">
+        {label}
+      </span>
+      {required ? (
+        <span className="rounded-full bg-red-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-red-700">
+          Required
+        </span>
+      ) : null}
+    </div>
+    {hint ? (
+      <p className="mt-1 text-xs font-medium text-gray-500">{hint}</p>
+    ) : null}
+  </div>
+);
+
 const maskEmail = (email: string): string => {
   const [local, domain] = email.split("@");
   if (!domain) return email;
@@ -269,6 +295,10 @@ export const RegisterCard = () => {
       setErrorMessage("Passwords do not match");
       return;
     }
+    if (formData.password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters");
+      return;
+    }
     if (!formData.dateOfBirth) {
       setErrorMessage("Please enter your date of birth");
       return;
@@ -277,8 +307,8 @@ export const RegisterCard = () => {
       setErrorMessage("Please select at least one student");
       return;
     }
-    if (uploadedFiles.length === 0) {
-      setErrorMessage("Please upload at least one supporting document");
+    if (uploadedFiles.length < 2) {
+      setErrorMessage("Please upload at least two supporting documents");
       return;
     }
 
@@ -374,99 +404,111 @@ export const RegisterCard = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <Input
-                    type="text"
-                    placeholder="First Name"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      handleInputChange("firstName", e.target.value)
-                    }
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Last Name"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      handleInputChange("lastName", e.target.value)
-                    }
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
-
-                  {/*
-                    ── Date of Birth ──────────────────────────────────────────
-                    Root cause of the overlap: type="date" renders its own
-                    "mm/dd/yyyy" text that floats on top of any CSS-positioned
-                    label inside the same box.
-
-                    Fix: wrap both the static label text AND the bare <input>
-                    inside a <label> element styled as the pill. The label
-                    sits on the left as plain inline text; the date input fills
-                    the remaining space. They never overlap because they are
-                    separate inline siblings, not stacked via position:absolute.
-                  */}
-                  <label
-                    htmlFor="dob-input"
-                    className="flex h-14 w-full items-center rounded-full border-2 border-gray-900 bg-white px-6 gap-2 cursor-pointer"
-                  >
-                    <span className="shrink-0 text-lg text-gray-500 whitespace-nowrap">
-                      Date of Birth
-                    </span>
-                    <input
-                      id="dob-input"
-                      type="date"
-                      max={todayISO}
-                      value={formData.dateOfBirth}
+                  <div>
+                    <FieldLabel label="First Name" required />
+                    <Input
+                      type="text"
+                      placeholder="First Name"
+                      value={formData.firstName}
                       onChange={(e) =>
-                        handleInputChange("dateOfBirth", e.target.value)
+                        handleInputChange("firstName", e.target.value)
                       }
-                      className="flex-1 min-w-0 bg-transparent text-lg text-gray-900 focus:outline-none [color-scheme:light]"
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
                     />
-                  </label>
-
-                  <Input
-                    type="tel"
-                    placeholder="Contact Number"
-                    value={formData.contact}
-                    onChange={(e) =>
-                      handleInputChange("contact", e.target.value)
-                    }
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Address"
-                    value={formData.address}
-                    onChange={(e) =>
-                      handleInputChange("address", e.target.value)
-                    }
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      handleInputChange("password", e.target.value)
-                    }
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Confirm Password"
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                      handleInputChange("confirmPassword", e.target.value)
-                    }
-                    className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
-                  />
+                  </div>
+                  <div>
+                    <FieldLabel label="Last Name" required />
+                    <Input
+                      type="text"
+                      placeholder="Last Name"
+                      value={formData.lastName}
+                      onChange={(e) =>
+                        handleInputChange("lastName", e.target.value)
+                      }
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Date of Birth" required />
+                    <label
+                      htmlFor="dob-input"
+                      className="flex h-14 w-full items-center rounded-full border-2 border-gray-900 bg-white px-6 gap-2 cursor-pointer"
+                    >
+                      <span className="shrink-0 text-lg text-gray-500 whitespace-nowrap">
+                        Date of Birth
+                      </span>
+                      <input
+                        id="dob-input"
+                        type="date"
+                        max={todayISO}
+                        value={formData.dateOfBirth}
+                        onChange={(e) =>
+                          handleInputChange("dateOfBirth", e.target.value)
+                        }
+                        className="flex-1 min-w-0 bg-transparent text-lg text-gray-900 focus:outline-none [color-scheme:light]"
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <FieldLabel label="Contact Number" required />
+                    <Input
+                      type="tel"
+                      placeholder="Contact Number"
+                      value={formData.contact}
+                      onChange={(e) =>
+                        handleInputChange("contact", e.target.value)
+                      }
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Address" required />
+                    <Input
+                      type="text"
+                      placeholder="Address"
+                      value={formData.address}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value)
+                      }
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Email" required />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Password" required />
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Confirm Password" required />
+                    <Input
+                      type="password"
+                      placeholder="Confirm Password"
+                      value={formData.confirmPassword}
+                      onChange={(e) =>
+                        handleInputChange("confirmPassword", e.target.value)
+                      }
+                      className="h-14 rounded-full border-2 border-gray-900 bg-white px-6 text-lg placeholder:text-gray-500"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -533,6 +575,11 @@ export const RegisterCard = () => {
                 )}
 
                 <div className="space-y-3">
+                  <FieldLabel
+                    label="Student Lookup"
+                    required
+                    hint="Search by enrolled student LRN"
+                  />
                   {studentRows.map((row) => (
                     <div key={row.rowId} className="relative">
                       <div className="flex gap-2">
@@ -643,9 +690,15 @@ export const RegisterCard = () => {
                 </Button>
 
                 <div>
+                  <FieldLabel
+                    label="Supporting Documents"
+                    required
+                    hint="Upload at least 2 files"
+                  />
                   <input
                     type="file"
                     multiple
+                    accept=".jpg,.jpeg,.png,.pdf"
                     onChange={handleFileUpload}
                     className="hidden"
                     id={FILE_INPUT_ID}
@@ -674,6 +727,9 @@ export const RegisterCard = () => {
                     <Upload className="w-12 h-12 text-gray-600" />
                     <p className="text-xl font-medium text-gray-800">
                       Drag & Drop or Click to Upload Files
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Accepted files: JPG, JPEG, PNG, PDF. Maximum of 10 files.
                     </p>
                   </div>
                 </div>
@@ -724,6 +780,13 @@ export const RegisterCard = () => {
               Enter the 6-digit code sent to{" "}
               <span className="font-semibold">{maskEmail(pendingEmail)}</span>.
             </p>
+            <div className="mt-6">
+              <FieldLabel
+                label="OTP Code"
+                required
+                hint="Enter exactly 6 digits"
+              />
+            </div>
             <Input
               type="text"
               inputMode="numeric"

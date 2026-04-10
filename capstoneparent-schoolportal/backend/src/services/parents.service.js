@@ -1,6 +1,7 @@
 const prisma = require("../config/database");
 const { findOrThrow } = require("../utils/findOrThrow");
 const { deleteFileByUrl, refreshSignedUrl } = require("../utils/supabaseStorage");
+const PENDING_REGISTRATION_TTL_MS = 10 * 60 * 1000;
 
 /**
  * File → User relationship (from schema):
@@ -22,6 +23,61 @@ const { deleteFileByUrl, refreshSignedUrl } = require("../utils/supabaseStorage"
  */
 
 const parentsService = {
+  async purgeExpiredPendingRegistrations() {
+    const cutoff = new Date(Date.now() - PENDING_REGISTRATION_TTL_MS);
+    const expiredRegistrations = await prisma.parentRegistration.findMany({
+      where: {
+        status: "PENDING",
+        submitted_at: { lte: cutoff },
+      },
+      include: {
+        parent: {
+          include: {
+            roles: true,
+            _count: {
+              select: {
+                parent_registrations: true,
+              },
+            },
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
+    });
+
+    if (expiredRegistrations.length === 0) {
+      return 0;
+    }
+
+    for (const registration of expiredRegistrations) {
+      await parentsService.deleteRegistrationFiles(registration.files || []);
+
+      const shouldDeleteParentUser =
+        registration.parent &&
+        registration.parent.account_status === "Inactive" &&
+        registration.parent.roles.length === 1 &&
+        registration.parent.roles[0].role === "Parent" &&
+        registration.parent._count.parent_registrations === 1;
+
+      if (shouldDeleteParentUser) {
+        await prisma.user.delete({
+          where: { user_id: registration.parent.user_id },
+        });
+        continue;
+      }
+
+      await prisma.parentRegistration.delete({
+        where: { pr_id: registration.pr_id },
+      });
+    }
+
+    return expiredRegistrations.length;
+  },
+
   async refreshRegistrationFileUrls(registration) {
     const refreshedFiles = await Promise.all(
       (registration.files || []).map(async (entry) => ({
@@ -65,6 +121,8 @@ const parentsService = {
   },
 
   async submitRegistration({ parent_id, student_ids, file_ids }) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     const parsedStudentIds = (student_ids || []).map((id) => parseInt(id, 10));
     const parsedFileIds = (file_ids || []).map((id) => parseInt(id, 10));
 
@@ -122,6 +180,8 @@ const parentsService = {
   },
 
   async getAllRegistrations({ page, limit, status }) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const take = parseInt(limit);
 
@@ -173,6 +233,8 @@ const parentsService = {
   },
 
   async getRegistrationById(registrationId) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     const registration = await prisma.parentRegistration.findUnique({
       where: { pr_id: registrationId },
       include: {
@@ -199,6 +261,8 @@ const parentsService = {
   },
 
   async verifyRegistration({ pr_id, status, remarks, verified_by }) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     const existingRegistration = await prisma.parentRegistration.findUnique({
       where: { pr_id },
       include: {
@@ -260,6 +324,8 @@ const parentsService = {
   },
 
   async getMyChildren(parentId) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     await findOrThrow(
       () => prisma.user.findUnique({ where: { user_id: parentId } }),
       "Parent not found",
@@ -280,6 +346,8 @@ const parentsService = {
   },
 
   async getChildGrades({ parent_id, student_id }) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     const hasAccess = await prisma.parentRegistration.findFirst({
       where: {
         parent_id,
@@ -302,6 +370,8 @@ const parentsService = {
   },
 
   async getChildAttendance({ parent_id, student_id }) {
+    await parentsService.purgeExpiredPendingRegistrations();
+
     const hasAccess = await prisma.parentRegistration.findFirst({
       where: {
         parent_id,

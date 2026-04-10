@@ -6,6 +6,23 @@ const cookieParser = require("cookie-parser");
 const routes = require("./routes");
 const errorHandler = require("./middlewares/errorHandler");
 const { globalLimiter } = require("./middlewares/rateLimiter");
+const parentsService = require("./services/parents.service");
+
+const REGISTRATION_CLEANUP_INTERVAL_MS = 60 * 1000;
+if (!global.__parentRegistrationCleanupTimer) {
+  global.__parentRegistrationCleanupTimer = setInterval(async () => {
+    try {
+      await parentsService.purgeExpiredPendingRegistrations();
+    } catch (error) {
+      console.error(
+        "[app] Failed to purge expired pending parent registrations",
+        error,
+      );
+    }
+  }, REGISTRATION_CLEANUP_INTERVAL_MS);
+
+  global.__parentRegistrationCleanupTimer.unref?.();
+}
 
 const app = express();
 

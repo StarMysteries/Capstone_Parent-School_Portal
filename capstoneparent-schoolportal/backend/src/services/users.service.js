@@ -2,6 +2,7 @@ const prisma = require("../config/database");
 const { uploadFiles, replaceFile } = require("../utils/supabaseStorage");
 const { findOrThrow } = require("../utils/findOrThrow");
 const { hashPassword, comparePassword } = require("../utils/hashUtil");
+const MIN_PASSWORD_LENGTH = 8;
 
 const usersService = {
   /**
@@ -297,6 +298,12 @@ const usersService = {
    * @param {string} newPassword      Plain-text new password
    */
   async changePassword(userId, currentPassword, newPassword) {
+    if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
+      throw new Error(
+        `New password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { user_id: userId },
       select: { user_id: true, password: true },

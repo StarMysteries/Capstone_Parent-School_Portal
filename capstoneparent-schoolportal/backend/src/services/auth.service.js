@@ -15,6 +15,7 @@ const usersService = require("./users.service");
 // ─── Pending Registrations Store ────────────────────────────────────────────
 const pendingRegistrations = new Map();
 const PENDING_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const MIN_PASSWORD_LENGTH = 8;
 
 // ─── Password Reset Token Store ─────────────────────────────────────────────
 const passwordResetTokens = new Map();
@@ -89,9 +90,16 @@ const authService = {
 
     const resolvedRoles = ["Parent"];
 
-    if (!files || files.length === 0) {
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
       cleanupTempFiles({ filePaths: files.map((f) => ({ path: f.path })) });
-      throw new Error("Parents must upload at least one supporting document");
+      throw new Error(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      );
+    }
+
+    if (!files || files.length < 2) {
+      cleanupTempFiles({ filePaths: files.map((f) => ({ path: f.path })) });
+      throw new Error("Parents must upload at least two supporting documents");
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -158,6 +166,13 @@ const authService = {
     } = userData;
 
     const resolvedRoles = (roles || []).filter((r) => r !== "Parent");
+    if (!password || password.length < MIN_PASSWORD_LENGTH) {
+      cleanupTempFiles({ filePaths: files.map((f) => ({ path: f.path })) });
+      throw new Error(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      );
+    }
+
     if (resolvedRoles.length === 0) {
       cleanupTempFiles({ filePaths: files.map((f) => ({ path: f.path })) });
       throw new Error("Employee must have at least one valid role");
@@ -455,6 +470,12 @@ const authService = {
 
   //http://localhost:5000/api/auth/reset-password
   async resetPassword(token, newPassword) {
+    if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
+      throw new Error(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      );
+    }
+
     const entry = passwordResetTokens.get(token);
 
     if (!entry) {
