@@ -2,12 +2,16 @@
   "name": "scholarhub",
   "private": true,
   "version": "0.0.0",
+  "main": "backend/src/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node backend/src/server.js",
+    "start": "npx prisma migrate deploy --schema=backend/prisma/schema.prisma && node backend/src/server.js",
     "postinstall": "npx prisma generate --schema=backend/prisma/schema.prisma"
   },
   "dependencies": {
