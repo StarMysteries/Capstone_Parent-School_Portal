@@ -7,7 +7,6 @@ import { getDefaultRouteForRole } from "@/lib/auth";
 const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Admin",
   principal: "Principal",
-  vice_principal: "Vice Principal",
   teacher: "Teacher",
   librarian: "Librarian",
   parent: "Parent",

@@ -26,7 +26,7 @@ const announcementsService = {
       where.announcement_type = type;
     } else {
       const isStaff = userRoles.some(role =>
-        ['Teacher', 'Admin', 'Principal', 'Vice_Principal', 'Librarian'].includes(role)
+        ['Teacher', 'Admin', 'Principal', 'Librarian'].includes(role)
       );
 
       if (!isStaff) {

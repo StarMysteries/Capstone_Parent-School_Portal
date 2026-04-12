@@ -159,7 +159,7 @@ const App = () => {
           path="/managestudents"
           element={
             <ProtectedRoute
-              allowedRoles={["admin", "teacher", "principal", "vice_principal"]}
+              allowedRoles={["admin", "teacher", "principal"]}
             >
               <ManageStudents />
             </ProtectedRoute>
@@ -168,7 +168,7 @@ const App = () => {
         <Route
           path="/managesections"
           element={
-            <ProtectedRoute allowedRoles={["admin", "principal", "vice_principal"]}>
+            <ProtectedRoute allowedRoles={["admin", "principal"]}>
               <ManageSection />
             </ProtectedRoute>
           }
@@ -266,7 +266,7 @@ const App = () => {
         <Route
           path="/manageclasslists"
           element={
-            <ProtectedRoute allowedRoles={["principal", "vice_principal"]}>
+            <ProtectedRoute allowedRoles={["principal"]}>
               <ManageClassLists />
             </ProtectedRoute>
           }

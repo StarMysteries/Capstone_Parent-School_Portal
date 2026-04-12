@@ -60,23 +60,6 @@ const NAV_CONFIGS: Record<UserRole, NavConfig> = {
     logoAlt: LOGO_ALT,
   },
 
-  vice_principal: {
-    announcementPath: "/announcements",
-    announcementActivePaths: ANNOUNCEMENT_PATHS,
-    recordsItems: [
-      { label: "Manage Class Lists", to: "/manageclasslists" },
-      { label: "Manage Sections", to: "/managesections" },
-      { label: "Manage Students", to: "/managestudents" },
-    ],
-    recordsActivePaths: [
-      "/manageclasslists",
-      "/managesections",
-      "/managestudents",
-    ],
-    sticky: true,
-    logoAlt: LOGO_ALT,
-  },
-
   teacher: {
     announcementPath: "/announcements",
     announcementActivePaths: ANNOUNCEMENT_PATHS,

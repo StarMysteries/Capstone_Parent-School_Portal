@@ -2,7 +2,7 @@
  * src/lib/api/auth.ts
  */
 
-import { apiFetch } from "./base";
+import { apiFetch, bearerHeaders } from "./base";
 import type { ApiMessage, ApiData, AuthUser } from "./types";
 
 export const authApi = {
@@ -70,7 +70,11 @@ export const authApi = {
     return apiFetch<ApiMessage>("/auth/logout", {
       method: "POST",
       successMessage: "Logged out successfully.",
-      headers: { "Content-Type": "application/json" },
+      skipErrorFeedback: true,
+      headers: {
+        "Content-Type": "application/json",
+        ...bearerHeaders(),
+      },
     });
   },
 

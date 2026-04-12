@@ -18,7 +18,7 @@ router.use(authenticate);
 
 // Get all class lists
 router.get('/',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     query('school_year').optional().isInt(),
     query('grade_level').optional().isInt(),
@@ -31,19 +31,19 @@ router.get('/',
 
 // Get teacher's classes (same user_id as adviser / subject teacher; empty list if none)
 router.get('/teacher/list',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   classesController.getTeacherClasses
 );
 
 // Get teacher's subjects
 router.get('/subjects/teacher',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   classesController.getTeacherSubjects
 );
 
 // Get all subjects
 router.get('/subjects/all',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 })
@@ -54,31 +54,31 @@ router.get('/subjects/all',
 
 // Get all sections
 router.get('/sections/all',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   classesController.getAllSections
 );
 
 // Download grade sheet template
 router.get('/grade-sheet-template',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   classesController.downloadGradeSheetTemplate
 );
 
 // Download attendance template
 router.get('/attendance-template',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   classesController.downloadAttendanceTemplate
 );
 
 // Get all grade levels
 router.get('/grade-levels/all',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   classesController.getAllGradeLevels
 );
 
 // Create section
 router.post('/sections',
-  authorize('Admin', 'Principal', 'Vice_Principal'),
+  authorize('Admin', 'Principal'),
   [
     body('section_name').notEmpty().withMessage('Section name is required')
   ],
@@ -88,7 +88,7 @@ router.post('/sections',
 
 // Update section
 router.put('/sections/:id',
-  authorize('Admin', 'Principal', 'Vice_Principal'),
+  authorize('Admin', 'Principal'),
   [
     param('id').isInt(),
     body('section_name').notEmpty().withMessage('Section name is required')
@@ -107,7 +107,7 @@ router.delete('/sections/:id',
 
 // Get class by ID
 router.get('/:id',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   validate,
   classesController.getClassById
@@ -115,7 +115,7 @@ router.get('/:id',
 
 // Create class (Admin only)
 router.post('/',
-  authorize('Admin', 'Principal', 'Vice_Principal'),
+  authorize('Admin', 'Principal'),
   [
     body('gl_id').isInt(),
     body('section_id').isInt(),
@@ -130,7 +130,7 @@ router.post('/',
 
 // Update class
 router.put('/:id',
-  authorize('Admin', 'Principal', 'Vice_Principal'),
+  authorize('Admin', 'Principal'),
   [
     param('id').isInt(),
     body('gl_id').optional().isInt(),
@@ -145,7 +145,7 @@ router.put('/:id',
 // Upload class schedule image
 router.post(
   '/:id/upload-schedule',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   upload.single('file'),
   validate,
@@ -162,7 +162,7 @@ router.delete('/:id',
 
 // Add subject to class
 router.post('/:id/subjects',
-  authorize('Admin', 'Principal', 'Vice_Principal', 'Teacher'),
+  authorize('Admin', 'Principal', 'Teacher'),
   [
     param('id').isInt(),
     body('subject_name').notEmpty(),
@@ -176,7 +176,7 @@ router.post('/:id/subjects',
 
 // Get class subjects
 router.get('/:id/subjects',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   validate,
   classesController.getClassSubjects
@@ -184,7 +184,7 @@ router.get('/:id/subjects',
 
 // Assign teacher to subject
 router.put('/subjects/:subjectId/assign-teacher',
-  authorize('Admin', 'Principal', 'Vice_Principal'),
+  authorize('Admin', 'Principal'),
   [
     param('subjectId').isInt(),
     body('teacher_id').isInt().withMessage('Teacher is required'),
@@ -195,7 +195,7 @@ router.put('/subjects/:subjectId/assign-teacher',
 
 // Add student to class
 router.post('/:id/students',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     param('id').isInt(),
     body('student_id').optional().isInt(),
@@ -212,7 +212,7 @@ router.post('/:id/students',
 
 // Remove student from class
 router.delete('/:id/students/:studentId',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     param('id').isInt(),
     param('studentId').isInt()
@@ -223,7 +223,7 @@ router.delete('/:id/students/:studentId',
 
 // Add student to subject
 router.post('/subjects/:subjectId/students/:studentId',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     param('subjectId').isInt(),
     param('studentId').isInt()
@@ -234,7 +234,7 @@ router.post('/subjects/:subjectId/students/:studentId',
 
 // Remove student from subject
 router.delete('/subjects/:subjectId/students/:studentId',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     param('subjectId').isInt(),
     param('studentId').isInt()
@@ -245,7 +245,7 @@ router.delete('/subjects/:subjectId/students/:studentId',
 
 // Update student grades
 router.put('/subjects/:subjectId/students/:studentId/grades',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     param('subjectId').isInt(),
     param('studentId').isInt(),
@@ -260,7 +260,7 @@ router.put('/subjects/:subjectId/students/:studentId/grades',
 
 // Update attendance
 router.post('/students/:studentId/attendance',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   [
     param('studentId').isInt(),
     body('school_days').isInt({ min: 0 }),
@@ -273,7 +273,7 @@ router.post('/students/:studentId/attendance',
 );
 
 router.get('/:id/export-grades-all-quarters',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   validate,
   classesController.exportAllQuartersGrades
@@ -281,7 +281,7 @@ router.get('/:id/export-grades-all-quarters',
 
 // Import subject grades via CSV
 router.post('/:id/import-grades',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   upload.single('file'),
   validate,
@@ -290,7 +290,7 @@ router.post('/:id/import-grades',
 
 // Import subject grades via CSV
 router.post('/subjects/:id/import-grades',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   upload.single('file'),
   validate,
@@ -299,7 +299,7 @@ router.post('/subjects/:id/import-grades',
 
 // Import class attendance via CSV
 router.post('/:id/import-attendance',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   upload.single('file'),
   validate,
@@ -308,7 +308,7 @@ router.post('/:id/import-attendance',
 
 // Backward-compatible import class attendance via CSV
 router.post('/import-attendance',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   upload.single('file'),
   validate,
   classesController.importAttendance
@@ -316,7 +316,7 @@ router.post('/import-attendance',
 
 // Import student list for a class via CSV
 router.post('/:id/import-students',
-  authorize('Teacher', 'Admin', 'Principal', 'Vice_Principal'),
+  authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
   upload.single('file'),
   validate,

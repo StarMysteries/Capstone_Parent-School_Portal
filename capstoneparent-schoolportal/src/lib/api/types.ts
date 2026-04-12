@@ -73,3 +73,54 @@ export interface PaginationMeta {
   limit: number;
   totalPages: number;
 }
+
+export interface ApiPaginatedData<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+export interface LibraryCategory {
+  category_id: number;
+  category_name: string;
+}
+
+export type ItemType = "Learning_Resource" | "Book";
+export type MaterialStatus = "AVAILABLE" | "BORROWED" | "LOST" | "GIVEN";
+
+export interface MaterialCopy {
+  copy_id: number;
+  item_id: number;
+  copy_code: number;
+  status: MaterialStatus;
+  condition?: string;
+  added_at: string;
+}
+
+export interface LearningMaterial {
+  item_id: number;
+  item_name: string;
+  author?: string;
+  item_type: ItemType;
+  category_id: number;
+  gl_id: number;
+  uploaded_at: string;
+  uploaded_by: number;
+  category?: LibraryCategory;
+  grade_level?: GradeLevel;
+  copies?: MaterialCopy[];
+}
+
+export interface BorrowRecord {
+  mbr_id: number;
+  copy_id: number;
+  student_id?: number | null;
+  user_id?: number | null;
+  penalty_cost: number | string;
+  borrowed_at: string;
+  due_at: string;
+  returned_at?: string | null;
+  remarks?: string | null;
+  copy?: MaterialCopy & { item?: LearningMaterial };
+  student?: { fname: string; lname: string };
+  user?: { fname: string; lname: string };
+}

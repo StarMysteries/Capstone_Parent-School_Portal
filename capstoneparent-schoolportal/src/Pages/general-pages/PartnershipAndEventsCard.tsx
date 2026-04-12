@@ -187,7 +187,6 @@ export const PartnershipAndEventsCard = () => {
 
 						<section className="rounded-2xl bg-(--button-green) p-6 text-white shadow-sm ring-1 ring-black/5 md:p-8">
 							<div className="space-y-4 text-lg leading-relaxed text-white/95">
-								<p className="text-3xl leading-snug md:text-4xl">{event.description}</p>
 								{event.details.map((paragraph) => (
 									<p key={paragraph}>{paragraph}</p>
 								))}

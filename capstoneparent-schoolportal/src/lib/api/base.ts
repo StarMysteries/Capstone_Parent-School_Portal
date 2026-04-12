@@ -4,6 +4,7 @@
  */
 
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { useAuthStore } from "@/lib/store/authStore";
 
 function normalizeApiBaseUrl(url?: string): string {
   const fallback = "/api";
@@ -100,6 +101,13 @@ export async function apiFetch<T>(
       (typeof data?.message === "string" && data.message) ||
       (typeof data?.error === "string" && data.error) ||
       `Request failed: ${res.status}`;
+
+    // Handle session expiration
+    if (res.status === 401) {
+      useAuthStore.getState().logout();
+      useApiFeedbackStore.getState().showError("Session expired. Please log in again.");
+      throw new Error("Session expired");
+    }
 
     if (isMutation && !skipErrorFeedback) {
       useApiFeedbackStore.getState().showError(errorMessage || msg);

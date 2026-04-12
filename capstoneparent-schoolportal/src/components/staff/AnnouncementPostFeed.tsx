@@ -141,7 +141,7 @@ const AnnouncementFeedSkeleton = () => (
           key={index}
           className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 sm:grid-cols-[68px_minmax(0,1fr)] sm:gap-5"
         >
-          <div className="mt-4 h-14 w-14 animate-pulse rounded-full border-2 border-gray-200 bg-gray-200 sm:h-16 sm:w-16" />
+          <div className="mt-4 h-14 w-14 animate-pulse rounded-full border-2 border-gray-300 bg-white object-cover sm:h-16 sm:w-16" />
           <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-5 shadow-sm sm:p-7 lg:p-8">
             <div className="h-7 w-40 animate-pulse rounded bg-gray-200 sm:h-8" />
             <div className="mt-2 h-4 w-24 animate-pulse rounded bg-gray-200" />
@@ -175,7 +175,6 @@ export const AnnouncementPostFeed = ({
   const ROLE_ORDER = [
     "admin",
     "principal",
-    "vice_principal",
     "teacher",
     "librarian",
   ] as const;
@@ -183,9 +182,8 @@ export const AnnouncementPostFeed = ({
   const ROLE_LABELS: Record<(typeof ROLE_ORDER)[number], string> = {
     admin: "Admin",
     principal: "Principal",
-    vice_principal: "Vice Principal",
     teacher: "Teacher",
-    librarian: "librarian",
+    librarian: "Librarian",
   };
 
   const getPrimaryRoleLabel = (roles?: Array<{ role: string }>) => {

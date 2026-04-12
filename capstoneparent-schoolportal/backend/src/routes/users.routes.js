@@ -67,10 +67,9 @@ router.patch(
         "Teacher",
         "Admin",
         "Principal",
-        "Vice_Principal",
       ])
       .withMessage(
-        "Each role must be one of: Parent, Librarian, Teacher, Admin, Principal, Vice_Principal",
+        "Each role must be one of: Parent, Librarian, Teacher, Admin, Principal",
       ),
   ],
   validate,
@@ -89,7 +88,6 @@ router.post(
       "Teacher",
       "Admin",
       "Principal",
-      "Vice_Principal",
     ]),
   ],
   validate,

@@ -140,16 +140,19 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-2 pt-1 md:grid-cols-[180px_1fr] md:items-center">
-          <p className="text-lg font-medium text-gray-900">Profile Picture:</p>
-          <div className="flex items-center gap-3">
-            <label htmlFor="profile-upload" className="inline-flex cursor-pointer items-center rounded-full bg-(--button-green) px-5 py-2 text-base font-semibold text-white transition-colors hover:bg-(--button-hover-green)">
-              Upload Picture +
-            </label>
-            <input id="profile-upload" type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
-            <div className="h-12 w-12 overflow-hidden rounded-full border border-gray-300 bg-gray-200">
-              <img src={formData.profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
+        <div className="grid grid-cols-1 gap-2 pt-1 md:grid-cols-[180px_1fr] md:items-start">
+          <p className="text-lg font-medium text-gray-900 md:pt-2">Profile Picture:</p>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <label htmlFor="profile-upload" className="inline-flex cursor-pointer items-center rounded-full bg-(--button-green) px-5 py-2 text-base font-semibold text-white transition-colors hover:bg-(--button-hover-green)">
+                Upload Picture +
+              </label>
+              <input id="profile-upload" type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
+              <div className="h-12 w-12 overflow-hidden rounded-full border border-gray-300 bg-gray-200">
+                <img src={formData.profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
+              </div>
             </div>
+            <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 5 MB</p>
           </div>
         </div>
 

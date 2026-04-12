@@ -31,7 +31,7 @@ router.use(authenticate);
 
 router.get(
   "/lookup",
-  authorize("Teacher", "Admin", "Principal", "Vice_Principal"),
+  authorize("Teacher", "Admin", "Principal"),
   [
     query("q")
       .notEmpty()
@@ -46,7 +46,7 @@ router.get(
 // Get all students
 router.get(
   "/",
-  authorize("Teacher", "Admin", "Principal", "Vice_Principal"),
+  authorize("Teacher", "Admin", "Principal"),
   [
     query("status")
       .optional()
@@ -72,7 +72,7 @@ router.get(
 // Create student
 router.post(
   "/",
-  authorize("Admin", "Principal", "Vice_Principal", "Teacher"),
+  authorize("Admin", "Principal", "Teacher"),
   [
     body("fname").notEmpty().trim(),
     body("lname").notEmpty().trim(),
@@ -98,7 +98,7 @@ router.post(
 // Import students via CSV
 router.post(
   "/import",
-  authorize("Admin", "Principal", "Vice_Principal", "Teacher"),
+  authorize("Admin", "Principal", "Teacher"),
   upload.single("file"),
   validate,
   studentsController.importStudents,
@@ -107,7 +107,7 @@ router.post(
 // Update student
 router.put(
   "/:id",
-  authorize("Admin", "Principal", "Vice_Principal", "Teacher"),
+  authorize("Admin", "Principal", "Teacher"),
   [
     param("id").isInt(),
     body("fname").optional().trim(),
@@ -133,7 +133,7 @@ router.put(
 // Delete student
 router.delete(
   "/:id",
-  authorize("Admin", "Principal", "Vice_Principal"),
+  authorize("Admin", "Principal"),
   param("id").isInt(),
   validate,
   studentsController.deleteStudent,
@@ -149,7 +149,7 @@ router.get(
 
 router.get(
   "/:id/export-grades",
-  authorize("Teacher", "Admin", "Principal", "Vice_Principal"),
+  authorize("Teacher", "Admin", "Principal"),
   param("id").isInt(),
   validate,
   studentsController.exportQuarterlyGrades,

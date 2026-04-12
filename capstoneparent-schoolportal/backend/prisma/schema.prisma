@@ -18,7 +18,6 @@ enum UserRole {
   Teacher
   Admin
   Principal
-  Vice_Principal
 }
 
 enum AnnouncementType {

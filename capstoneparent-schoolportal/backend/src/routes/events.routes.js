@@ -39,7 +39,7 @@ router.use(authenticate);
 // Create event (Admin, Principal, Vice Principal only)
 router.post(
   "/",
-  authorize("Admin", "Principal", "Vice_Principal"),
+  authorize("Admin", "Principal"),
   upload.single("asset"),
   [
     body("event_title").notEmpty().trim(),
@@ -53,7 +53,7 @@ router.post(
 // Update event
 router.put(
   "/:id",
-  authorize("Admin", "Principal", "Vice_Principal"),
+  authorize("Admin", "Principal"),
   upload.single("asset"),
   [
     param("id").isInt(),
@@ -68,7 +68,7 @@ router.put(
 // Delete event
 router.delete(
   "/:id",
-  authorize("Admin", "Principal", "Vice_Principal"),
+  authorize("Admin", "Principal"),
   param("id").isInt(),
   validate,
   eventsController.deleteEvent,

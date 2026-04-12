@@ -64,7 +64,7 @@ router.post(
 // Get all parent registrations (Admin, Teacher only)
 router.get(
   "/registrations",
-  authorize("Admin", "Teacher", "Principal", "Vice_Principal"),
+  authorize("Admin", "Teacher", "Principal"),
   [
     query("status").optional().isIn(["VERIFIED", "PENDING", "DENIED"]),
     query("page").optional().isInt({ min: 1 }),
@@ -85,7 +85,7 @@ router.get(
 // Verify parent registration (Admin, Teacher only)
 router.patch(
   "/registrations/:id/verify",
-  authorize("Admin", "Teacher", "Principal", "Vice_Principal"),
+  authorize("Admin", "Teacher", "Principal"),
   [
     param("id").isInt(),
     body("status").isIn(["VERIFIED", "DENIED"]),
