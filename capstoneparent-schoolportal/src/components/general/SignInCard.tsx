@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth";
 import { authApi, type AuthUser } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,8 +22,8 @@ export const SignInCard = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { showError, clearFeedback } = useApiFeedbackStore();
   const navigate = useNavigate();
 
   // ── Finish: store session and navigate ──────────────────────────────────────
@@ -38,7 +39,7 @@ export const SignInCard = () => {
   // ── Step 1: credentials ─────────────────────────────────────────────────────
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    clearFeedback();
     setLoading(true);
 
     try {
@@ -60,10 +61,10 @@ export const SignInCard = () => {
           await authApi.sendOtp(email);
           setStep("otp");
         } catch {
-          setError("Could not send OTP. Please try again.");
+          showError("Could not send OTP. Please try again.");
         }
       } else {
-        setError(msg);
+        showError(msg);
       }
     } finally {
       setLoading(false);
@@ -73,26 +74,26 @@ export const SignInCard = () => {
   // ── Step 2: OTP verification ────────────────────────────────────────────────
   const handleOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    clearFeedback();
     setLoading(true);
 
     try {
       const res = await authApi.verifyOtp(email, otpCode);
       finalise(res.data.token, res.data.user, res.data.deviceToken);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid OTP");
+      showError(err instanceof Error ? err.message : "Invalid OTP");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    setError("");
+    clearFeedback();
     setLoading(true);
     try {
       await authApi.sendOtp(email);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not resend OTP");
+      showError(err instanceof Error ? err.message : "Could not resend OTP");
     } finally {
       setLoading(false);
     }
@@ -148,12 +149,6 @@ export const SignInCard = () => {
               </Link>
             </p>
 
-            {error && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                {error}
-              </p>
-            )}
-
             <div className="pt-3 text-center">
               <Button
                 type="submit"
@@ -189,12 +184,6 @@ export const SignInCard = () => {
               className="h-13 rounded-2xl border border-gray-500 bg-gray-100 px-6 text-3xl tracking-widest text-gray-800 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />
 
-            {error && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                {error}
-              </p>
-            )}
-
             <div className="pt-3 text-center">
               <Button
                 type="submit"
@@ -210,7 +199,7 @@ export const SignInCard = () => {
                 type="button"
                 onClick={() => {
                   setStep("credentials");
-                  setError("");
+                  clearFeedback();
                   setOtpCode("");
                 }}
                 className="hover:underline"

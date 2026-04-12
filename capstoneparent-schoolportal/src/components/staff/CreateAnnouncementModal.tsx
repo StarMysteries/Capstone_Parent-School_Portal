@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 type AnnouncementCategory = "general" | "staffs" | "memorandum";
 
@@ -41,6 +42,7 @@ export const CreateAnnouncementModal = ({
   const [category, setCategory] = useState<AnnouncementCategory>("general");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -49,7 +51,8 @@ export const CreateAnnouncementModal = ({
     setTitle("");
     setContent("");
     setFiles([]);
-  }, [isOpen, defaultCategory]);
+    clearFeedback();
+  }, [isOpen, defaultCategory, clearFeedback]);
 
   if (!isOpen) return null;
 
@@ -83,14 +86,17 @@ export const CreateAnnouncementModal = ({
   const handleDeleteFile = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
-
   const handlePost = async () => {
     if (!title.trim()) {
+      showError("Please enter an announcement title.");
       return;
     }
     if (!content.trim()) {
+      showError("Please enter announcement details.");
       return;
     }
+
+    clearFeedback();
 
     setSubmitting(true);
     try {
@@ -105,6 +111,7 @@ export const CreateAnnouncementModal = ({
       onClose();
     } catch (err) {
       console.error(err);
+      showError(err instanceof Error ? err.message : "Failed to create announcement.");
     } finally {
       setSubmitting(false);
     }

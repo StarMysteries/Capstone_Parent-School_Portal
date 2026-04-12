@@ -10,6 +10,7 @@ import {
   normalizeRegistration,
   type ParentRegistrationStatus,
 } from "@/lib/api/parentsApi";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 type VerificationStatus = ParentVerificationRecord["status"];
 
@@ -26,7 +27,7 @@ export const ManageParentVerification = () => {
   const [selectedVerificationId, setSelectedVerificationId] = useState<number | null>(null);
   const [modalRemarks, setModalRemarks] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   const selectedVerification = useMemo(
     () =>
@@ -48,13 +49,13 @@ export const ManageParentVerification = () => {
 
   const loadRegistrations = useCallback(async () => {
     setIsLoading(true);
-    setErrorMessage("");
+    clearFeedback();
 
     try {
       const response = await parentsApi.getRegistrations(statusFilter);
       setVerifications(response.data.map(normalizeRegistration));
     } catch (error) {
-      setErrorMessage(
+      showError(
         error instanceof Error ? error.message : "Failed to load parent registrations",
       );
     } finally {
@@ -146,7 +147,7 @@ export const ManageParentVerification = () => {
       await loadRegistrations();
       closeVerification();
     } catch (error) {
-      setErrorMessage(
+      showError(
         error instanceof Error ? error.message : "Failed to update verification",
       );
     }
@@ -223,11 +224,7 @@ export const ManageParentVerification = () => {
             </div>
           </div>
 
-          {errorMessage ? (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-              {errorMessage}
-            </div>
-          ) : null}
+
 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">

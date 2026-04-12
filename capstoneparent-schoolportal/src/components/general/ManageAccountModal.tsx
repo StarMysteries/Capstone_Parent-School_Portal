@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import type { ProfileModalData } from "./profileModalData";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 interface ManageAccountModalProps {
   isOpen: boolean;
@@ -15,12 +16,14 @@ interface ManageAccountModalProps {
 export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfile, onSave }: ManageAccountModalProps) => {
   const [formData, setFormData] = useState<ProfileModalData>(profileData);
   const [profileFile, setProfileFile] = useState<File>();
+  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (!isOpen) return;
     setFormData(profileData);
     setProfileFile(undefined);
-  }, [isOpen, profileData]);
+    clearFeedback();
+  }, [isOpen, profileData, clearFeedback]);
 
   const handleFieldChange = (field: keyof ProfileModalData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -51,20 +54,44 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    clearFeedback();
 
-    if (!formData.fname.trim() || !formData.lname.trim() || !formData.contactNo.trim() || !formData.email.trim()) {
+    if (!formData.fname.trim()) {
+      showError("First name is required.");
+      return;
+    }
+    if (!formData.lname.trim()) {
+      showError("Last name is required.");
+      return;
+    }
+    if (!formData.contactNo.trim()) {
+      showError("Contact number is required.");
+      return;
+    }
+    if (!formData.email.trim()) {
+      showError("Email is required.");
       return;
     }
 
-    await onSave({
-      ...formData,
-      fname: formData.fname.trim(),
-      lname: formData.lname.trim(),
-      contactNo: formData.contactNo.trim(),
-      dateOfBirth: formData.dateOfBirth.trim(),
-      address: formData.address.trim(),
-      email: formData.email.trim(),
-    }, profileFile);
+    try {
+      const result = await onSave({
+        ...formData,
+        fname: formData.fname.trim(),
+        lname: formData.lname.trim(),
+        contactNo: formData.contactNo.trim(),
+        dateOfBirth: formData.dateOfBirth.trim(),
+        address: formData.address.trim(),
+        email: formData.email.trim(),
+      }, profileFile);
+
+      if (result.success) {
+        showSuccess(result.message || "Account updated successfully.");
+      } else {
+        showError(result.message || "Failed to update account.");
+      }
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "An unexpected error occurred.");
+    }
   };
 
   return (

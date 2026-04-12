@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import AddNumberOfCopiesModal from './AddNumberOfCopiesModal';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 interface AddBookCopyModalProps {
 	onClose: () => void;
@@ -29,6 +30,7 @@ const AddBookCopyModal: React.FC<AddBookCopyModalProps> = ({ onClose, bookTitle 
 	const [newCopies, setNewCopies] = React.useState<number[]>([]);
 	const [isAddNumberModalOpen, setIsAddNumberModalOpen] = React.useState(false);
 	const [isSaving, setIsSaving] = React.useState(false);
+	const { showError, clearFeedback } = useApiFeedbackStore();
 
 	const handleAddCopies = (numberOfCopies: number) => {
 		const existingSet = new Set([...existingCopyCodes, ...newCopies]);
@@ -46,12 +48,15 @@ const AddBookCopyModal: React.FC<AddBookCopyModalProps> = ({ onClose, bookTitle 
 			return;
 		}
 
+		clearFeedback();
+
 		setIsSaving(true);
 		try {
 			await onAddCopies(newCopies);
 			onClose();
 		} catch (error) {
 			console.error("Failed to add copies", error);
+			showError(error instanceof Error ? error.message : "Failed to add book copies.");
 		} finally {
 			setIsSaving(false);
 		}

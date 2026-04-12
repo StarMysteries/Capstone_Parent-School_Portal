@@ -86,7 +86,7 @@ export const ManageStudents = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { clearFeedback } = useApiFeedbackStore();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [gradeLevelFilter, setGradeLevelFilter] = useState("all");
@@ -101,7 +101,7 @@ export const ManageStudents = () => {
 
   const loadStudents = async (page = currentPage) => {
     setIsLoading(true);
-    setError(null);
+    clearFeedback();
 
     try {
       const status =
@@ -119,7 +119,7 @@ export const ManageStudents = () => {
       setStudents(response.data);
       setPagination(response.pagination);
     } catch (err) {
-      setError(
+      showError(
         err instanceof Error ? err.message : "Failed to fetch students",
       );
     } finally {
@@ -135,7 +135,7 @@ export const ManageStudents = () => {
         ]);
         setGradeLevels(gradeLevelsResponse.data);
       } catch (err) {
-        setError(
+        showError(
           err instanceof Error
             ? err.message
             : "Failed to fetch student form options",
@@ -409,16 +409,7 @@ export const ManageStudents = () => {
               <Loader2 className="mb-2 h-8 w-8 animate-spin text-(--button-green)" />
               <p>Loading students...</p>
             </div>
-          ) : error ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-center text-red-600">
-              <p>{error}</p>
-              <button
-                onClick={() => loadStudents(currentPage)}
-                className="mt-2 text-sm font-semibold underline hover:text-red-700"
-              >
-                Try Again
-              </button>
-            </div>
+
           ) : filteredStudents.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-gray-500">
               No students found.

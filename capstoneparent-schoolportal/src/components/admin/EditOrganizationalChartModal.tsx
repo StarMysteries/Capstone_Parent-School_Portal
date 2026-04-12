@@ -4,6 +4,7 @@ import { resolveMediaUrl } from "@/lib/api/base";
 import type { OrganizationalChartItem } from "@/lib/organizationalChartContent";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export type OrgChartModalMode = "add" | "edit";
 
@@ -52,7 +53,7 @@ export const EditOrganizationalChartModal = ({
   const [fileName, setFileName] = useState("No file selected");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -74,7 +75,7 @@ export const EditOrganizationalChartModal = ({
       return;
     }
 
-    setError(null);
+    clearFeedback();
 
     if (mode === "add") {
       setYearInput(currentYearString());
@@ -122,7 +123,7 @@ export const EditOrganizationalChartModal = ({
   };
 
   const handleSave = async () => {
-    setError(null);
+    clearFeedback();
     const base: OrganizationalChartItem = {
       id: chartForEdit?.id,
       year: yearInput,
@@ -146,11 +147,11 @@ export const EditOrganizationalChartModal = ({
     } catch (err: any) {
       console.error("Save error:", err);
       if (err.error) {
-        setError(err.error);
+        showError(err.error);
       } else if (err.message) {
-        setError(err.message);
+        showError(err.message);
       } else {
-        setError("Failed to save organizational chart. Please try again.");
+        showError("Failed to save organizational chart. Please try again.");
       }
     } finally {
       setIsSaving(false);
@@ -177,11 +178,7 @@ export const EditOrganizationalChartModal = ({
           </p>
         )}
 
-        {error && (
-          <div className="rounded-md bg-red-100 p-4 border border-red-400">
-            <p className="text-sm font-semibold text-red-700">{error}</p>
-          </div>
-        )}
+
 
         <div className="flex flex-col gap-2">
           <label htmlFor="org-chart-year" className="text-lg font-semibold">

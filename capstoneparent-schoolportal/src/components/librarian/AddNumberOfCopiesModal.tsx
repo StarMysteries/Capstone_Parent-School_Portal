@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 interface AddNumberOfCopiesModalProps {
 	onClose: () => void;
@@ -9,12 +10,16 @@ interface AddNumberOfCopiesModalProps {
 
 const AddNumberOfCopiesModal: React.FC<AddNumberOfCopiesModalProps> = ({ onClose, onAdd }) => {
 	const [numberOfCopies, setNumberOfCopies] = React.useState<string>('');
+	const { showError, clearFeedback } = useApiFeedbackStore();
 
 	const handleAdd = () => {
+		clearFeedback();
 		const parsedNumber = Number(numberOfCopies);
 		if (!Number.isNaN(parsedNumber) && parsedNumber > 0) {
 			onAdd?.(parsedNumber);
 			onClose();
+		} else {
+			showError("Please enter a valid number of copies.");
 		}
 	};
 

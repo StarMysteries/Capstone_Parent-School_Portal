@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import { useLibraryStore, formatGradeLevel } from '@/lib/store/libraryStore';
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import type { BorrowRecord } from '@/lib/api/types';
 import BorrowerDetailsModal from './BorrowerDetailsModal';
 
@@ -9,6 +10,7 @@ const BorrowedCopyModal: React.FC = () => {
 	const [subjectFilter, setSubjectFilter] = React.useState<string>('All');
 	const [gradeFilter, setGradeFilter] = React.useState<string>('All');
 	const [selectedItem, setSelectedItem] = React.useState<BorrowRecord | null>(null);
+	const { showError, clearFeedback } = useApiFeedbackStore();
 
 	const fetchBorrowHistory = useLibraryStore((state) => state.fetchBorrowHistory);
 	const borrowHistory = useLibraryStore((state) => state.borrowHistory);
@@ -21,10 +23,12 @@ const BorrowedCopyModal: React.FC = () => {
 	}, [fetchBorrowHistory]);
 
 	const handleReturn = async (mbr_id: number) => {
+		clearFeedback();
 		try {
 			await returnMaterial(mbr_id, { remarks: "Returned via Librarian Dashboard" });
 		} catch (error) {
 			console.error("Failed to return material", error);
+			showError(error instanceof Error ? error.message : "Failed to return material.");
 		}
 	};
 

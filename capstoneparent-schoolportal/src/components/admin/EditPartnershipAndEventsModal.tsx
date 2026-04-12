@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { FileText, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export interface PartnershipEventFormData {
   id?: number;
@@ -36,7 +37,6 @@ interface ModalFormData {
   imageUrl: string;
   imageFileName?: string;
   imageFile?: File;
-  uploadError?: string;
 }
 
 const createEmptyFormData = (): ModalFormData => ({
@@ -44,7 +44,6 @@ const createEmptyFormData = (): ModalFormData => ({
   description: "",
   imageUrl: "",
   imageFile: undefined,
-  uploadError: undefined,
 });
 
 const inferFileName = (imageUrl?: string, imageFileName?: string) => {
@@ -78,6 +77,7 @@ export const EditPartnershipAndEventsModal = ({
     initialData || createEmptyFormData()
   );
   const [isSaving, setIsSaving] = useState(false);
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (initialData) {
@@ -90,7 +90,6 @@ export const EditPartnershipAndEventsModal = ({
           initialData.imageFileName,
         ),
         imageFile: undefined,
-        uploadError: undefined,
       });
     } else {
       setFormData(createEmptyFormData());
@@ -113,8 +112,8 @@ export const EditPartnershipAndEventsModal = ({
           imageFile: undefined,
           imageUrl: "",
           imageFileName: undefined,
-          uploadError: "File size must be 10MB or less.",
         }));
+        showError("File size must be 10MB or less.");
         e.target.value = "";
         return;
       }
@@ -126,7 +125,6 @@ export const EditPartnershipAndEventsModal = ({
           imageUrl: (event.target?.result as string) || "",
           imageFileName: file.name,
           imageFile: file,
-          uploadError: undefined,
         }));
       };
       reader.readAsDataURL(file);
@@ -139,7 +137,6 @@ export const EditPartnershipAndEventsModal = ({
       imageUrl: "",
       imageFileName: undefined,
       imageFile: undefined,
-      uploadError: undefined,
     }));
   };
 
@@ -228,9 +225,7 @@ export const EditPartnershipAndEventsModal = ({
             <div className="max-w-60 space-y-2">
               <p className="text-sm text-gray-500">One file can be uploaded here</p>
               <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 10 MB</p>
-              {formData.uploadError && (
-                <p className="text-sm font-medium text-red-600">{formData.uploadError}</p>
-              )}
+
               {!formData.imageFileName ? (
                 <label className="inline-flex cursor-pointer items-center overflow-hidden bg-[#e4ef00] text-gray-900">
                   <span className="inline-flex items-center gap-3 px-4 py-2 text-base font-medium">

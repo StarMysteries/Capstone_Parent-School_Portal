@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -22,16 +23,19 @@ export const ChangePasswordModal = ({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (!isOpen) return;
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-  }, [isOpen]);
+    clearFeedback();
+  }, [isOpen, clearFeedback]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    clearFeedback();
     setIsLoading(true);
 
     const result = await onChangePassword(
@@ -44,6 +48,9 @@ export const ChangePasswordModal = ({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      showSuccess(result.message || "Password changed successfully.");
+    } else {
+      showError(result.message || "Failed to change password.");
     }
 
     setIsLoading(false);

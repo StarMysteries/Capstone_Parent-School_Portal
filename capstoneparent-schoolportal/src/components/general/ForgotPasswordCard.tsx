@@ -2,37 +2,31 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authApi } from "@/lib/api";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export const ForgotPasswordCard = () => {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus(null);
+    clearFeedback();
     setIsLoading(true);
 
     try {
       const result = await authApi.forgotPassword(email);
-      setStatus({
-        type: "success",
-        message:
-          result.message ||
+      showSuccess(
+        result.message ||
           "If that email is registered, a password reset link has been sent. The link expires in 1 hour.",
-      });
+      );
       setEmail("");
     } catch (err) {
-      setStatus({
-        type: "error",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Unable to connect to the server. Please try again later.",
-      });
+      showError(
+        err instanceof Error
+          ? err.message
+          : "Unable to connect to the server. Please try again later.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -58,17 +52,7 @@ export const ForgotPasswordCard = () => {
             className="h-13 rounded-2xl border border-gray-500 bg-gray-100 px-6 text-3xl text-gray-800 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-(--button-green)"
           />
 
-          {status ? (
-            <p
-              className={`rounded-xl px-4 py-3 text-base font-medium ${
-                status.type === "success"
-                  ? "border border-green-200 bg-green-50 text-green-700"
-                  : "border border-red-200 bg-red-50 text-red-700"
-              }`}
-            >
-              {status.message}
-            </p>
-          ) : null}
+
 
           <div className="pt-2 text-center">
             <Button

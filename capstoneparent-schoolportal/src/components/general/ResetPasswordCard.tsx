@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authApi } from "@/lib/api";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export const ResetPasswordCard = () => {
   const [searchParams] = useSearchParams();
@@ -14,11 +15,8 @@ export const ResetPasswordCard = () => {
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (!token) {
@@ -41,41 +39,34 @@ export const ResetPasswordCard = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus(null);
+    clearFeedback();
 
     if (newPassword.length < 8) {
-      setStatus({
-        type: "error",
-        message: "Password must be at least 8 characters.",
-      });
+      showError("Password must be at least 8 characters.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setStatus({ type: "error", message: "Passwords do not match." });
+      showError("Passwords do not match.");
       return;
     }
 
     setIsLoading(true);
     try {
       const result = await authApi.resetPassword(token, newPassword);
-      setStatus({
-        type: "success",
-        message:
-          result.message ||
-          "Password has been reset successfully. Please log in.",
-      });
+      showSuccess(
+        result.message ||
+          "Password has been reset successfully. Redirecting to login...",
+      );
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => navigate("/login"), 2500);
     } catch (err) {
-      setStatus({
-        type: "error",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Unable to connect to the server. Please try again later.",
-      });
+      showError(
+        err instanceof Error
+          ? err.message
+          : "Unable to connect to the server. Please try again later.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +149,7 @@ export const ResetPasswordCard = () => {
                 setNewPassword(e.target.value)
               }
               required
-              disabled={isLoading || status?.type === "success"}
+              disabled={isLoading}
               className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-base text-gray-800 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />
           </div>
@@ -179,34 +170,18 @@ export const ResetPasswordCard = () => {
                 setConfirmPassword(e.target.value)
               }
               required
-              disabled={isLoading || status?.type === "success"}
+              disabled={isLoading}
               className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-base text-gray-800 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />
           </div>
 
-          {/* Status message */}
-          {status ? (
-            <p
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                status.type === "success"
-                  ? "border border-green-200 bg-green-50 text-green-700"
-                  : "border border-red-200 bg-red-50 text-red-700"
-              }`}
-            >
-              {status.message}
-              {status.type === "success" && (
-                <span className="mt-0.5 block text-xs opacity-75">
-                  Redirecting to login…
-                </span>
-              )}
-            </p>
-          ) : null}
+
 
           {/* Submit */}
           <div className="pt-1 text-center">
             <Button
               type="submit"
-              disabled={isLoading || status?.type === "success"}
+              disabled={isLoading}
               className="rounded-full bg-(--button-green) px-10 py-2 text-base font-semibold text-white hover:bg-(--button-hover-green) disabled:opacity-60"
             >
               {isLoading ? "Saving…" : "Save Changes"}

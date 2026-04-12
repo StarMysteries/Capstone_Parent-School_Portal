@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Upload, FileText } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal } from "../ui/modal";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 interface StudentBatchUploadModalProps {
   isOpen: boolean;
@@ -18,11 +19,11 @@ export const StudentBatchUploadModal = ({
 }: StudentBatchUploadModalProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [error, setError] = useState("");
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   const resetState = () => {
     setSelectedFile(null);
-    setError("");
+    clearFeedback();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -36,7 +37,7 @@ export const StudentBatchUploadModal = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
-    setError("");
+    clearFeedback();
 
     if (!file) {
       setSelectedFile(null);
@@ -45,7 +46,7 @@ export const StudentBatchUploadModal = ({
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
       setSelectedFile(null);
-      setError("Please select a CSV file.");
+      showError("Please select a CSV file.");
       return;
     }
 
@@ -54,17 +55,17 @@ export const StudentBatchUploadModal = ({
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError("Please choose a CSV file to upload.");
+      showError("Please choose a CSV file to upload.");
       return;
     }
 
-    setError("");
+    clearFeedback();
 
     try {
       await onUpload(selectedFile);
       resetState();
     } catch (err) {
-      setError(
+      showError(
         err instanceof Error ? err.message : "Failed to upload student CSV.",
       );
     }
@@ -108,11 +109,7 @@ export const StudentBatchUploadModal = ({
           </div>
         </div>
 
-        {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+
 
         <div className="flex justify-end">
           <Button

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import type { AnnouncementPostItem } from "@/components/staff/AnnouncementPostFeed";
 import type { AnnouncementCategory } from "@/lib/announcementPosts";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 interface EditAnnouncementModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export const EditAnnouncementModal = ({
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [removedFileIds, setRemovedFileIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (!isOpen || !post) return;
@@ -59,7 +61,8 @@ export const EditAnnouncementModal = ({
     setSubmitting(false);
     setFiles([]);
     setRemovedFileIds([]);
-  }, [isOpen, post]);
+    clearFeedback();
+  }, [isOpen, post, clearFeedback]);
 
   if (!isOpen || !post) return null;
 
@@ -117,14 +120,17 @@ export const EditAnnouncementModal = ({
     announcementType !== initialAnnouncementType ||
     files.length > 0 ||
     removedFileIds.length > 0;
-
-  const handlePost = async () => {
+  const handleUpdate = async () => {
     if (!title.trim()) {
+      showError("Please enter an announcement title.");
       return;
     }
     if (!content.trim()) {
+      showError("Please enter announcement details.");
       return;
     }
+
+    clearFeedback();
 
     setSubmitting(true);
     try {
@@ -140,6 +146,7 @@ export const EditAnnouncementModal = ({
       onClose();
     } catch (err) {
       console.error(err);
+      showError(err instanceof Error ? err.message : "Failed to update announcement.");
     } finally {
       setSubmitting(false);
     }
@@ -291,7 +298,7 @@ export const EditAnnouncementModal = ({
             </Select>
 
             <button
-              onClick={handlePost}
+              onClick={handleUpdate}
               disabled={submitting || !hasChanges}
               className="bg-green-500 hover:bg-green-600 text-white px-6 sm:px-10 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-lg transition-colors disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 shrink-0"
             >
