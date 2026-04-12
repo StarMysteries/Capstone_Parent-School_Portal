@@ -7,7 +7,6 @@ import type { AuthUser } from "../api";
 export type UserRole =
   | "admin"
   | "principal"
-  | "vice_principal"
   | "teacher"
   | "librarian"
   | "parent"
@@ -55,7 +54,6 @@ interface AuthState {
 const ROLE_MAP: Record<string, UserRole> = {
   admin: "admin",
   principal: "principal",
-  vice_principal: "vice_principal",
   teacher: "teacher",
   librarian: "librarian",
   parent: "parent",
@@ -66,7 +64,6 @@ const ROLE_MAP: Record<string, UserRole> = {
 const ROLE_PRIORITY: UserRole[] = [
   "admin",
   "principal",
-  "vice_principal",
   "teacher",
   "librarian",
   "parent",

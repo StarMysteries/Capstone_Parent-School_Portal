@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Upload, FileText, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { X, Upload, FileText, Image as ImageIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,6 @@ export const FileUploadModal = ({
   maxSizeMB = 10,
 }: FileUploadModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [error, setError] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,16 +33,11 @@ export const FileUploadModal = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setError('');
-
     // Get file extension
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
 
     // Check if file type is accepted
     if (!acceptedFileTypes.includes(fileExtension)) {
-      setError(
-        `Unsupported file type. Please upload one of the following: ${acceptedFileTypes.join(', ')}`
-      );
       setSelectedFile(null);
       return;
     }
@@ -51,7 +45,6 @@ export const FileUploadModal = ({
     // Check file size
     const fileSizeMB = file.size / (1024 * 1024);
     if (fileSizeMB > maxSizeMB) {
-      setError(`File size exceeds ${maxSizeMB}MB limit. Please select a smaller file.`);
       setSelectedFile(null);
       return;
     }
@@ -60,17 +53,14 @@ export const FileUploadModal = ({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a file first');
-      return;
-    }
+    if (!selectedFile) return;
 
     setIsUploading(true);
     try {
       await onUpload(selectedFile);
       handleClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload file. Please try again.');
+      console.error(err);
     } finally {
       setIsUploading(false);
     }
@@ -78,7 +68,6 @@ export const FileUploadModal = ({
 
   const handleClose = () => {
     setSelectedFile(null);
-    setError('');
     setIsUploading(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -169,13 +158,7 @@ export const FileUploadModal = ({
             )}
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+
 
           {/* Upload Button */}
           <Button

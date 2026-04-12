@@ -1,63 +1,28 @@
 import { NavbarLibrarian } from "@/components/librarian/NavbarLibrarian";
 import AddCategoryModal from "@/components/librarian/AddCategoryModal";
-import EditCategoryModal from "@/components/librarian/EditCategoryModal";
 import { Input } from "@/components/ui/input";
-import {
-  addLibraryCategory,
-  deleteLibraryCategory,
-  getLibraryCategories,
-  subscribeLibraryCategories,
-  updateLibraryCategory,
-} from "@/lib/libraryCategories";
+import { useLibraryStore } from "@/lib/store/libraryStore";
 import { useEffect, useState } from "react";
 
 export const ManageCategories = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<string | null>(null);
 
-  const [categories, setCategories] = useState<string[]>(() => getLibraryCategories());
+  const categories = useLibraryStore((state) => state.categories);
+  const fetchCategories = useLibraryStore((state) => state.fetchCategories);
+  const createCategory = useLibraryStore((state) => state.createCategory);
 
   useEffect(() => {
-    setCategories(getLibraryCategories());
-    return subscribeLibraryCategories(() => setCategories(getLibraryCategories()));
-  }, []);
+    fetchCategories();
+  }, [fetchCategories]);
 
-  const handleAddCategory = (newCategory: string) => {
-    addLibraryCategory(newCategory);
-  };
-
-  const openEditCategoryModal = (categoryName: string) => {
-    setEditingCategory(categoryName);
-    setShowEditCategoryModal(true);
-  };
-
-  const closeEditCategoryModal = () => {
-    setShowEditCategoryModal(false);
-    setEditingCategory(null);
-  };
-
-  const handleEditCategory = (updatedCategory: string) => {
-    if (!editingCategory) {
-      return;
-    }
-
-    updateLibraryCategory(editingCategory, updatedCategory);
-
-    closeEditCategoryModal();
-  };
-
-  const handleDeleteCategory = (categoryToDelete: string) => {
-    deleteLibraryCategory(categoryToDelete);
-
-    if (editingCategory === categoryToDelete) {
-      closeEditCategoryModal();
-    }
+  const handleAddCategory = async (newCategory: string) => {
+    await createCategory(newCategory);
+    setShowAddCategoryModal(false);
   };
 
   const filtered = categories.filter((c) =>
-    c.toLowerCase().includes(searchQuery.toLowerCase())
+    c.category_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -86,26 +51,10 @@ export const ManageCategories = () => {
             <div className="mt-4 bg-white rounded-lg border border-gray-200 overflow-hidden">
                 {filtered.map((c) => (
                   <div
-                    key={c}
+                    key={c.category_id}
                     className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 last:border-b-0"
                   >
-                    <span className="min-w-32 text-left">{c}</span>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => openEditCategoryModal(c)}
-                        className="rounded-md bg-(--button-green) px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-(--button-hover-green)"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCategory(c)}
-                        className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <span className="min-w-32 text-left">{c.category_name}</span>
                   </div>
                 ))}
                 {filtered.length === 0 && (
@@ -124,14 +73,7 @@ export const ManageCategories = () => {
           onAdd={handleAddCategory}
         />
       )}
-
-      {showEditCategoryModal && editingCategory && (
-        <EditCategoryModal
-          onClose={closeEditCategoryModal}
-          onEdit={handleEditCategory}
-          initialCategoryName={editingCategory}
-        />
-      )}
     </div>
   );
 };
+

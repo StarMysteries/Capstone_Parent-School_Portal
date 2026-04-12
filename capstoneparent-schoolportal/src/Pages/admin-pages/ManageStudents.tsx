@@ -72,8 +72,7 @@ export const ManageStudents = () => {
   const canManageStudents =
     role === "admin" ||
     role === "teacher" ||
-    role === "principal" ||
-    role === "vice_principal";
+    role === "principal";
   const canCreateStudents = canManageStudents;
   const canBatchAddStudents = canManageStudents;
 

@@ -53,7 +53,6 @@ export const ManageStaffAccounts = () => {
     "Teacher",
     "Admin",
     "Principal",
-    "Vice Principal",
   ];
 
   const emptyFormState = {
@@ -75,15 +74,12 @@ export const ManageStaffAccounts = () => {
   const normalizeRoleLabel = (role: string): string => {
     const clean = role.trim();
     if (!clean) return "";
-    if (clean.toLowerCase() === "vice principal") return "Vice Principal";
-    if (clean.toLowerCase() === "vice_principal") return "Vice Principal";
+
     return toTitleCase(clean.replace(/\s+/g, "_"));
   };
 
   const toApiRole = (role: string): string => {
     const clean = role.trim().toLowerCase();
-    if (clean === "vice principal" || clean === "vice_principal")
-      return "Vice_Principal";
     if (clean === "librarian") return "Librarian";
     if (clean === "teacher") return "Teacher";
     if (clean === "admin") return "Admin";
@@ -128,13 +124,12 @@ export const ManageStaffAccounts = () => {
   const fetchStaffAccounts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [teachers, admins, librarians, principals, vicePrincipals] =
+      const [teachers, admins, librarians, principals] =
         await Promise.all([
           usersApi.list({ role: "Teacher", limit: 1000 }),
           usersApi.list({ role: "Admin", limit: 1000 }),
           usersApi.list({ role: "Librarian", limit: 1000 }),
           usersApi.list({ role: "Principal", limit: 1000 }),
-          usersApi.list({ role: "Vice_Principal", limit: 1000 }),
         ]);
 
       const merged = new Map<number, Staff>();
@@ -143,7 +138,6 @@ export const ManageStaffAccounts = () => {
         ...admins.data,
         ...librarians.data,
         ...principals.data,
-        ...vicePrincipals.data,
       ];
 
       allUsers.forEach((user) => {

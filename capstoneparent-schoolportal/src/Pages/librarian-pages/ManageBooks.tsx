@@ -2,10 +2,6 @@ import { NavbarLibrarian } from "@/components/librarian/NavbarLibrarian";
 import AddBookModal from "@/components/librarian/AddBookModal";
 import EditBookModal from "@/components/librarian/EditBookModal";
 import BookCopyModal from "@/components/librarian/BookCopyModal";
-import {
-  getLibraryCategories,
-  subscribeLibraryCategories,
-} from "@/lib/libraryCategories";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,21 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Search, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
-interface Book {
-  id: string;
-  title: string;
-  subject: string;
-  gradeLevel: string;
-}
-
-const booksData: Book[] = [
-  { id: "1", title: "Sibiks at Kultura", subject: "Sibika", gradeLevel: "Grade 1" },
-  { id: "2", title: "Fun in English", subject: "English", gradeLevel: "Grade 1" },
-  { id: "3", title: "Ang Bayan kong Mahal", subject: "Filipino", gradeLevel: "Grade 1" },
-  { id: "4", title: "Realistic Math", subject: "Math", gradeLevel: "Grade 2" },
-  { id: "5", title: "The New Science Links", subject: "Science", gradeLevel: "Grade 3" },
-];
+import { useLibraryStore, formatGradeLevel, GRADE_LEVELS } from "@/lib/store/libraryStore";
+import type { LearningMaterial } from "@/lib/api/types";
 
 export const ManageBooks = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,57 +23,50 @@ export const ManageBooks = () => {
   const [isAddBookModalOpen, setIsAddBookModalOpen] = useState(false);
   const [isEditBookModalOpen, setIsEditBookModalOpen] = useState(false);
   const [isBookCopyModalOpen, setIsBookCopyModalOpen] = useState(false);
-  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
-  const [books, setBooks] = useState<Book[]>(booksData);
-  const [categoryOptions, setCategoryOptions] = useState<string[]>(() => getLibraryCategories());
+  const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
+
+  const materials = useLibraryStore((state) => state.materials);
+  const categories = useLibraryStore((state) => state.categories);
+  const fetchMaterials = useLibraryStore((state) => state.fetchMaterials);
+  const fetchCategories = useLibraryStore((state) => state.fetchCategories);
+  const createMaterial = useLibraryStore((state) => state.createMaterial);
+  const updateMaterial = useLibraryStore((state) => state.updateMaterial);
 
   useEffect(() => {
-    setCategoryOptions(getLibraryCategories());
-    return subscribeLibraryCategories(() => setCategoryOptions(getLibraryCategories()));
-  }, []);
+    fetchMaterials({ item_type: "Book" });
+    fetchCategories();
+  }, [fetchMaterials, fetchCategories]);
 
-  const subjects = useMemo(() => {
-    const mergedSubjects = Array.from(
-      new Set([...categoryOptions, ...books.map((book) => book.subject)])
-    ).sort((left, right) => left.localeCompare(right));
-
-    return ["all", ...mergedSubjects];
-  }, [books, categoryOptions]);
-
-  const grades = ["all", "Grade 1", "Grade 2", "Grade 3", "Grade 4"];
+  const books = useMemo(() => materials.filter((m) => m.item_type === "Book"), [materials]);
 
   const filteredBooks = books.filter((b) => {
     const matchesSearch =
-      b.title.toLowerCase().includes(searchQuery.toLowerCase());
+      b.item_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSubject =
-      subjectFilter === "all" || b.subject === subjectFilter;
+      subjectFilter === "all" || b.category_id.toString() === subjectFilter;
     const matchesGrade =
-      gradeFilter === "all" || b.gradeLevel === gradeFilter;
+      gradeFilter === "all" || b.gl_id.toString() === gradeFilter;
     return matchesSearch && matchesSubject && matchesGrade;
   });
 
-  const handleAddBooks = (newBook: {
+  const handleAddBooks = async (newBook: {
     title: string;
     author: string;
-    subject: string;
-    gradeLevel: string;
+    category_id: number;
+    gl_id: number;
   }) => {
-    setBooks((previousBooks) => {
-      return [
-        ...previousBooks,
-        {
-          id: `${Date.now()}`,
-          title: newBook.title,
-          subject: newBook.subject,
-          gradeLevel: newBook.gradeLevel,
-        },
-      ];
+    await createMaterial({
+      item_name: newBook.title,
+      author: newBook.author,
+      category_id: newBook.category_id,
+      gl_id: newBook.gl_id,
+      item_type: "Book",
     });
   };
 
-  const selectedBook = books.find((book) => book.id === selectedBookId);
+  const selectedBook = books.find((book) => book.item_id === selectedBookId);
 
-  const handleOpenEditBookModal = (bookId: string) => {
+  const handleOpenEditBookModal = (bookId: number) => {
     setSelectedBookId(bookId);
     setIsEditBookModalOpen(true);
   };
@@ -100,28 +76,19 @@ export const ManageBooks = () => {
     setSelectedBookId(null);
   };
 
-  const handleSaveEditedBook = (updatedBook: {
+  const handleSaveEditedBook = async (updatedBook: {
     title: string;
     author: string;
-    subject: string;
-    gradeLevel: string;
+    category_id: number;
+    gl_id: number;
   }) => {
-    if (!selectedBookId) {
-      return;
-    }
-
-    setBooks((previousBooks) =>
-      previousBooks.map((book) =>
-        book.id === selectedBookId
-          ? {
-              ...book,
-              title: updatedBook.title,
-              subject: updatedBook.subject,
-              gradeLevel: updatedBook.gradeLevel,
-            }
-          : book
-      )
-    );
+    if (!selectedBookId) return;
+    await updateMaterial(selectedBookId, {
+      item_name: updatedBook.title,
+      author: updatedBook.author,
+      category_id: updatedBook.category_id,
+      gl_id: updatedBook.gl_id,
+    });
   };
 
   return (
@@ -160,9 +127,10 @@ export const ManageBooks = () => {
                     <SelectValue placeholder="Subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    {subjects.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s === "all" ? "All" : s}
+                    <SelectItem value="all">All</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.category_id} value={c.category_id.toString()}>
+                        {c.category_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -176,9 +144,10 @@ export const ManageBooks = () => {
                     <SelectValue placeholder="Grade Level" />
                   </SelectTrigger>
                   <SelectContent>
-                    {grades.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g === "all" ? "All" : g}
+                    <SelectItem value="all">All</SelectItem>
+                    {GRADE_LEVELS.map((g) => (
+                      <SelectItem key={g.id} value={g.id.toString()}>
+                        {g.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -189,20 +158,20 @@ export const ManageBooks = () => {
             <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               {filteredBooks.map((book) => (
                 <div
-                  key={book.id}
+                  key={book.item_id}
                   className="flex items-center justify-between px-4 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => { setSelectedBookId(book.id); setIsBookCopyModalOpen(true); }}
+                  onClick={() => { setSelectedBookId(book.item_id); setIsBookCopyModalOpen(true); }}
                 >
-                  <span className="text-lg font-medium">{book.title}</span>
+                  <span className="text-lg font-medium">{book.item_name}</span>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                      {book.subject}
+                      {book.category?.category_name}
                     </span>
                     <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                      {book.gradeLevel}
+                      {formatGradeLevel(book.gl_id)}
                     </span>
                     <Pencil
-                      onClick={(e) => { e.stopPropagation(); handleOpenEditBookModal(book.id); }}
+                      onClick={(e) => { e.stopPropagation(); handleOpenEditBookModal(book.item_id); }}
                       className="cursor-pointer text-(--button-green) hover:text-(--button-hover-green)"
                       size={18}
                     />
@@ -221,7 +190,7 @@ export const ManageBooks = () => {
         <AddBookModal
           onClose={() => setIsAddBookModalOpen(false)}
           onAdd={handleAddBooks}
-          subjectOptions={subjects.filter((subject) => subject !== "all")}
+          categories={categories}
         />
       )}
 
@@ -229,23 +198,23 @@ export const ManageBooks = () => {
         <EditBookModal
           onClose={handleCloseEditBookModal}
           onSave={handleSaveEditedBook}
-          subjectOptions={subjects.filter((subject) => subject !== "all")}
+          categories={categories}
           initialBook={{
-            title: selectedBook.title,
-            author: "",
-            subject: selectedBook.subject,
-            gradeLevel: selectedBook.gradeLevel,
+            title: selectedBook.item_name,
+            author: selectedBook.author || "",
+            category_id: selectedBook.category_id,
+            gl_id: selectedBook.gl_id,
           }}
         />
       )}
 
-      {isBookCopyModalOpen && (
+      {isBookCopyModalOpen && selectedBook && (
         <BookCopyModal
-          bookTitle={books.find((b) => b.id === selectedBookId)?.title}
-          bookSubject={books.find((b) => b.id === selectedBookId)?.subject}
+          material={selectedBook}
           onClose={() => { setIsBookCopyModalOpen(false); setSelectedBookId(null); }}
         />
       )}
     </>
   );
 };
+

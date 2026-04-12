@@ -1,29 +1,31 @@
 import React from 'react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
+import type { LibraryCategory } from '@/lib/api/types';
+import { GRADE_LEVELS } from '@/lib/store/libraryStore';
 
 interface AddBookModalProps {
 	onClose: () => void;
-	onAdd?: (book: { title: string; author: string; subject: string; gradeLevel: string }) => void;
-	subjectOptions: string[];
+	onAdd?: (book: { title: string; author: string; category_id: number; gl_id: number }) => void;
+	categories: LibraryCategory[];
 }
 
-const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onAdd, subjectOptions }) => {
+const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onAdd, categories }) => {
 	const [bookTitle, setBookTitle] = React.useState('');
 	const [authorName, setAuthorName] = React.useState('');
-	const [subject, setSubject] = React.useState('SUBJECT');
-	const [gradeLevel, setGradeLevel] = React.useState('GRADE LEVEL');
+	const [categoryId, setCategoryId] = React.useState<number | ''>('');
+	const [glId, setGlId] = React.useState<number | ''>('');
 
 	const handleAdd = () => {
-		if (!bookTitle.trim() || subject === 'SUBJECT' || gradeLevel === 'GRADE LEVEL') {
+		if (!bookTitle.trim() || categoryId === '' || glId === '') {
 			return;
 		}
 
 		onAdd?.({
 			title: bookTitle.trim(),
 			author: authorName.trim(),
-			subject,
-			gradeLevel,
+			category_id: categoryId,
+			gl_id: glId,
 		});
 		onClose();
 	};
@@ -47,27 +49,26 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onAdd, subjectOpti
 				/>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<select
-						value={subject}
-						onChange={(event) => setSubject(event.target.value)}
+						value={categoryId}
+						onChange={(event) => setCategoryId(Number(event.target.value))}
 						className="w-full px-4 py-3 text-lg border-2 border-black rounded-md focus:outline-none focus:ring-2 focus:ring-(--button-green)"
 					>
-						<option value="SUBJECT">SUBJECT</option>
-						{subjectOptions.map((option) => (
-							<option key={option} value={option}>
-								{option}
+						<option value="" disabled>SUBJECT</option>
+						{categories.map((cat) => (
+							<option key={cat.category_id} value={cat.category_id}>
+								{cat.category_name}
 							</option>
 						))}
 					</select>
 					<select
-						value={gradeLevel}
-						onChange={(event) => setGradeLevel(event.target.value)}
+						value={glId}
+						onChange={(event) => setGlId(Number(event.target.value))}
 						className="w-full px-4 py-3 text-lg border-2 border-black rounded-md focus:outline-none focus:ring-2 focus:ring-(--button-green)"
 					>
-						<option value="GRADE LEVEL">GRADE LEVEL</option>
-						<option value="Grade 1">Grade 1</option>
-						<option value="Grade 2">Grade 2</option>
-						<option value="Grade 3">Grade 3</option>
-						<option value="Grade 4">Grade 4</option>
+						<option value="" disabled>GRADE LEVEL</option>
+						{GRADE_LEVELS.map((g) => (
+							<option key={g.id} value={g.id}>{g.label}</option>
+						))}
 					</select>
 				</div>
 				<div className="flex justify-end gap-3">
@@ -92,3 +93,4 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ onClose, onAdd, subjectOpti
 };
 
 export default AddBookModal;
+

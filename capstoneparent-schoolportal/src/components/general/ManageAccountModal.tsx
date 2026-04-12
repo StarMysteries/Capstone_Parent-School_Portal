@@ -15,13 +15,11 @@ interface ManageAccountModalProps {
 export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfile, onSave }: ManageAccountModalProps) => {
   const [formData, setFormData] = useState<ProfileModalData>(profileData);
   const [profileFile, setProfileFile] = useState<File>();
-  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setFormData(profileData);
     setProfileFile(undefined);
-    setStatus(null);
   }, [isOpen, profileData]);
 
   const handleFieldChange = (field: keyof ProfileModalData, value: string) => {
@@ -55,11 +53,10 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
     event.preventDefault();
 
     if (!formData.fname.trim() || !formData.lname.trim() || !formData.contactNo.trim() || !formData.email.trim()) {
-      setStatus({ type: "error", message: "First Name, Last Name, Contact No, and Email are required." });
       return;
     }
 
-    const saveResult = await onSave({
+    await onSave({
       ...formData,
       fname: formData.fname.trim(),
       lname: formData.lname.trim(),
@@ -68,10 +65,6 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
       address: formData.address.trim(),
       email: formData.email.trim(),
     }, profileFile);
-
-    if (!saveResult.success) {
-      setStatus({ type: "error", message: saveResult.message });
-    }
   };
 
   return (
@@ -156,17 +149,7 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
           </div>
         </div>
 
-        {status ? (
-          <p
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
-              status.type === "success"
-                ? "border border-green-200 bg-green-50 text-green-700"
-                : "border border-red-200 bg-red-50 text-red-700"
-            }`}
-          >
-            {status.message}
-          </p>
-        ) : null}
+
 
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={isSavingProfile || !hasChanges} className="h-12 rounded-full bg-(--button-green) px-8 text-xl font-semibold text-white hover:bg-(--button-hover-green) disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400">

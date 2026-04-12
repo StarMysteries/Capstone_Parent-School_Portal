@@ -1,11 +1,7 @@
 import { NavbarLibrarian } from "@/components/librarian/NavbarLibrarian";
 import AddLearningResourceModal from "@/components/librarian/AddLearningResourceModal";
 import EditLearningResourceModal from "@/components/librarian/EditLearningResourceModal";
-import LearningResourceCopyModal from "@/components/librarian/LearningResourceCopyModal";
-import {
-  getLibraryCategories,
-  subscribeLibraryCategories,
-} from "@/lib/libraryCategories";
+import BookCopyModal from "@/components/librarian/BookCopyModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,23 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
-interface Resource {
-  id: string;
-  title: string;
-  category: string;
-  gradeLevel: string;
-}
-
-const GRADE_OPTIONS = ["Grade 1", "Grade 2", "Grade 3", "Grade 4"];
-
-const resourcesData: Resource[] = [
-  { id: "1", title: "World Map", category: "Map", gradeLevel: "Grade 2" },
-  { id: "2", title: "Philippine Map", category: "Map", gradeLevel: "Grade 2" },
-  { id: "3", title: "Chess Board", category: "Game", gradeLevel: "Grade 1" },
-  { id: "4", title: "Scrabble Board", category: "Game", gradeLevel: "Grade 3" },
-  { id: "5", title: "Water Cycle Formation", category: "Infographic", gradeLevel: "Grade 2" },
-];
+import { useLibraryStore, formatGradeLevel, GRADE_LEVELS } from "@/lib/store/libraryStore";
 
 export const ManageLearningResources = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,50 +22,48 @@ export const ManageLearningResources = () => {
   const [isAddLearningResourceModalOpen, setIsAddLearningResourceModalOpen] = useState(false);
   const [isEditLearningResourceModalOpen, setIsEditLearningResourceModalOpen] = useState(false);
   const [isLearningResourceCopyModalOpen, setIsLearningResourceCopyModalOpen] = useState(false);
-  const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
-  const [resources, setResources] = useState<Resource[]>(resourcesData);
-  const [categoryOptions, setCategoryOptions] = useState<string[]>(() => getLibraryCategories());
+  const [selectedResourceId, setSelectedResourceId] = useState<number | null>(null);
+
+  const materials = useLibraryStore((state) => state.materials);
+  const categories = useLibraryStore((state) => state.categories);
+  const fetchMaterials = useLibraryStore((state) => state.fetchMaterials);
+  const fetchCategories = useLibraryStore((state) => state.fetchCategories);
+  const createMaterial = useLibraryStore((state) => state.createMaterial);
+  const updateMaterial = useLibraryStore((state) => state.updateMaterial);
 
   useEffect(() => {
-    setCategoryOptions(getLibraryCategories());
-    return subscribeLibraryCategories(() => setCategoryOptions(getLibraryCategories()));
-  }, []);
+    fetchMaterials({ item_type: "Learning_Resource" });
+    fetchCategories();
+  }, [fetchMaterials, fetchCategories]);
 
-  const categories = useMemo(() => {
-    const mergedCategories = Array.from(
-      new Set([...categoryOptions, ...resources.map((resource) => resource.category)])
-    ).sort((left, right) => left.localeCompare(right));
-
-    return ["all", ...mergedCategories];
-  }, [categoryOptions, resources]);
-
-  const grades = ["all", ...GRADE_OPTIONS];
+  const resources = useMemo(() => materials.filter((m) => m.item_type === "Learning_Resource"), [materials]);
 
   const filteredResources = resources.filter((r) => {
     const matchesSearch =
-      r.title.toLowerCase().includes(searchQuery.toLowerCase());
+      r.item_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
-      categoryFilter === "all" || r.category === categoryFilter;
+      categoryFilter === "all" || r.category_id.toString() === categoryFilter;
     const matchesGrade =
-      gradeFilter === "all" || r.gradeLevel === gradeFilter;
+      gradeFilter === "all" || r.gl_id.toString() === gradeFilter;
     return matchesSearch && matchesCategory && matchesGrade;
   });
 
-  const handleAddResources = (newResource: Omit<Resource, "id">) => {
-    setResources((previousResources) => {
-      return [
-        ...previousResources,
-        {
-          id: `${Date.now()}`,
-          ...newResource,
-        },
-      ];
+  const handleAddResources = async (newResource: {
+    title: string;
+    category_id: number;
+    gl_id: number;
+  }) => {
+    await createMaterial({
+      item_name: newResource.title,
+      category_id: newResource.category_id,
+      gl_id: newResource.gl_id,
+      item_type: "Learning_Resource",
     });
   };
 
-  const selectedResource = resources.find((resource) => resource.id === selectedResourceId);
+  const selectedResource = resources.find((resource) => resource.item_id === selectedResourceId);
 
-  const handleOpenEditLearningResourceModal = (resourceId: string) => {
+  const handleOpenEditLearningResourceModal = (resourceId: number) => {
     setSelectedResourceId(resourceId);
     setIsEditLearningResourceModalOpen(true);
   };
@@ -95,21 +73,17 @@ export const ManageLearningResources = () => {
     setSelectedResourceId(null);
   };
 
-  const handleSaveEditedResource = (updatedResource: Omit<Resource, "id">) => {
-    if (!selectedResourceId) {
-      return;
-    }
-
-    setResources((previousResources) =>
-      previousResources.map((resource) =>
-        resource.id === selectedResourceId
-          ? {
-              ...resource,
-              ...updatedResource,
-            }
-          : resource
-      )
-    );
+  const handleSaveEditedResource = async (updatedResource: {
+    title: string;
+    category_id: number;
+    gl_id: number;
+  }) => {
+    if (!selectedResourceId) return;
+    await updateMaterial(selectedResourceId, {
+      item_name: updatedResource.title,
+      category_id: updatedResource.category_id,
+      gl_id: updatedResource.gl_id,
+    });
   };
 
   return (
@@ -148,9 +122,10 @@ export const ManageLearningResources = () => {
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
                     {categories.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c === "all" ? "All" : c}
+                      <SelectItem key={c.category_id} value={c.category_id.toString()}>
+                        {c.category_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -164,9 +139,10 @@ export const ManageLearningResources = () => {
                     <SelectValue placeholder="Grade Level" />
                   </SelectTrigger>
                   <SelectContent>
-                    {grades.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g === "all" ? "All" : g}
+                    <SelectItem value="all">All</SelectItem>
+                    {GRADE_LEVELS.map((g) => (
+                      <SelectItem key={g.id} value={g.id.toString()}>
+                        {g.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -177,25 +153,25 @@ export const ManageLearningResources = () => {
             <section className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               {filteredResources.map((res) => (
                 <div
-                  key={res.id}
+                  key={res.item_id}
                   className="flex items-center justify-between px-4 py-4 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    setSelectedResourceId(res.id);
+                    setSelectedResourceId(res.item_id);
                     setIsLearningResourceCopyModalOpen(true);
                   }}
                 >
-                  <span className="text-lg font-medium">{res.title}</span>
+                  <span className="text-lg font-medium">{res.item_name}</span>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                      {res.category}
+                      {res.category?.category_name}
                     </span>
                     <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                      {res.gradeLevel}
+                      {formatGradeLevel(res.gl_id)}
                     </span>
                     <Pencil
                       onClick={(event) => {
                         event.stopPropagation();
-                        handleOpenEditLearningResourceModal(res.id);
+                        handleOpenEditLearningResourceModal(res.item_id);
                       }}
                       className="cursor-pointer text-(--button-green) hover:text-(--button-hover-green)"
                       size={18}
@@ -215,8 +191,7 @@ export const ManageLearningResources = () => {
         <AddLearningResourceModal
           onClose={() => setIsAddLearningResourceModalOpen(false)}
           onAdd={handleAddResources}
-          categoryOptions={categories.filter((category) => category !== "all")}
-          gradeOptions={GRADE_OPTIONS}
+          categories={categories}
         />
       )}
 
@@ -224,26 +199,25 @@ export const ManageLearningResources = () => {
         <EditLearningResourceModal
           onClose={handleCloseEditLearningResourceModal}
           onSave={handleSaveEditedResource}
+          categories={categories}
           initialResource={{
-            title: selectedResource.title,
-            category: selectedResource.category,
-            gradeLevel: selectedResource.gradeLevel,
+            title: selectedResource.item_name,
+            category_id: selectedResource.category_id,
+            gl_id: selectedResource.gl_id,
           }}
-          categoryOptions={categories.filter((category) => category !== "all")}
-          gradeOptions={GRADE_OPTIONS}
         />
       )}
 
       {isLearningResourceCopyModalOpen && selectedResource && (
-        <LearningResourceCopyModal
+        <BookCopyModal
+          material={selectedResource}
           onClose={() => {
             setIsLearningResourceCopyModalOpen(false);
             setSelectedResourceId(null);
           }}
-          resourceTitle={selectedResource.title}
-          resourceCategory={selectedResource.category}
         />
       )}
     </>
   );
 };
+

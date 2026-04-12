@@ -22,34 +22,23 @@ export const ChangePasswordModal = ({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setStatus(null);
   }, [isOpen]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    setStatus(null);
 
     const result = await onChangePassword(
       currentPassword,
       newPassword,
       confirmPassword,
     );
-
-    setStatus({
-      type: result.success ? "success" : "error",
-      message: result.message,
-    });
 
     if (result.success) {
       setCurrentPassword("");
@@ -117,17 +106,7 @@ export const ChangePasswordModal = ({
           />
         </div>
 
-        {status ? (
-          <p
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
-              status.type === "success"
-                ? "border border-green-200 bg-green-50 text-green-700"
-                : "border border-red-200 bg-red-50 text-red-700"
-            }`}
-          >
-            {status.message}
-          </p>
-        ) : null}
+
 
         <div className="flex justify-end pt-1">
           <Button

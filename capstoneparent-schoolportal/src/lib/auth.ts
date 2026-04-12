@@ -63,7 +63,6 @@ import type { UserRole } from "./store/authStore";
 const ROLE_MAP: Record<string, UserRole> = {
   admin: "admin",
   principal: "principal",
-  vice_principal: "vice_principal",
   teacher: "teacher",
   librarian: "librarian",
   parent: "parent",
@@ -77,7 +76,6 @@ export function mapBackendRole(backendRole: string): UserRole {
 const DEFAULT_ROUTES: Record<UserRole, string> = {
   admin: "/homepage",
   principal: "/homepage",
-  vice_principal: "/homepage",
   teacher: "/homepage",
   librarian: "/homepage",
   parent: "/homepage",

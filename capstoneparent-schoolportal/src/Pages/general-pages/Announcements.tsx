@@ -14,7 +14,7 @@ import { useAnnouncementStore } from "@/lib/store/announcementStore";
 /** School staff (excludes parents). Used for announcement type toggle and create/edit. */
 const SCHOOL_STAFF_ROLES: UserRole[] = [
   "admin",
-  "vice_principal",
+
   "principal",
   "teacher",
   "librarian",

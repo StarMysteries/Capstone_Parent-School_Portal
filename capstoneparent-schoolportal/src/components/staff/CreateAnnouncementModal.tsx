@@ -41,12 +41,10 @@ export const CreateAnnouncementModal = ({
   const [category, setCategory] = useState<AnnouncementCategory>("general");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setCategory(defaultCategory);
-    setError(null);
     setSubmitting(false);
     setTitle("");
     setContent("");
@@ -87,14 +85,10 @@ export const CreateAnnouncementModal = ({
   };
 
   const handlePost = async () => {
-    setError(null);
-
     if (!title.trim()) {
-      setError("Title is required");
       return;
     }
     if (!content.trim()) {
-      setError("Content is required");
       return;
     }
 
@@ -110,11 +104,7 @@ export const CreateAnnouncementModal = ({
       await onCreate(data);
       onClose();
     } catch (err) {
-      if (err instanceof Error && err.message.trim()) {
-        setError(err.message);
-      } else {
-        setError("Failed to create announcement");
-      }
+      console.error(err);
     } finally {
       setSubmitting(false);
     }
@@ -158,7 +148,6 @@ export const CreateAnnouncementModal = ({
             className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 border-yellow-300 bg-[#fff7b0] min-h-37.5 sm:min-h-55 resize-none text-sm sm:text-base placeholder:text-gray-600 focus:outline-none focus:border-yellow-500"
           />
 
-          {error && <div className="text-xs sm:text-sm text-red-600">{error}</div>}
 
           <div
             onDragOver={(e) => e.preventDefault()}

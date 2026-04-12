@@ -1,8 +1,10 @@
 import { AboutChildNavbar } from "@/components/parent/AboutChildNavbar";
 import { NavbarParent } from "@/components/parent/NavbarParent";
 import { ChevronDown, Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLibraryStore } from "@/lib/store/libraryStore";
 
+// Keep dummy children for now, as parent module dynamic children are out of scope for this task
 interface Child {
 	id: string;
 	name: string;
@@ -12,17 +14,6 @@ interface Child {
 	section?: string;
 	schoolYear?: string;
 	sex?: string;
-}
-
-interface LibraryTransaction {
-	id: string;
-	bookTitle: string;
-	author: string;
-	dateBorrowed: string;
-	dueDate: string;
-	dateReturned: string | null;
-	status: "BORROWED" | "RETURNED" | "OVERDUE";
-	fines: number;
 }
 
 const childrenData: Child[] = [
@@ -58,45 +49,20 @@ const childrenData: Child[] = [
 	},
 ];
 
-const libraryTransactions: LibraryTransaction[] = [
-	{
-		id: "1",
-		bookTitle: "The Little Prince",
-		author: "Antoine de Saint-Exupéry",
-		dateBorrowed: "03/10/2025",
-		dueDate: "03/24/2025",
-		dateReturned: null,
-		status: "BORROWED",
-		fines: 0,
-	},
-	{
-		id: "2",
-		bookTitle: "Charlotte's Web",
-		author: "E.B. White",
-		dateBorrowed: "02/15/2025",
-		dueDate: "03/01/2025",
-		dateReturned: "02/28/2025",
-		status: "RETURNED",
-		fines: 0,
-	},
-	{
-		id: "3",
-		bookTitle: "Harry Potter...",
-		author: "J.K. Rowling",
-		dateBorrowed: "01/05/2025",
-		dueDate: "01/19/2025",
-		dateReturned: null,
-		status: "OVERDUE",
-		fines: 50.0,
-	},
-];
-
 export const LibraryRecords = () => {
 	const [selectedChild, setSelectedChild] = useState<Child>(childrenData[0]);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState<string>("all");
 	const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+	const borrowHistory = useLibraryStore((state) => state.borrowHistory);
+	const fetchBorrowHistory = useLibraryStore((state) => state.fetchBorrowHistory);
+
+	useEffect(() => {
+		// Pass selected child ID to filter fetch. Uses dummy 1, 2, 3 as fallback.
+		fetchBorrowHistory({ student_id: parseInt(selectedChild.id) || 1 });
+	}, [fetchBorrowHistory, selectedChild.id]);
 
 	const otherChildren = childrenData.filter(
 		(child) => child.id !== selectedChild.id && child.status === "VERIFIED"
@@ -107,12 +73,19 @@ export const LibraryRecords = () => {
 		setIsDropdownOpen(false);
 	};
 
-	const filteredTransactions = libraryTransactions.filter((transaction) => {
+	const filteredTransactions = borrowHistory.filter((transaction) => {
+		const title = transaction.copy?.item?.item_name || "";
+		const author = transaction.copy?.item?.author || "";
+		
 		const matchesSearch =
-			transaction.bookTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			transaction.author.toLowerCase().includes(searchQuery.toLowerCase());
+			title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			author.toLowerCase().includes(searchQuery.toLowerCase());
+			
+		const computedStatus = transaction.returned_at ? "RETURNED" : (new Date(transaction.due_at) < new Date() ? "OVERDUE" : "BORROWED");
+		
 		const matchesStatus =
-			statusFilter === "all" || transaction.status === statusFilter;
+			statusFilter === "all" || computedStatus === statusFilter;
+			
 		return matchesSearch && matchesStatus;
 	});
 
@@ -130,16 +103,22 @@ export const LibraryRecords = () => {
 	};
 
 	// Calculate summary
-	const totalBooksBorrowed = 15;
-	const currentlyBorrowed = libraryTransactions.filter(
-		(t) => t.status === "BORROWED" || t.status === "OVERDUE"
+	const totalBooksBorrowed = borrowHistory.length;
+	const currentlyBorrowed = borrowHistory.filter(
+		(t) => !t.returned_at
 	).length;
-	const overdueBooks = libraryTransactions.filter((t) => t.status === "OVERDUE")
-		.length;
-	const totalFines = libraryTransactions.reduce(
-		(sum, t) => sum + t.fines,
-		0
-	);
+	const overdueBooks = borrowHistory.filter(
+		(t) => !t.returned_at && new Date(t.due_at) < new Date()
+	).length;
+	const totalFines = borrowHistory.reduce((sum, t) => {
+		const penalty = typeof t.penalty_cost === "string" ? parseFloat(t.penalty_cost) : (t.penalty_cost || 0);
+		return sum + penalty;
+	}, 0);
+
+	const formatDate = (isoStr?: string | null) => {
+		if (!isoStr) return "-";
+		return new Date(isoStr).toLocaleDateString();
+	};
 
 	return (
 		<div className="min-h-screen bg-white">
@@ -297,39 +276,42 @@ export const LibraryRecords = () => {
 								</thead>
 								<tbody>
 									{filteredTransactions.length > 0 ? (
-										filteredTransactions.map((transaction) => (
-											<tr key={transaction.id} className="hover:bg-gray-50">
-												<td className="border border-gray-400 px-3 py-3">
-													{transaction.bookTitle}
-												</td>
-												<td className="border border-gray-400 px-3 py-3">
-													{transaction.author}
-												</td>
-												<td className="border border-gray-400 px-3 py-3">
-													{transaction.dateBorrowed}
-												</td>
-												<td className="border border-gray-400 px-3 py-3">
-													{transaction.dueDate}
-												</td>
-												<td className="border border-gray-400 px-3 py-3 text-center">
-													{transaction.dateReturned || "-"}
-												</td>
-												<td className="border border-gray-400 px-3 py-3 text-center">
-													<span
-														className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(
-															transaction.status
-														)}`}
-													>
-														{transaction.status}
-													</span>
-												</td>
-												<td className="border border-gray-400 px-3 py-3 text-center">
-													{transaction.fines > 0
-														? `₱ ${transaction.fines.toFixed(2)}`
-														: "-"}
-												</td>
-											</tr>
-										))
+										filteredTransactions.map((transaction) => {
+											const tStatus = transaction.returned_at ? "RETURNED" : (new Date(transaction.due_at) < new Date() ? "OVERDUE" : "BORROWED");
+											const penalty = typeof transaction.penalty_cost === "string" ? parseFloat(transaction.penalty_cost) : (transaction.penalty_cost || 0);
+
+											return (
+												<tr key={transaction.mbr_id} className="hover:bg-gray-50">
+													<td className="border border-gray-400 px-3 py-3">
+														{transaction.copy?.item?.item_name || "-"} (Copy {transaction.copy?.copy_code})
+													</td>
+													<td className="border border-gray-400 px-3 py-3">
+														{transaction.copy?.item?.author || "-"}
+													</td>
+													<td className="border border-gray-400 px-3 py-3">
+														{formatDate(transaction.borrowed_at)}
+													</td>
+													<td className="border border-gray-400 px-3 py-3">
+														{formatDate(transaction.due_at)}
+													</td>
+													<td className="border border-gray-400 px-3 py-3 text-center">
+														{transaction.returned_at ? formatDate(transaction.returned_at) : "-"}
+													</td>
+													<td className="border border-gray-400 px-3 py-3 text-center">
+														<span
+															className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(tStatus)}`}
+														>
+															{tStatus}
+														</span>
+													</td>
+													<td className="border border-gray-400 px-3 py-3 text-center">
+														{penalty > 0
+															? `₱ ${penalty.toFixed(2)}`
+															: "-"}
+													</td>
+												</tr>
+											);
+										})
 									) : (
 										<tr>
 											<td

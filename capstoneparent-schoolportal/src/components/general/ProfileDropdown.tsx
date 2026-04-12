@@ -12,6 +12,7 @@ import { ManageAccountModal } from "./ManageAccountModal";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { LogoutConfirmationModal } from "./LogoutConfirmationModal";
 import { authApi, usersApi } from "@/lib/api";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 type ActiveProfileModal =
   | "my-profile"
@@ -67,7 +68,7 @@ export const ProfileDropdown = () => {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const { showSuccess, showError } = useApiFeedbackStore();
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
@@ -98,12 +99,10 @@ export const ProfileDropdown = () => {
   const openModal = (modalType: Exclude<ActiveProfileModal, null>) => {
     setActiveModal(modalType);
     setIsOpen(false);
-    setSuccessMsg(null);
   };
 
   const closeModal = () => {
     setActiveModal(null);
-    setSuccessMsg(null);
   };
 
   const handleSaveProfile = async (
@@ -157,11 +156,12 @@ export const ProfileDropdown = () => {
       });
 
       setActiveModal("my-profile");
-      setSuccessMsg("Profile updated successfully.");
+      showSuccess("Profile updated successfully.");
 
       return { success: true, message: "Profile updated successfully." };
     } catch (err: any) {
-      return { success: false, message: err.message || "An error occurred." };
+      showError(err.message || "An error occurred.");
+      return { success: false, message: err.message || "An error occurred."};
     } finally {
       setIsSavingProfile(false);
     }
@@ -302,7 +302,6 @@ export const ProfileDropdown = () => {
         isOpen={activeModal === "my-profile"}
         onClose={closeModal}
         profileData={profileData}
-        successMessage={successMsg}
       />
 
       <ManageAccountModal

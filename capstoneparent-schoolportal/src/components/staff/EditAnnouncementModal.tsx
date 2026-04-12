@@ -44,7 +44,6 @@ export const EditAnnouncementModal = ({
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [removedFileIds, setRemovedFileIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen || !post) return;
@@ -57,7 +56,6 @@ export const EditAnnouncementModal = ({
     } else {
       setAnnouncementType("general");
     }
-    setError(null);
     setSubmitting(false);
     setFiles([]);
     setRemovedFileIds([]);
@@ -121,13 +119,10 @@ export const EditAnnouncementModal = ({
     removedFileIds.length > 0;
 
   const handlePost = async () => {
-    setError(null);
     if (!title.trim()) {
-      setError("Title is required");
       return;
     }
     if (!content.trim()) {
-      setError("Content is required");
       return;
     }
 
@@ -144,11 +139,7 @@ export const EditAnnouncementModal = ({
       });
       onClose();
     } catch (err) {
-      if (err instanceof Error && err.message.trim()) {
-        setError(err.message);
-      } else {
-        setError("Failed to update announcement");
-      }
+      console.error(err);
     } finally {
       setSubmitting(false);
     }
@@ -280,7 +271,6 @@ export const EditAnnouncementModal = ({
             </div>
           )}
 
-          {error && <div className="text-xs sm:text-sm text-red-600">{error}</div>}
 
           {/* Bottom Row */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4">

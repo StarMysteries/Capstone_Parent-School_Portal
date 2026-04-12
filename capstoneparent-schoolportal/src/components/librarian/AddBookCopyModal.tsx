@@ -7,17 +7,11 @@ import { Button } from '../ui/button';
 interface AddBookCopyModalProps {
 	onClose: () => void;
 	bookTitle?: string;
+	onAddCopies: (copyNumbers: number[]) => Promise<void>;
+	existingCopyCodes: number[];
 }
 
-interface BookCopyItem {
-	id: number;
-	copyNumber: number;
-}
-
-const buildCopyLabel = (bookTitle: string, copyNumber: number) => `${bookTitle} ${copyNumber}`;
-
-const getNextAvailableCopyNumbers = (copies: BookCopyItem[], numberOfCopies: number) => {
-	const existingCopyNumbers = new Set(copies.map((copy) => copy.copyNumber));
+const getNextAvailableCopyNumbers = (existingCopyNumbers: Set<number>, numberOfCopies: number) => {
 	const nextCopyNumbers: number[] = [];
 	let candidateCopyNumber = 1;
 
@@ -31,29 +25,36 @@ const getNextAvailableCopyNumbers = (copies: BookCopyItem[], numberOfCopies: num
 	return nextCopyNumbers;
 };
 
-const AddBookCopyModal: React.FC<AddBookCopyModalProps> = ({ onClose, bookTitle = 'Book' }) => {
-	const [copies, setCopies] = React.useState<BookCopyItem[]>(
-		Array.from({ length: 3 }, (_, index) => ({
-			id: index + 1,
-			copyNumber: index + 1,
-		}))
-	);
+const AddBookCopyModal: React.FC<AddBookCopyModalProps> = ({ onClose, bookTitle = 'Book', onAddCopies, existingCopyCodes }) => {
+	const [newCopies, setNewCopies] = React.useState<number[]>([]);
 	const [isAddNumberModalOpen, setIsAddNumberModalOpen] = React.useState(false);
+	const [isSaving, setIsSaving] = React.useState(false);
 
 	const handleAddCopies = (numberOfCopies: number) => {
-		setCopies((previousCopies) => {
-			const nextCopyNumbers = getNextAvailableCopyNumbers(previousCopies, numberOfCopies);
-			const newCopies = nextCopyNumbers.map((copyNumber, index) => ({
-				id: Date.now() + index,
-				copyNumber,
-			}));
-
-			return [...previousCopies, ...newCopies].sort((leftCopy, rightCopy) => leftCopy.copyNumber - rightCopy.copyNumber);
-		});
+		const existingSet = new Set([...existingCopyCodes, ...newCopies]);
+		const nextCopyNumbers = getNextAvailableCopyNumbers(existingSet, numberOfCopies);
+		setNewCopies((prev) => [...prev, ...nextCopyNumbers].sort((a, b) => a - b));
 	};
 
-	const handleRemoveCopy = (id: number) => {
-		setCopies((previousCopies) => previousCopies.filter((copy) => copy.id !== id));
+	const handleRemoveCopy = (copyNumber: number) => {
+		setNewCopies((prev) => prev.filter((c) => c !== copyNumber));
+	};
+
+	const handleSave = async () => {
+		if (newCopies.length === 0) {
+			onClose();
+			return;
+		}
+
+		setIsSaving(true);
+		try {
+			await onAddCopies(newCopies);
+			onClose();
+		} catch (error) {
+			console.error("Failed to add copies", error);
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
 	return (
@@ -75,27 +76,39 @@ const AddBookCopyModal: React.FC<AddBookCopyModalProps> = ({ onClose, bookTitle 
 					</div>
 
 					<div className="max-h-80 overflow-y-auto space-y-3 border border-gray-200 rounded-md p-3">
-						{copies.map((copy) => (
-							<div key={copy.id} className="flex items-center justify-between gap-3 rounded-md bg-gray-50 px-4 py-3">
-								<span className="text-sm font-medium text-gray-800">{buildCopyLabel(bookTitle, copy.copyNumber)}</span>
+						{newCopies.map((copyNum) => (
+							<div key={copyNum} className="flex items-center justify-between gap-3 rounded-md bg-gray-50 px-4 py-3">
+								<span className="text-sm font-medium text-gray-800">{bookTitle} - Copy {copyNum}</span>
 								<button
 									type="button"
-									onClick={() => handleRemoveCopy(copy.id)}
+									onClick={() => handleRemoveCopy(copyNum)}
 									className="text-red-600 hover:text-red-700 cursor-pointer"
-									aria-label={`Remove ${buildCopyLabel(bookTitle, copy.copyNumber)}`}
+									aria-label={`Remove Copy`}
 								>
 									<Trash2 className="h-5 w-5" />
 								</button>
 							</div>
 						))}
+						{newCopies.length === 0 && (
+							<div className="text-center text-gray-500 text-sm">No new copies staged. Click 'Add Copy' to begin.</div>
+						)}
 					</div>
-					<div className="flex justify-end">
+					<div className="flex justify-end gap-3">
 						<Button
 							type="button"
 							onClick={onClose}
-							className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 text-lg rounded-full"
+							disabled={isSaving}
+							className="bg-gray-400 hover:bg-gray-500 text-white px-8 py-3 text-lg rounded-full"
 						>
-							Done
+							Cancel
+						</Button>
+						<Button
+							type="button"
+							onClick={handleSave}
+							disabled={isSaving || newCopies.length === 0}
+							className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:opacity-50"
+						>
+							{isSaving ? "Saving..." : "Save Copies"}
 						</Button>
 					</div>
 				</div>
