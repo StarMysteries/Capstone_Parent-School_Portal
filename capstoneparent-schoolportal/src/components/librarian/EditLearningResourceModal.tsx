@@ -1,43 +1,44 @@
 import React from 'react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
+import type { LibraryCategory } from '@/lib/api/types';
+import { GRADE_LEVELS } from '@/lib/store/libraryStore';
 
 interface EditLearningResourceModalProps {
 	onClose: () => void;
-	onSave?: (resource: { title: string; category: string; gradeLevel: string }) => void;
+	onSave?: (resource: { title: string; category_id: number; gl_id: number }) => void;
+	categories: LibraryCategory[];
 	initialResource?: {
 		title?: string;
-		category?: string;
-		gradeLevel?: string;
+		category_id?: number;
+		gl_id?: number;
 	};
-	categoryOptions: string[];
-	gradeOptions: string[];
 }
 
 const EditLearningResourceModal: React.FC<EditLearningResourceModalProps> = ({
 	onClose,
 	onSave,
 	initialResource,
-	categoryOptions,
-	gradeOptions,
+	categories,
 }) => {
 	const [resourceTitle, setResourceTitle] = React.useState(initialResource?.title ?? '');
-	const [category, setCategory] = React.useState(initialResource?.category ?? 'CATEGORY');
-	const [gradeLevel, setGradeLevel] = React.useState(initialResource?.gradeLevel ?? 'GRADE LEVEL');
+	const [categoryId, setCategoryId] = React.useState<number | ''>(initialResource?.category_id ?? '');
+	const [glId, setGlId] = React.useState<number | ''>(initialResource?.gl_id ?? '');
+
 	const hasChanges =
 		resourceTitle.trim() !== (initialResource?.title ?? '').trim() ||
-		category !== (initialResource?.category ?? 'CATEGORY') ||
-		gradeLevel !== (initialResource?.gradeLevel ?? 'GRADE LEVEL');
+		categoryId !== (initialResource?.category_id ?? '') ||
+		glId !== (initialResource?.gl_id ?? '');
 
 	const handleSave = () => {
-		if (!resourceTitle.trim() || category === 'CATEGORY' || gradeLevel === 'GRADE LEVEL') {
+		if (!resourceTitle.trim() || categoryId === '' || glId === '') {
 			return;
 		}
 
 		onSave?.({
 			title: resourceTitle.trim(),
-			category,
-			gradeLevel,
+			category_id: categoryId as number,
+			gl_id: glId as number,
 		});
 		onClose();
 	};
@@ -54,26 +55,26 @@ const EditLearningResourceModal: React.FC<EditLearningResourceModalProps> = ({
 				/>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<select
-						value={category}
-						onChange={(event) => setCategory(event.target.value)}
+						value={categoryId}
+						onChange={(event) => setCategoryId(Number(event.target.value))}
 						className="w-full px-4 py-3 text-lg border-2 border-black rounded-md focus:outline-none focus:ring-2 focus:ring-(--button-green)"
 					>
-						<option value="CATEGORY">CATEGORY</option>
-						{categoryOptions.map((option) => (
-							<option key={option} value={option}>
-								{option}
+						<option value="" disabled>CATEGORY</option>
+						{categories.map((cat) => (
+							<option key={cat.category_id} value={cat.category_id}>
+								{cat.category_name}
 							</option>
 						))}
 					</select>
 					<select
-						value={gradeLevel}
-						onChange={(event) => setGradeLevel(event.target.value)}
+						value={glId}
+						onChange={(event) => setGlId(Number(event.target.value))}
 						className="w-full px-4 py-3 text-lg border-2 border-black rounded-md focus:outline-none focus:ring-2 focus:ring-(--button-green)"
 					>
-						<option value="GRADE LEVEL">GRADE LEVEL</option>
-						{gradeOptions.map((option) => (
-							<option key={option} value={option}>
-								{option}
+						<option value="" disabled>GRADE LEVEL</option>
+						{GRADE_LEVELS.map((g) => (
+							<option key={g.id} value={g.id}>
+								{g.label}
 							</option>
 						))}
 					</select>

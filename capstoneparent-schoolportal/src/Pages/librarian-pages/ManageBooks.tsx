@@ -14,7 +14,6 @@ import {
 import { Search, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLibraryStore, formatGradeLevel, GRADE_LEVELS } from "@/lib/store/libraryStore";
-import type { LearningMaterial } from "@/lib/api/types";
 
 export const ManageBooks = () => {
   const [searchQuery, setSearchQuery] = useState("");

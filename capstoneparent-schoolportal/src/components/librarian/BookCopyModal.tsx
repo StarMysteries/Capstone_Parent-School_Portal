@@ -1,11 +1,11 @@
 import React from 'react';
-import { Plus, ChevronDown } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
 import AddBookCopyModal from './AddBookCopyModal';
-import BorrowerDetailsModal from './BorrowerDetailsModal';
-import type { LearningMaterial, MaterialCopy, MaterialStatus } from '@/lib/api/types';
-import { useLibraryStore, formatGradeLevel } from '@/lib/store/libraryStore';
+
+import type { LearningMaterial } from '@/lib/api/types';
+import { useLibraryStore } from '@/lib/store/libraryStore';
 
 interface BookCopyModalProps {
   onClose: () => void;
@@ -18,26 +18,16 @@ const BookCopyModal: React.FC<BookCopyModalProps> = ({
 }) => {
   const [filterStatus, setFilterStatus] = React.useState<string>('Status');
   const [isAddCopyModalOpen, setIsAddCopyModalOpen] = React.useState(false);
-  const [selectedCopy, setSelectedCopy] = React.useState<MaterialCopy | null>(null);
-
   const addCopy = useLibraryStore((state) => state.addCopy);
-  const updateCopyStatusStore = useLibraryStore((state) => state.updateCopyStatus);
 
   const copies = material.copies || [];
   
   const existingCopyCodes = copies.map((c) => c.copy_code);
 
   const handleAddCopies = async (copyNumbers: number[]) => {
-    // Add multiple copies sequentially or via Promise.all
     await Promise.all(
-      copyNumbers.map((copy_code) => addCopy(material.item_id, copy_code, 'New'))
+      copyNumbers.map((copy_code) => addCopy(material.item_id, { copy_code }))
     );
-  };
-
-  const syncStatus = async (copyId: number, nextStatus: MaterialStatus) => {
-    // We simply use updateCopyStatus from store (Wait, I need to add that to libraryStore)
-    // Actually, libraryStore does not have updateCopyStatus exposed. Oh! I should add it or use libraryApi directly.
-    // Let me just import libraryApi directly for this specific update, or I can update libraryStore.
   };
 
   return (
@@ -82,7 +72,6 @@ const BookCopyModal: React.FC<BookCopyModalProps> = ({
         <div
           key={copy.copy_id}
           className="border border-gray-200 rounded-md p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-          onClick={() => setSelectedCopy(copy)}
         >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
