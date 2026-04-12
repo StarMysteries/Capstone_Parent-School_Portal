@@ -169,6 +169,7 @@ export const CreateAnnouncementModal = ({
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-700">File Upload</p>
                 <p className="text-xs text-gray-500">Multiple files can be uploaded here</p>
+                <p className="text-xs text-gray-400">Accepted: JPEG, PNG, PDF · Max 10 MB per file</p>
               </div>
               <label
                 htmlFor="create-announcement-file-input"

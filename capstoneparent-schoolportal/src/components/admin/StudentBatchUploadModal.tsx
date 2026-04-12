@@ -98,8 +98,9 @@ export const StudentBatchUploadModal = ({
             <Upload className="mr-2 h-4 w-4" />
             Select CSV File
           </Button>
+          <p className="mt-1 text-center text-xs text-gray-400">Accepted: CSV only · No size limit</p>
 
-          <div className="mt-4 flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
+          <div className="mt-3 flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
             <FileText className="h-5 w-5 text-(--button-green)" />
             <span className="text-sm text-gray-700">
               {selectedFile ? selectedFile.name : "No file selected"}

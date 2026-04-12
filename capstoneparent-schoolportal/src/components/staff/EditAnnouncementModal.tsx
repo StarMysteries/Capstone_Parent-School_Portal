@@ -207,6 +207,7 @@ export const EditAnnouncementModal = ({
                 <p className="text-xs text-gray-500">
                   You can add new files and remove old ones below.
                 </p>
+                <p className="text-xs text-gray-400">Accepted: JPEG, PNG, PDF · Max 10 MB per file</p>
               </div>
               <label
                 htmlFor="edit-announcement-file-input"

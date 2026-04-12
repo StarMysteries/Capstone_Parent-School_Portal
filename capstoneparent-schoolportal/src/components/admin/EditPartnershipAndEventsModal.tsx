@@ -227,6 +227,7 @@ export const EditPartnershipAndEventsModal = ({
           <div className="relative min-h-45">
             <div className="max-w-60 space-y-2">
               <p className="text-sm text-gray-500">One file can be uploaded here</p>
+              <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 10 MB</p>
               {formData.uploadError && (
                 <p className="text-sm font-medium text-red-600">{formData.uploadError}</p>
               )}

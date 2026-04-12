@@ -115,7 +115,7 @@ export const EditTransparencyModal = ({
           className="hidden"
         />
 
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-1">
           <Button
             type="button"
             onClick={handleUploadClick}
@@ -125,6 +125,7 @@ export const EditTransparencyModal = ({
             Upload New Transparency Picture
             <Plus className="ml-2 h-6 w-6 text-black" strokeWidth={3} />
           </Button>
+          <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 10 MB</p>
         </div>
 
         <div className="flex justify-end">

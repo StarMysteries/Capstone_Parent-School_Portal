@@ -99,6 +99,8 @@ export const DeniedDetailsModal = ({
               className="hidden"
               onChange={onDeniedFileChange}
             />
+            <p className="mb-1 text-xs text-gray-500">Choose a target document first, then click File Upload.</p>
+            <p className="mb-3 text-xs text-gray-400">Accepted: PDF, JPG, JPEG, PNG · Max 10 MB per file</p>
 
             <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <button

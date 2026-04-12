@@ -169,11 +169,11 @@ export const EditOrganizationalChartModal = ({
       <div className="space-y-6">
         {mode === "add" ? (
           <p className="text-lg text-black/80">
-            Choose the school year and upload a chart image. Only image files (JPEG, PNG) are accepted.
+            Choose the school year and upload a chart image. Only image files (JPEG, PNG) are accepted · Max 10 MB.
           </p>
         ) : (
           <p className="text-lg text-black/80">
-            Update the image for this school year, or replace the file below.
+            Update the image for this school year, or replace the file below. Only image files (JPEG, PNG) are accepted · Max 10 MB.
           </p>
         )}
 
