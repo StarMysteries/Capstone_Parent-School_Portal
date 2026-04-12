@@ -3,10 +3,429 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
+model User {
+  user_id                Int                      @id @default(autoincrement())
+  email                  String                   @unique
+  password               String
+  fname                  String
+  lname                  String
+  contact_num            String
+  address                String
+  account_status         AccountStatus            @default(Active)
+  created_at             DateTime                 @default(now())
+  updated_at             DateTime                 @updatedAt
+  date_of_birth          DateTime?                @db.Date
+  photo_path             String?
+  announcements          Announcement[]
+  class_advisers         ClassList[]
+  events                 Event[]
+  files                  File[]
+  uploaded_materials     LearningMaterial[]
+  material_borrows       MaterialBorrowRecord[]
+  org_charts             OrgChart[]
+  page_sections          PageSection[]
+  parent_registrations   ParentRegistration[]     @relation("ParentUser")
+  verified_registrations ParentRegistration[]     @relation("VerifiedBy")
+  subject_teachers       SubjectRecord[]
+  otp_codes              UserOTPCode[]
+  password_reset_tokens  UserPasswordResetToken[]
+  roles                  UserRole_Model[]
+  trusted_devices        UserTrustedDevice[]
+
+  @@map("users")
+}
+
+model UserOTPCode {
+  otp_id     Int      @id @default(autoincrement())
+  user_id    Int
+  otp_code   String
+  expires_at DateTime
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("user_otp_codes")
+}
+
+model UserTrustedDevice {
+  td_id        Int      @id @default(autoincrement())
+  user_id      Int
+  device_token String   @unique @db.Char(64)
+  last_used_at DateTime
+  created_at   DateTime @default(now())
+  user         User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("user_trusted_devices")
+}
+
+model UserPasswordResetToken {
+  prt_id     Int      @id @default(autoincrement())
+  user_id    Int
+  token      String   @unique @db.Char(64)
+  expires_at DateTime
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([token])
+  @@map("user_password_reset_tokens")
+}
+
+model UserRole_Model {
+  ur_id   Int      @id @default(autoincrement())
+  user_id Int
+  role    UserRole
+  user    User     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("user_roles")
+}
+
+model Announcement {
+  announcement_id    Int                @id @default(autoincrement())
+  announcement_title String
+  announcement_desc  String
+  announcement_type  AnnouncementType
+  announced_by       Int
+  created_at         DateTime           @default(now())
+  files              AnnouncementFile[]
+  user               User               @relation(fields: [announced_by], references: [user_id])
+
+  @@index([announced_by, created_at])
+  @@map("announcements")
+}
+
+model File {
+  file_id            Int                @id @default(autoincrement())
+  file_name          String
+  file_path          String
+  file_type          String
+  file_size          Int
+  uploaded_at        DateTime           @default(now())
+  uploaded_by        Int
+  announcements      AnnouncementFile[]
+  user               User               @relation(fields: [uploaded_by], references: [user_id])
+  parent_child_files ParentChildFile[]
+
+  @@index([uploaded_by])
+  @@map("files")
+}
+
+model AnnouncementFile {
+  af_id           Int          @id @default(autoincrement())
+  announcement_id Int
+  file_id         Int
+  announcement    Announcement @relation(fields: [announcement_id], references: [announcement_id], onDelete: Cascade)
+  file            File         @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
+
+  @@index([announcement_id])
+  @@index([file_id])
+  @@map("announcement_files")
+}
+
+model Event {
+  event_id    Int      @id @default(autoincrement())
+  event_title String
+  event_desc  String?
+  event_date  DateTime @db.Date
+  created_at  DateTime @default(now())
+  created_by  Int
+  photo_path  String
+  user        User     @relation(fields: [created_by], references: [user_id])
+
+  @@index([created_by])
+  @@index([event_date])
+  @@map("events")
+}
+
+model PageSection {
+  page_id      Int         @id @default(autoincrement())
+  content_type ContentType
+  content      String?
+  file_path    String?
+  start_year   Int?
+  end_year     Int?
+  updated_at   DateTime    @updatedAt
+  updated_by   Int
+  file_name    String?
+  user         User        @relation(fields: [updated_by], references: [user_id])
+
+  @@index([content_type, updated_at])
+  @@index([content_type, start_year])
+  @@map("page_sections")
+}
+
+model OrgChart {
+  chart_id    Int      @id @default(autoincrement())
+  school_year Int
+  uploaded_at DateTime @default(now())
+  uploaded_by Int
+  file_name   String?
+  file_path   String?
+  user        User     @relation(fields: [uploaded_by], references: [user_id])
+
+  @@index([school_year])
+  @@index([uploaded_by])
+  @@map("org_charts")
+}
+
+model Student {
+  student_id              Int                         @id @default(autoincrement())
+  fname                   String
+  lname                   String
+  sex                     Sex
+  lrn_number              String
+  gl_id                   Int
+  syear_start             Int
+  syear_end               Int
+  status                  StudentStatus               @default(ENROLLED)
+  created_at              DateTime                    @default(now())
+  updated_at              DateTime                    @updatedAt
+  attendance_records      AttendanceRecord[]
+  class_lists             ClassListStudent[]
+  material_borrow_records MaterialBorrowRecord[]
+  parent_registrations    ParentRegistrationStudent[]
+  grade_level             GradeLevel                  @relation(fields: [gl_id], references: [gl_id])
+  subject_records         SubjectRecordStudent[]
+
+  @@unique([lrn_number, syear_start])
+  @@index([status, gl_id, syear_start])
+  @@index([created_at])
+  @@map("students")
+}
+
+model ParentRegistration {
+  pr_id        Int                         @id @default(autoincrement())
+  parent_id    Int
+  status       RegistrationStatus          @default(PENDING)
+  remarks      String?
+  submitted_at DateTime                    @default(now())
+  verified_at  DateTime?
+  verified_by  Int?
+  files        ParentChildFile[]
+  students     ParentRegistrationStudent[]
+  parent       User                        @relation("ParentUser", fields: [parent_id], references: [user_id], onDelete: Cascade)
+  verifier     User?                       @relation("VerifiedBy", fields: [verified_by], references: [user_id])
+
+  @@index([parent_id, status])
+  @@index([verified_by])
+  @@map("parent_registrations")
+}
+
+model ParentRegistrationStudent {
+  prs_id       Int                @id @default(autoincrement())
+  pr_id        Int
+  student_id   Int
+  registration ParentRegistration @relation(fields: [pr_id], references: [pr_id], onDelete: Cascade)
+  student      Student            @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@index([pr_id])
+  @@index([student_id])
+  @@map("parent_registration_students")
+}
+
+model ParentChildFile {
+  pcf_id       Int                @id @default(autoincrement())
+  pr_id        Int
+  file_id      Int
+  file         File               @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
+  registration ParentRegistration @relation(fields: [pr_id], references: [pr_id], onDelete: Cascade)
+
+  @@index([pr_id])
+  @@index([file_id])
+  @@map("parent_child_files")
+}
+
+model GradeLevel {
+  gl_id              Int                @id @default(autoincrement())
+  grade_level        String
+  class_lists        ClassList[]
+  learning_materials LearningMaterial[]
+  students           Student[]
+
+  @@map("grade_levels")
+}
+
+model Section {
+  section_id   Int         @id @default(autoincrement())
+  section_name String      @unique
+  class_lists  ClassList[]
+
+  @@map("sections")
+}
+
+model ClassList {
+  clist_id        Int                      @id @default(autoincrement())
+  gl_id           Int
+  section_id      Int
+  class_adviser   Int
+  syear_start     Int
+  syear_end       Int
+  class_sched     String?
+  students        ClassListStudent[]
+  subject_records ClassListSubjectRecord[]
+  adviser         User                     @relation(fields: [class_adviser], references: [user_id])
+  grade_level     GradeLevel               @relation(fields: [gl_id], references: [gl_id])
+  section         Section                  @relation(fields: [section_id], references: [section_id])
+
+  @@index([class_adviser, syear_start])
+  @@index([gl_id, section_id, syear_start])
+  @@index([section_id])
+  @@map("class_lists")
+}
+
+model ClassListStudent {
+  cls_id     Int       @id @default(autoincrement())
+  clist_id   Int
+  student_id Int
+  class_list ClassList @relation(fields: [clist_id], references: [clist_id], onDelete: Cascade)
+  student    Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([clist_id, student_id])
+  @@map("class_list_students")
+}
+
+model Subject {
+  subject_id         Int                @id @default(autoincrement())
+  name               String             @unique
+  created_at         DateTime           @default(now())
+  learning_materials LearningMaterial[]
+  subject_records    SubjectRecord[]
+
+  @@map("subjects")
+}
+
+model SubjectRecord {
+  srecord_id      Int                      @id @default(autoincrement())
+  subject_name    String
+  time_start      DateTime                 @db.Time(6)
+  time_end        DateTime                 @db.Time(6)
+  subject_teacher Int?
+  subject_id      Int?
+  class_lists     ClassListSubjectRecord[]
+  students        SubjectRecordStudent[]
+  subject         Subject?                 @relation(fields: [subject_id], references: [subject_id])
+  teacher         User?                    @relation(fields: [subject_teacher], references: [user_id])
+
+  @@index([subject_teacher])
+  @@index([subject_id])
+  @@map("subject_records")
+}
+
+model AttendanceRecord {
+  attendance_id Int     @id @default(autoincrement())
+  student_id    Int
+  school_days   Int
+  days_present  Int
+  days_absent   Int
+  month         Month
+  student       Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@index([student_id, month])
+  @@map("attendance_records")
+}
+
+model ClassListSubjectRecord {
+  clsr_id        Int           @id @default(autoincrement())
+  clist_id       Int
+  srecord_id     Int
+  class_list     ClassList     @relation(fields: [clist_id], references: [clist_id], onDelete: Cascade)
+  subject_record SubjectRecord @relation(fields: [srecord_id], references: [srecord_id], onDelete: Cascade)
+
+  @@index([clist_id])
+  @@index([srecord_id])
+  @@map("class_list_subject_records")
+}
+
+model SubjectRecordStudent {
+  srs_id         Int            @id @default(autoincrement())
+  srecord_id     Int
+  student_id     Int
+  q1_grade       Int?
+  q2_grade       Int?
+  q3_grade       Int?
+  q4_grade       Int?
+  avg_grade      Int?
+  remarks        SubjectRemarks @default(IN_PROGRESS)
+  subject_record SubjectRecord  @relation(fields: [srecord_id], references: [srecord_id], onDelete: Cascade)
+  student        Student        @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
+  @@unique([srecord_id, student_id])
+  @@index([student_id])
+  @@map("subject_record_students")
+}
+
+model Category {
+  category_id        Int                @id @default(autoincrement())
+  category_name      String
+  learning_materials LearningMaterial[]
+
+  @@map("categories")
+}
+
+model LearningMaterial {
+  item_id     Int            @id @default(autoincrement())
+  item_name   String
+  author      String?
+  item_type   ItemType
+  category_id Int
+  gl_id       Int
+  uploaded_at DateTime       @default(now())
+  uploaded_by Int
+  subject_id  Int?
+  category    Category       @relation(fields: [category_id], references: [category_id])
+  grade_level GradeLevel     @relation(fields: [gl_id], references: [gl_id])
+  subject     Subject?       @relation(fields: [subject_id], references: [subject_id])
+  uploader    User           @relation(fields: [uploaded_by], references: [user_id])
+  copies      MaterialCopy[]
+
+  @@index([item_type, category_id, gl_id])
+  @@index([uploaded_by])
+  @@index([subject_id])
+  @@map("learning_materials")
+}
+
+model MaterialCopy {
+  copy_id        Int                    @id @default(autoincrement())
+  item_id        Int
+  copy_code      Int
+  status         MaterialStatus         @default(AVAILABLE)
+  condition      String?
+  added_at       DateTime               @default(now())
+  borrow_records MaterialBorrowRecord[]
+  item           LearningMaterial       @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
+
+  @@index([item_id])
+  @@index([copy_code])
+  @@map("material_copies")
+}
+
+model MaterialBorrowRecord {
+  mbr_id       Int          @id @default(autoincrement())
+  copy_id      Int
+  student_id   Int?
+  user_id      Int?
+  penalty_cost Decimal      @default(0) @db.Decimal(15, 2)
+  borrowed_at  DateTime     @default(now())
+  due_at       DateTime
+  returned_at  DateTime?
+  remarks      String?
+  copy         MaterialCopy @relation(fields: [copy_id], references: [copy_id], onDelete: Cascade)
+  student      Student?     @relation(fields: [student_id], references: [student_id])
+  user         User?        @relation(fields: [user_id], references: [user_id])
+
+  @@index([copy_id])
+  @@index([student_id])
+  @@index([user_id])
+  @@index([returned_at, due_at])
+  @@map("material_borrow_records")
+}
+
 enum AccountStatus {
   Active
   Inactive
@@ -85,439 +504,4 @@ enum ContentType {
   contact
   school_calendar
   transparency
-}
-
-model User {
-  user_id                      Int                   @id @default(autoincrement())
-  email                        String                @unique
-  password                     String
-  fname                        String
-  lname                        String
-  photo_path                   String?               @db.Text
-  contact_num                  String
-  address                      String
-  date_of_birth                DateTime?             @db.Date
-  account_status               AccountStatus         @default(Active)
-  created_at                   DateTime              @default(now())
-  updated_at                   DateTime              @updatedAt
-
-  // Relations
-  otp_codes                    UserOTPCode[]
-  trusted_devices              UserTrustedDevice[]
-  password_reset_tokens        UserPasswordResetToken[]
-  roles                        UserRole_Model[]
-  announcements                Announcement[]
-  files                        File[]
-  events                       Event[]
-  page_sections                PageSection[]
-  org_charts                   OrgChart[]
-  parent_registrations         ParentRegistration[]  @relation("ParentUser")
-  verified_registrations       ParentRegistration[]  @relation("VerifiedBy")
-  class_advisers               ClassList[]
-  subject_teachers             SubjectRecord[]
-  material_borrows             MaterialBorrowRecord[]
-  uploaded_materials           LearningMaterial[]
-
-  @@map("users")
-}
-
-model UserOTPCode {
-  otp_id      Int      @id @default(autoincrement())
-  user_id     Int
-  otp_code    String
-  expires_at  DateTime
-  used        Boolean  @default(false)
-  created_at  DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-
-  @@map("user_otp_codes")
-}
-
-model UserTrustedDevice {
-  td_id         Int      @id @default(autoincrement())
-  user_id       Int
-  device_token  String   @unique @db.Char(64)
-  last_used_at  DateTime
-  created_at    DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-
-  @@map("user_trusted_devices")
-}
-
-model UserPasswordResetToken {
-  prt_id     Int      @id @default(autoincrement())
-  user_id    Int
-  token      String   @unique @db.Char(64)
-  expires_at DateTime
-  used       Boolean  @default(false)
-  created_at DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-
-  @@index([token])
-  @@map("user_password_reset_tokens")
-}
-
-model UserRole_Model {
-  ur_id   Int      @id @default(autoincrement())
-  user_id Int
-  role    UserRole
-
-  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-
-  @@index([user_id])
-  @@map("user_roles")
-}
-
-model Announcement {
-  announcement_id    Int               @id @default(autoincrement())
-  announcement_title String
-  announcement_desc  String            @db.Text
-  announcement_type  AnnouncementType
-  announced_by       Int
-  created_at         DateTime          @default(now())
-
-  user  User                @relation(fields: [announced_by], references: [user_id])
-  files AnnouncementFile[]
-
-  @@index([announced_by, created_at])
-  @@map("announcements")
-}
-
-model File {
-  file_id     Int      @id @default(autoincrement())
-  file_name   String
-  file_path   String   @db.Text
-  file_type   String
-  file_size   Int
-  uploaded_at DateTime @default(now())
-  uploaded_by Int
-
-  user                 User                   @relation(fields: [uploaded_by], references: [user_id])
-  announcements        AnnouncementFile[]
-  parent_child_files   ParentChildFile[]
-
-  @@index([uploaded_by])
-  @@map("files")
-}
-
-model AnnouncementFile {
-  af_id           Int @id @default(autoincrement())
-  announcement_id Int
-  file_id         Int
-
-  announcement Announcement @relation(fields: [announcement_id], references: [announcement_id], onDelete: Cascade)
-  file         File         @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
-
-  @@index([announcement_id])
-  @@index([file_id])
-  @@map("announcement_files")
-}
-
-model Event {
-  event_id    Int      @id @default(autoincrement())
-  event_title String
-  event_desc  String?  @db.Text
-  event_date  DateTime @db.Date
-  created_at  DateTime @default(now())
-  created_by  Int
-  photo_path  String   @db.Text
-
-  user User @relation(fields: [created_by], references: [user_id])
-
-  @@index([created_by])
-  @@index([event_date])
-  @@map("events")
-}
-
-model PageSection {
-  page_id      Int         @id @default(autoincrement())
-  content_type ContentType
-  content      String?     @db.Text
-  file_path    String?     @db.Text
-  file_name    String?     @db.Text
-  start_year   Int?
-  end_year     Int?
-  updated_at   DateTime    @updatedAt
-  updated_by   Int
-
-  user User @relation(fields: [updated_by], references: [user_id])
-
-  @@index([content_type, updated_at])
-  @@index([content_type, start_year])
-  @@map("page_sections")
-}
-
-model OrgChart {
-  chart_id    Int      @id @default(autoincrement())
-  school_year Int
-  file_path   String?  @db.Text
-  file_name   String?  @db.Text
-  uploaded_at DateTime @default(now())
-  uploaded_by Int
-
-  user User @relation(fields: [uploaded_by], references: [user_id])
-
-  @@index([school_year])
-  @@index([uploaded_by])
-  @@map("org_charts")
-}
-
-//Student Data
-model Student {
-  student_id Int           @id @default(autoincrement())
-  fname      String
-  lname      String
-  sex        Sex
-  lrn_number String
-  gl_id      Int
-  syear_start Int         
-  syear_end   Int         
-  status     StudentStatus @default(ENROLLED)
-  created_at DateTime      @default(now())
-  updated_at DateTime      @updatedAt
-
-  grade_level              GradeLevel                 @relation(fields: [gl_id], references: [gl_id])
-  parent_registrations     ParentRegistrationStudent[]
-  class_lists              ClassListStudent[]
-  subject_records          SubjectRecordStudent[]
-  attendance_records       AttendanceRecord[]
-  material_borrow_records  MaterialBorrowRecord[]
-
-  @@unique([lrn_number, syear_start])
-  @@index([status, gl_id, syear_start])
-  @@index([created_at])
-  @@map("students")
-}
-
-//Parent
-model ParentRegistration {
-  pr_id        Int                @id @default(autoincrement())
-  parent_id    Int
-  status       RegistrationStatus @default(PENDING)
-  remarks      String?            @db.Text
-  submitted_at DateTime           @default(now())
-  verified_at  DateTime?
-  verified_by  Int?
-
-  parent   User                        @relation("ParentUser", fields: [parent_id], references: [user_id], onDelete: Cascade)
-  verifier User?                       @relation("VerifiedBy", fields: [verified_by], references: [user_id])
-  students ParentRegistrationStudent[]
-  files    ParentChildFile[]
-
-  @@index([parent_id, status])
-  @@index([verified_by])
-  @@map("parent_registrations")
-}
-
-model ParentRegistrationStudent {
-  prs_id     Int @id @default(autoincrement())
-  pr_id      Int
-  student_id Int
-
-  registration ParentRegistration @relation(fields: [pr_id], references: [pr_id], onDelete: Cascade)
-  student      Student            @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-
-  @@index([pr_id])
-  @@index([student_id])
-  @@map("parent_registration_students")
-}
-
-model ParentChildFile {
-  pcf_id  Int @id @default(autoincrement())
-  pr_id   Int
-  file_id Int
-
-  registration ParentRegistration @relation(fields: [pr_id], references: [pr_id], onDelete: Cascade)
-  file         File               @relation(fields: [file_id], references: [file_id], onDelete: Cascade)
-
-  @@index([pr_id])
-  @@index([file_id])
-  @@map("parent_child_files")
-}
-
-//Student Record
-model GradeLevel {
-  gl_id       Int    @id @default(autoincrement())
-  grade_level String
-
-  students          Student[]
-  class_lists       ClassList[]
-  learning_materials LearningMaterial[]
-
-  @@map("grade_levels")
-}
-
-model Section {
-  section_id   Int    @id @default(autoincrement())
-  section_name String @unique
-
-  class_lists ClassList[]
-
-  @@map("sections")
-}
-
-model ClassList {
-  clist_id      Int     @id @default(autoincrement())
-  gl_id         Int
-  section_id    Int
-  class_adviser Int
-  syear_start   Int
-  syear_end     Int
-  class_sched   String? @db.Text
-
-  grade_level     GradeLevel                @relation(fields: [gl_id], references: [gl_id])
-  section         Section                   @relation(fields: [section_id], references: [section_id])
-  adviser         User                      @relation(fields: [class_adviser], references: [user_id])
-  students        ClassListStudent[]
-  subject_records ClassListSubjectRecord[]
-
-  @@index([class_adviser, syear_start])
-  @@index([gl_id, section_id, syear_start])
-  @@index([section_id])
-  @@map("class_lists")
-}
-
-model ClassListStudent {
-  cls_id     Int @id @default(autoincrement())
-  clist_id   Int
-  student_id Int
-
-  class_list ClassList @relation(fields: [clist_id], references: [clist_id], onDelete: Cascade)
-  student    Student   @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-
-  @@unique([clist_id, student_id])
-  @@map("class_list_students")
-}
-
-model SubjectRecord {
-  srecord_id      Int      @id @default(autoincrement())
-  subject_name    String
-  time_start      DateTime @db.Time()
-  time_end        DateTime @db.Time()
-  subject_teacher Int?
-
-  teacher     User?                      @relation(fields: [subject_teacher], references: [user_id])
-  class_lists ClassListSubjectRecord[]
-  students    SubjectRecordStudent[]
-
-  @@index([subject_teacher])
-  @@map("subject_records")
-}
-
-model AttendanceRecord {
-  attendance_id Int    @id @default(autoincrement())
-  student_id    Int
-  school_days   Int
-  days_present  Int
-  days_absent   Int
-  month         Month
-
-  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-
-  @@index([student_id, month])
-  @@map("attendance_records")
-}
-
-model ClassListSubjectRecord {
-  clsr_id    Int @id @default(autoincrement())
-  clist_id   Int
-  srecord_id Int
-
-  class_list     ClassList     @relation(fields: [clist_id], references: [clist_id], onDelete: Cascade)
-  subject_record SubjectRecord @relation(fields: [srecord_id], references: [srecord_id], onDelete: Cascade)
-
-  @@index([clist_id])
-  @@index([srecord_id])
-  @@map("class_list_subject_records")
-}
-
-model SubjectRecordStudent {
-  srs_id     Int            @id @default(autoincrement())
-  srecord_id Int
-  student_id Int
-  q1_grade   Int?
-  q2_grade   Int?
-  q3_grade   Int?
-  q4_grade   Int?
-  avg_grade  Int?
-  remarks    SubjectRemarks @default(IN_PROGRESS)
-
-  subject_record SubjectRecord @relation(fields: [srecord_id], references: [srecord_id], onDelete: Cascade)
-  student        Student       @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-
-  @@unique([srecord_id, student_id])
-  @@index([student_id])
-  @@map("subject_record_students")
-}
-
-//Library
-model Category {
-  category_id   Int    @id @default(autoincrement())
-  category_name String
-
-  learning_materials LearningMaterial[]
-
-  @@map("categories")
-}
-
-model LearningMaterial {
-  item_id     Int      @id @default(autoincrement())
-  item_name   String
-  author      String?
-  item_type   ItemType
-  category_id Int
-  gl_id       Int
-  uploaded_at DateTime @default(now())
-  uploaded_by Int
-
-  category      Category         @relation(fields: [category_id], references: [category_id])
-  grade_level   GradeLevel       @relation(fields: [gl_id], references: [gl_id])
-  uploader      User             @relation(fields: [uploaded_by], references: [user_id])
-  copies        MaterialCopy[]
-
-  @@index([item_type, category_id, gl_id])
-  @@index([uploaded_by])
-  @@map("learning_materials")
-}
-
-
-model MaterialCopy {
-  copy_id    Int            @id @default(autoincrement())
-  item_id    Int
-  copy_code  Int
-  status     MaterialStatus @default(AVAILABLE)
-  condition  String?        @db.Text
-  added_at   DateTime       @default(now())
-
-  item            LearningMaterial       @relation(fields: [item_id], references: [item_id], onDelete: Cascade)
-  borrow_records  MaterialBorrowRecord[]
-
-  @@index([item_id])
-  @@index([copy_code])
-  @@map("material_copies")
-}
-
-model MaterialBorrowRecord {
-  mbr_id       Int       @id @default(autoincrement())
-  copy_id      Int
-  student_id   Int?
-  user_id      Int?
-  penalty_cost Decimal   @default(0) @db.Decimal(15, 2)
-  borrowed_at  DateTime  @default(now())
-  due_at       DateTime
-  returned_at  DateTime?
-  remarks      String?   @db.Text
-
-  copy    MaterialCopy @relation(fields: [copy_id], references: [copy_id], onDelete: Cascade)
-  student Student?     @relation(fields: [student_id], references: [student_id])
-  user    User?        @relation(fields: [user_id], references: [user_id])
-
-  @@index([copy_id])
-  @@index([student_id])
-  @@index([user_id])
-  @@index([returned_at, due_at])
-  @@map("material_borrow_records")
 }
