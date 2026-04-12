@@ -86,10 +86,8 @@ export const useAnnouncementStore = create<AnnouncementStore>((set, get) => ({
   postsByCategory: EMPTY_POSTS,
   loadingByCategory: EMPTY_LOADING,
   loadedByCategory: EMPTY_LOADED,
-  feedback: null,
 
   setViewCategory: (category) => set({ viewCategory: category }),
-  clearFeedback: () => set({ feedback: null }),
 
   fetchPosts: async (category, force = false) => {
     const isLoading = get().loadingByCategory[category];
