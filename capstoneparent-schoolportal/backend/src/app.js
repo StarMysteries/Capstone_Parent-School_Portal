@@ -27,6 +27,9 @@ if (!global.__parentRegistrationCleanupTimer) {
 
 const app = express();
 
+// Trust proxy for Railway/reverse proxies to allow rate limiting to work correctly
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(
   helmet({
