@@ -257,6 +257,19 @@ export const ManageStaffAccounts = () => {
     setIsEditModalOpen(true);
   };
 
+  const editFormHasChanges = useMemo(() => {
+    if (!editingStaff) return false;
+    return (
+      formData.name.trim() !== editingStaff.name.trim() ||
+      formData.contactNo.trim() !== editingStaff.contactNo.trim() ||
+      formData.dateOfBirth.trim() !== editingStaff.dateOfBirth.trim() ||
+      formData.address.trim() !== editingStaff.address.trim() ||
+      formData.email.trim() !== editingStaff.email.trim() ||
+      formData.status !== editingStaff.status ||
+      selectedRoles.join(", ") !== editingStaff.roles
+    );
+  }, [formData, editingStaff, selectedRoles]);
+
   const handleUpdateStaff = async () => {
     if (
       !editingStaff ||
@@ -404,7 +417,13 @@ export const ManageStaffAccounts = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteClick(staff)}
-                            className="text-red-600 hover:text-red-800 transition-colors"
+                            disabled={staff.id === currentUserId}
+                            className={`transition-colors ${
+                              staff.id === currentUserId
+                                ? "cursor-not-allowed text-gray-300"
+                                : "text-red-600 hover:text-red-800"
+                            }`}
+                            title={staff.id === currentUserId ? "You cannot delete your own account" : undefined}
                             aria-label="Delete staff"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -462,6 +481,7 @@ export const ManageStaffAccounts = () => {
         onToggleRole={toggleRole}
         showStatusField
         useEditDisplayStyle
+        disableSubmit={!editFormHasChanges}
         isEditingSelf={editingStaff?.id === currentUserId}
       />
 

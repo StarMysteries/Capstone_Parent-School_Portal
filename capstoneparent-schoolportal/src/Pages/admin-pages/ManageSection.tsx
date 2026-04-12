@@ -17,9 +17,10 @@ import { classesApi, type Section } from "../../lib/api/classesApi";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export const ManageSection = () => {
-  const showError = useApiFeedbackStore((state) => state.showError);
+  const { showError, showSuccess } = useApiFeedbackStore();
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -99,7 +100,10 @@ export const ManageSection = () => {
   };
 
   const handleAddSection = async () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim()) {
+      showError("Section name is required");
+      return;
+    }
 
     const formatError = validateFormat(formData.name);
     if (formatError) {
@@ -107,12 +111,17 @@ export const ManageSection = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await classesApi.createSection(formData.name);
       setFormData({ name: "" });
       setIsAddModalOpen(false);
       fetchSections();
-    } catch {}
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to add section");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditClick = (section: Section) => {
@@ -124,7 +133,10 @@ export const ManageSection = () => {
   };
 
   const handleUpdateSection = async () => {
-    if (!editingSection || !formData.name.trim()) {
+    if (!editingSection) return;
+
+    if (!formData.name.trim()) {
+      showError("Section name is required");
       return;
     }
 
@@ -134,13 +146,18 @@ export const ManageSection = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await classesApi.updateSection(editingSection.section_id, formData.name);
       setFormData({ name: "" });
       setEditingSection(null);
       setIsEditModalOpen(false);
       fetchSections();
-    } catch {}
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to update section");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteClick = (section: Section) => {
@@ -156,7 +173,9 @@ export const ManageSection = () => {
       setDeletingSection(null);
       setIsDeleteModalOpen(false);
       fetchSections();
-    } catch {}
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to delete section");
+    }
   };
 
   const openAddSectionModal = () => {
@@ -298,6 +317,8 @@ export const ManageSection = () => {
         submitLabel="Add"
         formData={formData}
         setFormData={setFormData}
+        disableSubmit={!formData.name.trim()}
+        isLoading={isSubmitting}
       />
 
       <SectionFormModal
@@ -313,6 +334,7 @@ export const ManageSection = () => {
         formData={formData}
         setFormData={setFormData}
         disableSubmit={!editFormHasChanges}
+        isLoading={isSubmitting}
       />
 
       <SectionDeleteModal

@@ -289,8 +289,10 @@ export const ManageStudents = () => {
     }
   };
 
-  const editFormHasChanges = editingStudent
-    ? formData.firstName.trim() !== editingStudent.fname.trim() ||
+  const editFormHasChanges = useMemo(() => {
+    if (!editingStudent) return false;
+    return (
+      formData.firstName.trim() !== editingStudent.fname.trim() ||
       formData.lastName.trim() !== editingStudent.lname.trim() ||
       formData.sex !== editingStudent.sex ||
       formData.lrn.trim() !== editingStudent.lrn_number.trim() ||
@@ -298,7 +300,18 @@ export const ManageStudents = () => {
       formData.status !== editingStudent.status ||
       formData.schoolYearStart !== String(editingStudent.syear_start) ||
       formData.schoolYearEnd !== String(editingStudent.syear_end)
-    : false;
+    );
+  }, [formData, editingStudent]);
+
+  const addFormIsValid =
+    formData.firstName.trim().length > 0 &&
+    formData.lastName.trim().length > 0 &&
+    formData.sex !== "" &&
+    formData.lrn.trim().length === 12 &&
+    formData.gradeLevelId !== "" &&
+    formData.status !== "" &&
+    formData.schoolYearStart !== "" &&
+    formData.schoolYearEnd !== "";
 
   const totalPages = pagination.totalPages;
   const showingStart =
@@ -545,7 +558,7 @@ export const ManageStudents = () => {
         setFormData={setFormData}
         gradeLevels={gradeLevels}
         isSubmitting={isSubmitting}
-        disableSubmit={!editFormHasChanges}
+        disableSubmit={!addFormIsValid}
       />
 
       <StudentFormModal
@@ -562,6 +575,7 @@ export const ManageStudents = () => {
         setFormData={setFormData}
         gradeLevels={gradeLevels}
         isSubmitting={isSubmitting}
+        disableSubmit={!editFormHasChanges}
       />
 
       <StudentBatchUploadModal

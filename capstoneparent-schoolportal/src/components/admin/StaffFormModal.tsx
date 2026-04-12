@@ -181,24 +181,40 @@ export const StaffFormModal = ({
           </div>
         </div>
         {showStatusField ? (
-          <div className="grid grid-cols-[170px_1fr] items-center gap-3 pt-1">
-            <p className={labelClassName}>Status:</p>
-            <div className={`relative ${useEditDisplayStyle ? "max-w-[250px]" : "max-w-[230px]"}`}>
-              <select
-                value={formData.status}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value as StaffStatus })
-                }
-                className={`h-12 w-full appearance-none ${useEditDisplayStyle ? "bg-white text-[18px]" : "bg-[#efefef] text-xl"} px-4 pr-12 leading-none font-semibold ${
-                  formData.status === "ACTIVE"
-                    ? "text-(--status-active)"
-                    : "text-(--status-inactive)"
-                } focus:outline-none ${useEditDisplayStyle ? "" : "focus:ring-2 focus:ring-(--button-green)"}`}
+          <div className="grid grid-cols-[170px_1fr] items-start gap-3 pt-1">
+            <p className={`${labelClassName} pt-3`}>Status:</p>
+            <div className="flex flex-col gap-1">
+              <div
+                className={`relative ${useEditDisplayStyle ? "max-w-[250px]" : "max-w-[230px]"}`}
               >
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-              </select>
-              <span className={`pointer-events-none absolute top-1/2 h-0 w-0 -translate-y-1/2 border-l-[10px] border-r-[10px] border-t-[16px] border-l-transparent border-r-transparent border-t-black ${useEditDisplayStyle ? "right-5" : "right-4"}`} />
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value as StaffStatus })
+                  }
+                  disabled={isEditingSelf}
+                  className={`h-12 w-full appearance-none ${
+                    useEditDisplayStyle
+                      ? `${isEditingSelf ? "bg-gray-100 cursor-not-allowed" : "bg-white"} text-[18px]`
+                      : `${isEditingSelf ? "bg-gray-200 cursor-not-allowed" : "bg-[#efefef]"} text-xl`
+                  } px-4 pr-12 leading-none font-semibold ${
+                    formData.status === "ACTIVE"
+                      ? "text-(--status-active)"
+                      : "text-(--status-inactive)"
+                  } focus:outline-none ${useEditDisplayStyle ? "" : "focus:ring-2 focus:ring-(--button-green)"}`}
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+                <span
+                  className={`pointer-events-none absolute top-1/2 h-0 w-0 -translate-y-1/2 border-l-[10px] border-r-[10px] border-t-[16px] border-l-transparent border-r-transparent border-t-black ${useEditDisplayStyle ? "right-5" : "right-4"}`}
+                />
+              </div>
+              {isEditingSelf && (
+                <p className="text-[13px] text-gray-500 italic">
+                  You cannot edit your own status.
+                </p>
+              )}
             </div>
           </div>
         ) : null}

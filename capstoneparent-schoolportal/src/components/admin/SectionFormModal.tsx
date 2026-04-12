@@ -15,6 +15,7 @@ interface SectionFormModalProps {
   formData: SectionFormData;
   setFormData: React.Dispatch<React.SetStateAction<SectionFormData>>;
   disableSubmit?: boolean;
+  isLoading?: boolean;
 }
 
 export const SectionFormModal = ({
@@ -26,6 +27,7 @@ export const SectionFormModal = ({
   formData,
   setFormData,
   disableSubmit = false,
+  isLoading = false,
 }: SectionFormModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
@@ -41,10 +43,10 @@ export const SectionFormModal = ({
           <Button
             type="button"
             onClick={onSubmit}
-            disabled={disableSubmit}
-            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
+            disabled={disableSubmit || isLoading}
+            className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 flex items-center gap-2"
           >
-            {submitLabel}
+            {isLoading ? (submitLabel.endsWith("e") ? `${submitLabel.slice(0, -1)}ing...` : `${submitLabel}ing...`) : submitLabel}
           </Button>
         </div>
       </div>
