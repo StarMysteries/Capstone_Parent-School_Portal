@@ -5,6 +5,7 @@ import { Trash2, Upload, Plus, Search, X, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { authApi, studentsApi, type StudentSearchResult } from "@/lib/api";
 import { setDeviceToken } from "@/lib/auth";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 type RegistrationStep = "form" | "otp" | "complete";
 
@@ -114,8 +115,7 @@ export const RegisterCard = () => {
   const [step, setStep] = useState<RegistrationStep>("form");
   const [pendingEmail, setPendingEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [infoMessage, setInfoMessage] = useState("");
+  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
@@ -287,27 +287,26 @@ export const RegisterCard = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
-    setInfoMessage("");
+    clearFeedback();
 
     if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("Passwords do not match");
+      showError("Passwords do not match");
       return;
     }
     if (formData.password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters");
+      showError("Password must be at least 8 characters");
       return;
     }
     if (!formData.dateOfBirth) {
-      setErrorMessage("Please enter your date of birth");
+      showError("Please enter your date of birth");
       return;
     }
     if (selectedStudents.length === 0) {
-      setErrorMessage("Please select at least one student");
+      showError("Please select at least one student");
       return;
     }
     if (uploadedFiles.length < 2) {
-      setErrorMessage("Please upload at least two supporting documents");
+      showError("Please upload at least two supporting documents");
       return;
     }
 
@@ -330,11 +329,11 @@ export const RegisterCard = () => {
       setPendingEmail(formData.email.trim().toLowerCase());
       setStep("otp");
       setOtpCode("");
-      setInfoMessage(
+      showSuccess(
         result.message || "OTP sent to your email. Enter it below to continue.",
       );
     } catch (error) {
-      setErrorMessage(
+      showError(
         getErrorMessage(error, "Unable to submit registration right now"),
       );
     } finally {
@@ -344,10 +343,9 @@ export const RegisterCard = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
-    setInfoMessage("");
+    clearFeedback();
     if (otpCode.length !== 6) {
-      setErrorMessage("OTP code must be exactly 6 digits");
+      showError("OTP code must be exactly 6 digits");
       return;
     }
     setIsVerifyingOtp(true);
@@ -359,9 +357,9 @@ export const RegisterCard = () => {
       if (otpResult.data?.deviceToken)
         setDeviceToken(otpResult.data.deviceToken);
       setStep("complete");
-      setInfoMessage(otpResult.message || "Email verified successfully");
+      showSuccess(otpResult.message || "Email verified successfully");
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Unable to verify OTP"));
+      showError(getErrorMessage(error, "Unable to verify OTP"));
     } finally {
       setIsVerifyingOtp(false);
     }
@@ -372,17 +370,6 @@ export const RegisterCard = () => {
   return (
     <div className="mt-20">
       <div className="bg-[#f9f6c8] rounded-3xl p-8 pt-10 mx-auto max-w-7xl">
-        {errorMessage && (
-          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {errorMessage}
-          </p>
-        )}
-        {infoMessage && (
-          <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {infoMessage}
-          </p>
-        )}
-
         {/* ── FORM STEP ── */}
         {step === "form" && (
           <form onSubmit={handleSubmit} autoComplete="off">

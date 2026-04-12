@@ -102,8 +102,8 @@ export async function apiFetch<T>(
       (typeof data?.error === "string" && data.error) ||
       `Request failed: ${res.status}`;
 
-    // Handle session expiration
-    if (res.status === 401) {
+    // Handle session expiration for non-auth routes
+    if (res.status === 401 && !endpoint.startsWith("/auth/")) {
       useAuthStore.getState().logout();
       useApiFeedbackStore.getState().showError("Session expired. Please log in again.");
       throw new Error("Session expired");
