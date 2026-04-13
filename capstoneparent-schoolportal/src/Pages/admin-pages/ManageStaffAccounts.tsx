@@ -1,16 +1,17 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
 import { Button } from "../../components/ui/button";
 import { StatusDropdown } from "../../components/general/StatusDropdown";
 import { StaffFormModal } from "../../components/admin/StaffFormModal";
-import { StaffDeleteModal } from "../../components/admin/StaffDeleteModal";
 import { authApi, usersApi, type AuthUser } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/authStore";
 
 interface Staff {
   id: number;
   name: string;
+  firstName: string;
+  lastName: string;
   contactNo: string;
   roles: string;
   status: "ACTIVE" | "INACTIVE";
@@ -21,7 +22,6 @@ interface Staff {
 
 export const ManageStaffAccounts = () => {
   const currentUserId = useAuthStore((s) => s.user?.userId);
-  const TEMPORARY_PASSWORD = "Temporary123!";
   const [staffList, setStaffList] = useState<Staff[]>([]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,10 +30,10 @@ export const ManageStaffAccounts = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     contactNo: "",
     dateOfBirth: "",
     address: "",
@@ -44,9 +44,9 @@ export const ManageStaffAccounts = () => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingStaff, setIsAddingStaff] = useState(false);
+  const [generatedTemporaryPassword, setGeneratedTemporaryPassword] = useState("");
 
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
-  const [deletingStaff, setDeletingStaff] = useState<Staff | null>(null);
 
   const availableRoles = [
     "Librarian",
@@ -56,7 +56,8 @@ export const ManageStaffAccounts = () => {
   ];
 
   const emptyFormState = {
-    name: "",
+    firstName: "",
+    lastName: "",
     contactNo: "",
     dateOfBirth: "",
     address: "",
@@ -112,6 +113,8 @@ export const ManageStaffAccounts = () => {
     return {
       id: user.user_id,
       name: `${user.fname} ${user.lname}`.trim(),
+      firstName: user.fname || "",
+      lastName: user.lname || "",
       contactNo: user.contact_num || "",
       roles: normalizedRoles.join(", "),
       status: normalizeStatus(user.account_status),
@@ -205,10 +208,40 @@ export const ManageStaffAccounts = () => {
   // Get unique roles for filter
   const roles = ["all", "Admin", "Teacher", "Librarian"];
 
+  const generateTemporaryPassword = () => {
+    const uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const lowercase = "abcdefghijkmnopqrstuvwxyz";
+    const numbers = "23456789";
+    const symbols = "!@#$%&*?";
+    const allChars = uppercase + lowercase + numbers + symbols;
+
+    const getRandomChar = (chars: string) =>
+      chars[Math.floor(Math.random() * chars.length)];
+
+    const passwordChars = [
+      getRandomChar(uppercase),
+      getRandomChar(lowercase),
+      getRandomChar(numbers),
+      getRandomChar(symbols),
+    ];
+
+    while (passwordChars.length < 12) {
+      passwordChars.push(getRandomChar(allChars));
+    }
+
+    for (let i = passwordChars.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [passwordChars[i], passwordChars[j]] = [passwordChars[j], passwordChars[i]];
+    }
+
+    return passwordChars.join("");
+  };
+
   // Add staff handler
   const handleAddStaff = async () => {
     if (
-      !formData.name.trim() ||
+      !formData.firstName.trim() ||
+      !formData.lastName.trim() ||
       !formData.contactNo.trim() ||
       !formData.dateOfBirth.trim() ||
       !formData.address.trim() ||
@@ -217,16 +250,14 @@ export const ManageStaffAccounts = () => {
     )
       return;
 
-    const [firstName, ...restNames] = formData.name.trim().split(/\s+/);
-    const lastName = restNames.join(" ") || "-";
     const payload = new FormData();
-    payload.append("fname", firstName);
-    payload.append("lname", lastName);
+    payload.append("fname", formData.firstName.trim());
+    payload.append("lname", formData.lastName.trim());
     payload.append("date_of_birth", formData.dateOfBirth.trim());
     payload.append("contact_num", formData.contactNo.trim());
     payload.append("address", formData.address.trim());
     payload.append("email", formData.email.trim());
-    payload.append("password", TEMPORARY_PASSWORD);
+    payload.append("password", generatedTemporaryPassword);
     payload.append("account_status", "Active");
     selectedRoles.forEach((role) => payload.append("roles", toApiRole(role)));
 
@@ -236,6 +267,7 @@ export const ManageStaffAccounts = () => {
       await fetchStaffAccounts();
       setFormData(emptyFormState);
       setSelectedRoles([]);
+      setGeneratedTemporaryPassword("");
       setIsAddModalOpen(false);
     } finally {
       setIsAddingStaff(false);
@@ -246,7 +278,8 @@ export const ManageStaffAccounts = () => {
   const handleEditClick = (staff: Staff) => {
     setEditingStaff(staff);
     setFormData({
-      name: staff.name,
+      firstName: staff.firstName,
+      lastName: staff.lastName,
       contactNo: staff.contactNo,
       dateOfBirth: staff.dateOfBirth,
       address: staff.address,
@@ -260,7 +293,8 @@ export const ManageStaffAccounts = () => {
   const editFormHasChanges = useMemo(() => {
     if (!editingStaff) return false;
     return (
-      formData.name.trim() !== editingStaff.name.trim() ||
+      formData.firstName.trim() !== editingStaff.firstName.trim() ||
+      formData.lastName.trim() !== editingStaff.lastName.trim() ||
       formData.contactNo.trim() !== editingStaff.contactNo.trim() ||
       formData.dateOfBirth.trim() !== editingStaff.dateOfBirth.trim() ||
       formData.address.trim() !== editingStaff.address.trim() ||
@@ -273,18 +307,16 @@ export const ManageStaffAccounts = () => {
   const handleUpdateStaff = async () => {
     if (
       !editingStaff ||
-      !formData.name.trim() ||
+      !formData.firstName.trim() ||
+      !formData.lastName.trim() ||
       !formData.contactNo.trim() ||
       selectedRoles.length === 0
     )
       return;
 
-    const [firstName, ...restNames] = formData.name.trim().split(/\s+/);
-    const lastName = restNames.join(" ") || "-";
-
     await usersApi.updateProfile(editingStaff.id, {
-      fname: firstName,
-      lname: lastName,
+      fname: formData.firstName.trim(),
+      lname: formData.lastName.trim(),
       date_of_birth: formData.dateOfBirth.trim(),
       contact_num: formData.contactNo.trim(),
       address: formData.address.trim(),
@@ -301,23 +333,9 @@ export const ManageStaffAccounts = () => {
     setIsEditModalOpen(false);
   };
 
-  // Delete staff handlers
-  const handleDeleteClick = (staff: Staff) => {
-    setDeletingStaff(staff);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteStaff = async () => {
-    if (!deletingStaff) return;
-
-    await usersApi.delete(deletingStaff.id);
-    await fetchStaffAccounts();
-    setDeletingStaff(null);
-    setIsDeleteModalOpen(false);
-  };
-
   const addFormIsValid =
-    formData.name.trim().length > 0 &&
+    formData.firstName.trim().length > 0 &&
+    formData.lastName.trim().length > 0 &&
     formData.contactNo.trim().length > 0 &&
     formData.dateOfBirth.trim().length > 0 &&
     formData.address.trim().length > 0 &&
@@ -336,6 +354,7 @@ export const ManageStaffAccounts = () => {
               onClick={() => {
                 setFormData(emptyFormState);
                 setSelectedRoles([]);
+                setGeneratedTemporaryPassword(generateTemporaryPassword());
                 setIsAddModalOpen(true);
               }}
             >
@@ -407,28 +426,13 @@ export const ManageStaffAccounts = () => {
                         {staff.status}
                       </td>
                       <td className="py-4 px-6">
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => handleEditClick(staff)}
-                            className="text-(--button-green) hover:text-(--button-hover-green) transition-colors"
-                            aria-label="Edit staff"
-                          >
-                            <Pencil className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(staff)}
-                            disabled={staff.id === currentUserId}
-                            className={`transition-colors ${
-                              staff.id === currentUserId
-                                ? "cursor-not-allowed text-gray-300"
-                                : "text-red-600 hover:text-red-800"
-                            }`}
-                            title={staff.id === currentUserId ? "You cannot delete your own account" : undefined}
-                            aria-label="Delete staff"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleEditClick(staff)}
+                          className="text-(--button-green) hover:text-(--button-hover-green) transition-colors"
+                          aria-label="Edit staff"
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -448,6 +452,7 @@ export const ManageStaffAccounts = () => {
           setIsAddModalOpen(false);
           setFormData(emptyFormState);
           setSelectedRoles([]);
+          setGeneratedTemporaryPassword("");
         }}
         onSubmit={handleAddStaff}
         title="Add Account"
@@ -458,7 +463,7 @@ export const ManageStaffAccounts = () => {
         availableRoles={availableRoles}
         onToggleRole={toggleRole}
         disableSubmit={!addFormIsValid}
-        temporaryPassword={TEMPORARY_PASSWORD}
+        temporaryPassword={generatedTemporaryPassword}
         showStatusField={false}
         isSubmitting={isAddingStaff}
       />
@@ -483,16 +488,6 @@ export const ManageStaffAccounts = () => {
         useEditDisplayStyle
         disableSubmit={!editFormHasChanges}
         isEditingSelf={editingStaff?.id === currentUserId}
-      />
-
-      <StaffDeleteModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setDeletingStaff(null);
-        }}
-        onConfirm={handleDeleteStaff}
-        staffName={deletingStaff?.name}
       />
     </div>
   );

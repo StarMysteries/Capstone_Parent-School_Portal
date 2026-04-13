@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   setDeviceToken,
   getDeviceToken,
@@ -23,8 +23,10 @@ export const SignInCard = () => {
   const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const { showError, clearFeedback } = useApiFeedbackStore();
+  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoVerifyStartedRef = useRef(false);
 
   // ── Finish: store session and navigate ──────────────────────────────────────
   const finalise = (token: string, user: AuthUser, rawDeviceToken?: string) => {
@@ -99,6 +101,59 @@ export const SignInCard = () => {
     }
   };
 
+  useEffect(() => {
+    const emailFromLink = searchParams.get("email")?.trim() ?? "";
+    const otpFromLink = searchParams.get("otp")?.trim() ?? "";
+    const shouldAutoVerify = searchParams.get("autoVerify") === "1";
+    const normalizedOtpFromLink = otpFromLink.replace(/\D/g, "").slice(0, 6);
+    const autoVerifyKey = `otp-auto-verify:${emailFromLink}:${normalizedOtpFromLink}`;
+
+    if (emailFromLink) {
+      setEmail(emailFromLink);
+    }
+
+    if (normalizedOtpFromLink) {
+      setOtpCode(normalizedOtpFromLink);
+      setStep("otp");
+    }
+
+    if (
+      !shouldAutoVerify ||
+      autoVerifyStartedRef.current ||
+      sessionStorage.getItem(autoVerifyKey) === "done" ||
+      !emailFromLink ||
+      normalizedOtpFromLink.length !== 6
+    ) {
+      return;
+    }
+
+    autoVerifyStartedRef.current = true;
+    sessionStorage.setItem(autoVerifyKey, "done");
+    setStep("otp");
+    clearFeedback();
+    setLoading(true);
+
+    void authApi
+      .verifyOtp(emailFromLink, normalizedOtpFromLink)
+      .then((res) => {
+        showSuccess("OTP verified successfully.");
+        finalise(res.data.token, res.data.user, res.data.deviceToken);
+      })
+      .catch((err) => {
+        sessionStorage.removeItem(autoVerifyKey);
+        showError(
+          err instanceof Error ? err.message : "Automatic OTP verification failed",
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+        const next = new URLSearchParams(searchParams);
+        next.delete("otp");
+        next.delete("autoVerify");
+        setSearchParams(next, { replace: true });
+      });
+  }, [clearFeedback, searchParams, setSearchParams, showError, showSuccess]);
+
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -168,6 +223,10 @@ export const SignInCard = () => {
               A 6-digit code was sent to{" "}
               <span className="font-semibold">{email}</span>. Enter it below to
               verify this device.
+            </p>
+            <p className="text-sm text-gray-600">
+              You can click the automatic verification link from your email, or
+              enter the OTP code manually here.
             </p>
 
             <Input

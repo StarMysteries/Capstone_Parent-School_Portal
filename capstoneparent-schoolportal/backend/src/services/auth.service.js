@@ -9,7 +9,11 @@ const {
   generateDeviceToken,
   hashDeviceToken,
 } = require("../utils/hashUtil");
-const { sendOTPEmail, sendPasswordResetEmail } = require("../utils/emailUtil");
+const {
+  sendOTPEmail,
+  sendPasswordResetEmail,
+  sendStaffAccountCreatedEmail,
+} = require("../utils/emailUtil");
 const usersService = require("./users.service");
 
 // ─── Pending Registrations Store ────────────────────────────────────────────
@@ -153,6 +157,7 @@ const authService = {
       address,
       date_of_birth,
       roles,
+      account_status,
     } = userData;
 
     const resolvedRoles = (roles || []).filter((r) => r !== "Parent");
@@ -174,51 +179,54 @@ const authService = {
       throw new Error("User with this email already exists");
     }
 
-    if (getPendingRegistration(email)) {
-      cleanupTempFiles({ filePaths: files.map((f) => ({ path: f.path })) });
-      throw new Error(
-        "A verification email was already sent. Please check your inbox.",
-      );
-    }
-
     const hashedPassword = await hashPassword(password);
-    const otpCode = generateOTP();
-    const otpExpiresAt = Date.now() + PENDING_TTL_MS;
+    const normalizedAccountStatus =
+      String(account_status || "").toLowerCase() === "inactive"
+        ? "Inactive"
+        : "Active";
 
-    storePendingRegistration(email, {
-      email,
-      hashedPassword,
-      fname,
-      lname,
-      contact_num,
-      address,
-      date_of_birth,
-      roles: resolvedRoles,
-      student_ids: null, // Employees don't have student_ids
-      otpCode,
-      otpExpiresAt,
-      filePaths: files.map((f) => ({
-        originalname: f.originalname,
-        path: f.path,
-        mimetype: f.mimetype,
-        size: f.size,
-      })),
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          fname,
+          lname,
+          contact_num,
+          address,
+          date_of_birth: date_of_birth ? new Date(date_of_birth) : null,
+          account_status: normalizedAccountStatus,
+        },
+        select: {
+          user_id: true,
+          email: true,
+          fname: true,
+          lname: true,
+          account_status: true,
+        },
+      });
+
+      await tx.userRole_Model.createMany({
+        data: resolvedRoles.map((role) => ({
+          user_id: createdUser.user_id,
+          role,
+        })),
+      });
+
+      return createdUser;
     });
 
-    const emailSent = await sendOTPEmail(email, otpCode, {
+    const emailSent = await sendStaffAccountCreatedEmail(email, {
       name: `${fname} ${lname}`.trim(),
       roles: resolvedRoles,
       temporaryPassword: password,
     });
-    if (!emailSent) {
-      cleanupTempFiles(getPendingRegistration(email));
-      clearPendingRegistration(email);
-      throw new Error("Failed to send OTP email");
-    }
 
     return {
-      message:
-        "Verification OTP sent. Please verify your email to complete registration.",
+      message: emailSent
+        ? "Staff account created successfully. Login details have been sent by email."
+        : "Staff account created successfully, but the email notification could not be sent.",
+      user,
     };
   },
 

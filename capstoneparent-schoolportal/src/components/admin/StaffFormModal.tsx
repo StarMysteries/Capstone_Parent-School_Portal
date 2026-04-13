@@ -6,7 +6,8 @@ import { Modal } from "../ui/modal";
 type StaffStatus = "ACTIVE" | "INACTIVE";
 
 interface StaffFormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   contactNo: string;
   dateOfBirth: string;
   address: string;
@@ -80,11 +81,21 @@ export const StaffFormModal = ({
     >
       <div className={`space-y-2 ${useEditDisplayStyle ? "pt-1" : ""}`}>
         <div className={rowClassName}>
-          <label className={labelClassName}>Full Name:</label>
+          <label className={labelClassName}>First Name:</label>
           <input
             type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.firstName}
+            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            readOnly={isProfileReadOnly}
+            className={inputClassName}
+          />
+        </div>
+        <div className={rowClassName}>
+          <label className={labelClassName}>Last Name:</label>
+          <input
+            type="text"
+            value={formData.lastName}
+            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
             readOnly={isProfileReadOnly}
             className={inputClassName}
           />
