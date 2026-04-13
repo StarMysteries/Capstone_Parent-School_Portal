@@ -77,7 +77,7 @@ export const EditPartnershipAndEventsModal = ({
     initialData || createEmptyFormData()
   );
   const [isSaving, setIsSaving] = useState(false);
-  const { showError, clearFeedback } = useApiFeedbackStore();
+  const { showError } = useApiFeedbackStore();
 
   useEffect(() => {
     if (initialData) {

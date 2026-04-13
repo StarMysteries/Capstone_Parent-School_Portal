@@ -17,7 +17,7 @@ import { classesApi, type Section } from "../../lib/api/classesApi";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 export const ManageSection = () => {
-  const { showError, showSuccess } = useApiFeedbackStore();
+  const { showError } = useApiFeedbackStore();
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
