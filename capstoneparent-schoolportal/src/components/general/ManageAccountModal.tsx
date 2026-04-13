@@ -49,7 +49,6 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
     formData.contactNo.trim() !== profileData.contactNo.trim() ||
     formData.dateOfBirth.trim() !== profileData.dateOfBirth.trim() ||
     formData.address.trim() !== profileData.address.trim() ||
-    formData.email.trim() !== profileData.email.trim() ||
     Boolean(profileFile);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -68,10 +67,7 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
       showError("Contact number is required.");
       return;
     }
-    if (!formData.email.trim()) {
-      showError("Email is required.");
-      return;
-    }
+
 
     try {
       const result = await onSave({
@@ -81,7 +77,6 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
         contactNo: formData.contactNo.trim(),
         dateOfBirth: formData.dateOfBirth.trim(),
         address: formData.address.trim(),
-        email: formData.email.trim(),
       }, profileFile);
 
       if (result.success) {
@@ -156,8 +151,8 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
             id="email"
             type="email"
             value={formData.email}
-            onChange={(event) => handleFieldChange("email", event.target.value)}
-            className="h-12 rounded-md border border-gray-300 bg-white px-4 text-lg font-semibold text-gray-900"
+            readOnly
+            className="h-12 rounded-md border border-gray-300 bg-gray-100 px-4 text-lg font-semibold text-gray-500 cursor-not-allowed"
           />
         </div>
 

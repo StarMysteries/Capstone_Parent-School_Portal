@@ -40,6 +40,7 @@ const usersController = {
     try {
       const { id } = req.params;
       const updateData = { ...req.body };
+      delete updateData.email; // Prevent email from being updated
       
       if (updateData.date_of_birth) {
         updateData.date_of_birth = new Date(updateData.date_of_birth);

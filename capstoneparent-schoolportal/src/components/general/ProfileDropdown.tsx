@@ -109,9 +109,7 @@ export const ProfileDropdown = () => {
     updatedProfileData: ProfileModalData,
     profileFile?: File
   ): Promise<{ success: boolean; message: string }> => {
-    if (!updatedProfileData.email.includes("@")) {
-      return { success: false, message: "Enter a valid email address." };
-    }
+
 
     if (!user) {
       return { success: false, message: "You are not logged in." };
@@ -126,7 +124,6 @@ export const ProfileDropdown = () => {
         lname: updatedProfileData.lname,
         contact_num: updatedProfileData.contactNo,
         address: updatedProfileData.address,
-        email: updatedProfileData.email,
         date_of_birth: updatedProfileData.dateOfBirth,
       };
       
