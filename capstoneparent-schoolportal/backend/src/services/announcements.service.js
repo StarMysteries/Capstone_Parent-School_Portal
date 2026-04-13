@@ -226,6 +226,10 @@ const announcementsService = {
       announcement_type,
     } = updateData;
 
+    if (existingAnnouncement.announced_by !== updated_by) {
+      throw new Error('You are not authorized to edit this announcement');
+    }
+
     const fieldsToUpdate = {
       ...(announcement_title !== undefined ? { announcement_title } : {}),
       ...(announcement_desc !== undefined ? { announcement_desc } : {}),
@@ -363,7 +367,7 @@ const announcementsService = {
     return announcement;
   },
 
-  async deleteAnnouncement(announcementId) {
+  async deleteAnnouncement(announcementId, userId) {
     if (!announcementId) {
       throw new Error('Announcement ID is required');
     }
@@ -374,6 +378,10 @@ const announcementsService = {
     });
     if (!existingAnnouncement) {
       throw new Error('Announcement not found');
+    }
+
+    if (existingAnnouncement.announced_by !== userId) {
+      throw new Error('You are not authorized to delete this announcement');
     }
 
     await prisma.announcement.delete({

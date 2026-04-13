@@ -90,7 +90,6 @@ export const Announcements = () => {
 
   const canEditPost = useCallback(
     (post: AnnouncementPostItem) => {
-      if (authUser?.role === "admin") return true;
       const authorId = post.user?.user_id;
       if (authorId == null || authUser == null) return false;
       return authorId === authUser.userId;

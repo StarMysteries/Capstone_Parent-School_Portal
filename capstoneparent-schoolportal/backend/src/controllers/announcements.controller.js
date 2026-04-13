@@ -91,6 +91,9 @@ const announcementsController = {
       if (error.message === "Updating user not found") {
         return res.status(404).json({ message: error.message });
       }
+      if (error.message === "You are not authorized to edit this announcement") {
+        return res.status(403).json({ message: error.message });
+      }
       next(error);
     }
   },
@@ -98,7 +101,7 @@ const announcementsController = {
   async deleteAnnouncement(req, res, next) {
     try {
       const { id } = req.params;
-      await announcementsService.deleteAnnouncement(parseInt(id));
+      await announcementsService.deleteAnnouncement(parseInt(id), req.user.user_id);
 
       res.status(200).json({
         message: "Announcement deleted successfully",
@@ -106,6 +109,9 @@ const announcementsController = {
     } catch (error) {
       if (error.message === "Announcement not found") {
         return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "You are not authorized to delete this announcement") {
+        return res.status(403).json({ message: error.message });
       }
       next(error);
     }
