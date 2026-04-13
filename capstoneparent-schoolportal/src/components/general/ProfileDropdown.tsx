@@ -168,51 +168,39 @@ export const ProfileDropdown = () => {
     currentPassword: string,
     newPassword: string,
     confirmPassword: string,
-  ): Promise<{ success: boolean; message: string }> => {
+  ): Promise<void> => {
     // --- front-end validation (fast, no round-trip needed) ---
     if (
       !currentPassword.trim() ||
       !newPassword.trim() ||
       !confirmPassword.trim()
     ) {
-      return { success: false, message: "All password fields are required." };
+      showError("All password fields are required.");
+      throw new Error("Validation failed");
     }
 
     if (newPassword.length < 8) {
-      return {
-        success: false,
-        message: "New password must be at least 8 characters.",
-      };
+      showError("New password must be at least 8 characters.");
+      throw new Error("Validation failed");
     }
 
     if (newPassword !== confirmPassword) {
-      return {
-        success: false,
-        message: "New password and confirmation do not match.",
-      };
+      showError("New password and confirmation do not match.");
+      throw new Error("Validation failed");
     }
 
     if (currentPassword === newPassword) {
-      return {
-        success: false,
-        message: "New password must be different from the current password.",
-      };
+      showError("New password must be different from the current password.");
+      throw new Error("Validation failed");
     }
 
     if (!user) {
-      return { success: false, message: "You are not logged in." };
+      showError("You are not logged in.");
+      throw new Error("Validation failed");
     }
 
-    // --- API call ---
-    try {
-      await usersApi.changePassword(user.userId, currentPassword, newPassword);
-      return { success: true, message: "Password changed successfully." };
-    } catch (err: any) {
-      return {
-        success: false,
-        message: err.message || "An error occurred. Please try again.",
-      };
-    }
+    // --- API call (apiFetch handles notifications) ---
+    await usersApi.changePassword(user.userId, currentPassword, newPassword);
   };
 
 

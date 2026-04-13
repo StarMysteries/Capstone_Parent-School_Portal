@@ -11,7 +11,7 @@ interface ChangePasswordModalProps {
     currentPassword: string,
     newPassword: string,
     confirmPassword: string,
-  ) => Promise<{ success: boolean; message: string }>;
+  ) => Promise<void>;
 }
 
 export const ChangePasswordModal = ({
@@ -38,22 +38,17 @@ export const ChangePasswordModal = ({
     clearFeedback();
     setIsLoading(true);
 
-    const result = await onChangePassword(
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    );
-
-    if (result.success) {
+    try {
+      await onChangePassword(currentPassword, newPassword, confirmPassword);
+      // If we reach here, it's success (apiFetch already showed the toast)
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      showSuccess(result.message || "Password changed successfully.");
-    } else {
-      showError(result.message || "Failed to change password.");
+    } catch (err: any) {
+      // Notification handled by ProfileDropdown (validation) or apiFetch (API error)
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

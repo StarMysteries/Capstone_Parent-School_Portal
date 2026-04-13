@@ -103,7 +103,9 @@ export async function apiFetch<T>(
       `Request failed: ${res.status}`;
 
     // Handle session expiration for non-auth routes
-    if (res.status === 401 && !endpoint.startsWith("/auth/")) {
+    // Exception: Password change routes (where 401/400 might be business logic errors)
+    const isPasswordRoute = endpoint.includes("/password");
+    if (res.status === 401 && !endpoint.startsWith("/auth/") && !isPasswordRoute) {
       useAuthStore.getState().logout();
       useApiFeedbackStore.getState().showError("Session expired. Please log in again.");
       throw new Error("Session expired");

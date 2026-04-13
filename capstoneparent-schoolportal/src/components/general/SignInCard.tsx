@@ -289,18 +289,7 @@ export const SignInCard = () => {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between pt-1 text-sm text-gray-500">
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("credentials");
-                  clearFeedback();
-                  setOtpCode("");
-                }}
-                className="hover:underline"
-              >
-                ← Back
-              </button>
+            <div className="flex items-center justify-end pt-1 text-sm text-gray-500">
               <button
                 type="button"
                 onClick={handleResendOtp}

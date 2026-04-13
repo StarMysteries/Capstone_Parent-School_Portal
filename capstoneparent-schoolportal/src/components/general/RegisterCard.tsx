@@ -886,17 +886,6 @@ export const RegisterCard = () => {
             />
             <div className="mt-8 flex justify-center gap-4">
               <Button
-                type="button"
-                className="h-12 rounded-full bg-gray-500 px-8 text-white hover:bg-gray-600"
-                onClick={() => {
-                  setStep("form");
-                  setOtpCode("");
-                  clearFeedback();
-                }}
-              >
-                Back
-              </Button>
-              <Button
                 type="submit"
                 disabled={isVerifyingOtp}
                 className="h-12 rounded-full bg-[#4a9d5f] px-10 text-white hover:bg-[#3d8550] disabled:opacity-60"
