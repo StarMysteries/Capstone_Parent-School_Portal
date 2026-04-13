@@ -201,9 +201,7 @@ const studentsService = {
             }
           },
         },
-        orderBy: {
-          created_at: "desc",
-        },
+        orderBy: [{ lname: "asc" }, { fname: "asc" }],
       }),
       prisma.student.count({ where }),
     ]);
@@ -518,9 +516,15 @@ const studentsService = {
                 user_id: true,
                 fname: true,
                 lname: true,
+                roles: true,
               },
             },
           },
+        },
+      },
+      orderBy: {
+        subject_record: {
+          subject_name: "asc",
         },
       },
     });

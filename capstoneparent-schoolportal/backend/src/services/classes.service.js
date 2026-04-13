@@ -299,7 +299,11 @@ const classesService = {
             select: { user_id: true, fname: true, lname: true },
           },
         },
-        orderBy: { syear_start: "desc" },
+        orderBy: [
+          { grade_level: { gl_id: "asc" } },
+          { section: { section_name: "asc" } },
+          { syear_start: "desc" },
+        ],
       }),
       prisma.classList.count({ where }),
     ]);
@@ -325,7 +329,11 @@ const classesService = {
           select: { user_id: true, fname: true, lname: true },
         },
       },
-      orderBy: { syear_start: "desc" },
+      orderBy: [
+        { grade_level: { gl_id: "asc" } },
+        { section: { section_name: "asc" } },
+        { syear_start: "desc" },
+      ],
     });
   },
 
@@ -414,6 +422,9 @@ const classesService = {
           include: {
             student: true,
           },
+          orderBy: {
+            student: { lname: "asc" },
+          },
         },
         subject_records: {
           include: {
@@ -422,9 +433,17 @@ const classesService = {
                 teacher: {
                   select: { user_id: true, fname: true, lname: true },
                 },
-                students: { include: { student: true } },
+                students: {
+                  include: { student: true },
+                  orderBy: {
+                    student: { lname: "asc" },
+                  },
+                },
               },
             },
+          },
+          orderBy: {
+            subject_record: { subject_name: "asc" },
           },
         },
       },
@@ -611,9 +630,17 @@ const classesService = {
         subject_record: {
           include: {
             teacher: { select: { user_id: true, fname: true, lname: true } },
-            students: { include: { student: true } },
+            students: {
+              include: { student: true },
+              orderBy: {
+                student: { lname: "asc" },
+              },
+            },
           },
         },
+      },
+      orderBy: {
+        subject_record: { subject_name: "asc" },
       },
     });
 

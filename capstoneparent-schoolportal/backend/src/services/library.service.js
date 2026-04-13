@@ -34,7 +34,7 @@ const libraryService = {
           copies: true,
         },
         orderBy: {
-          uploaded_at: "desc",
+          item_name: "asc",
         },
       }),
       prisma.learningMaterial.count({ where }),

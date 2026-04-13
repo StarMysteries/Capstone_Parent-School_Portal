@@ -211,7 +211,10 @@ const parentsService = {
           files: { include: { file: true } },
           verifier: { select: { user_id: true, fname: true, lname: true } },
         },
-        orderBy: { submitted_at: "desc" },
+        orderBy: [
+          { parent: { lname: "asc" } },
+          { parent: { fname: "asc" } },
+        ],
       }),
       prisma.parentRegistration.count({ where }),
     ]);
@@ -371,6 +374,11 @@ const parentsService = {
           include: {
             teacher: { select: { user_id: true, fname: true, lname: true } },
           },
+        },
+      },
+      orderBy: {
+        subject_record: {
+          subject_name: "asc",
         },
       },
     });

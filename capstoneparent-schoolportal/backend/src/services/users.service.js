@@ -87,9 +87,7 @@ const usersService = {
           date_of_birth: true,
           roles: true,
         },
-        orderBy: {
-          created_at: "desc",
-        },
+        orderBy: [{ lname: "asc" }, { fname: "asc" }],
       }),
       prisma.user.count({ where }),
     ]);
