@@ -3,6 +3,7 @@ import { Modal } from "@/components/ui/modal";
 import { FileText, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 export interface PartnershipEventFormData {
   id?: number;
@@ -106,14 +107,19 @@ export const EditPartnershipAndEventsModal = ({
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
+      const validation = validateFiles([file], {
+        acceptedTypes: [".jpg", ".jpeg", ".png"],
+        maxSizeMB: 10,
+        label: "partnership or event image",
+      });
+      if (!validation.valid) {
         setFormData((prev) => ({
           ...prev,
           imageFile: undefined,
           imageUrl: "",
           imageFileName: undefined,
         }));
-        showError("File size must be 10MB or less.");
+        showError(validation.error);
         e.target.value = "";
         return;
       }
@@ -224,7 +230,7 @@ export const EditPartnershipAndEventsModal = ({
           <div className="relative min-h-45">
             <div className="max-w-60 space-y-2">
               <p className="text-sm text-gray-500">One file can be uploaded here</p>
-              <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 10 MB</p>
+              <p className="text-xs text-gray-400">Accepted: JPEG, PNG · Max 10 MB</p>
 
               {!formData.imageFileName ? (
                 <label className="inline-flex cursor-pointer items-center overflow-hidden bg-[#e4ef00] text-gray-900">
@@ -238,7 +244,7 @@ export const EditPartnershipAndEventsModal = ({
                   <input
                     type="file"
                     onChange={handleImageUpload}
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png"
                     className="hidden"
                   />
                 </label>

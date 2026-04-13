@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
+import { validateFiles } from '@/lib/fileValidation';
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -29,24 +31,21 @@ export const FileUploadModal = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Get file extension
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-
-    // Check if file type is accepted
-    if (!acceptedFileTypes.includes(fileExtension)) {
+    clearFeedback();
+    const validation = validateFiles([file], {
+      acceptedTypes: acceptedFileTypes,
+      maxSizeMB,
+      label: title.toLowerCase(),
+    });
+    if (!validation.valid) {
       setSelectedFile(null);
-      return;
-    }
-
-    // Check file size
-    const fileSizeMB = file.size / (1024 * 1024);
-    if (fileSizeMB > maxSizeMB) {
-      setSelectedFile(null);
+      showError(validation.error);
+      e.target.value = '';
       return;
     }
 
@@ -54,7 +53,10 @@ export const FileUploadModal = ({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      showError(`Please select a valid file for ${title.toLowerCase()}.`);
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -70,6 +72,7 @@ export const FileUploadModal = ({
   const handleClose = () => {
     setSelectedFile(null);
     setIsUploading(false);
+    clearFeedback();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

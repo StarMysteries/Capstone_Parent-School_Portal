@@ -5,6 +5,7 @@ import type { OrganizationalChartItem } from "@/lib/organizationalChartContent";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 export type OrgChartModalMode = "add" | "edit";
 
@@ -106,6 +107,18 @@ export const EditOrganizationalChartModal = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    const validation = validateFiles([file], {
+      acceptedTypes: [".jpg", ".jpeg", ".png"],
+      maxSizeMB: 10,
+      label: "organizational chart",
+    });
+    if (!validation.valid) {
+      setSelectedFile(null);
+      showError(validation.error);
+      event.target.value = "";
       return;
     }
 
@@ -220,7 +233,7 @@ export const EditOrganizationalChartModal = ({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept=".jpg,.jpeg,.png"
           onChange={handleFileChange}
           className="hidden"
         />

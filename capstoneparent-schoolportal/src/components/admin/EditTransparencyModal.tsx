@@ -3,6 +3,8 @@ import { Modal } from "@/components/ui/modal";
 import type { TransparencyContent } from "@/lib/transparencyContent";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 interface EditTransparencyModalProps {
   isOpen: boolean;
@@ -38,13 +40,15 @@ export const EditTransparencyModal = ({
   const [fileName, setFileName] = useState(getReadableFileName(initialContent));
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { showError, clearFeedback } = useApiFeedbackStore();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    clearFeedback();
     setPreviewImageUrl(initialContent.imageUrl);
     setFileName(getReadableFileName(initialContent));
     setSelectedFile(null);
-  }, [initialContent]);
+  }, [initialContent, clearFeedback]);
 
   const hasChanges = Boolean(selectedFile);
 
@@ -55,6 +59,18 @@ export const EditTransparencyModal = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    const validation = validateFiles([file], {
+      acceptedTypes: [".jpg", ".jpeg", ".png"],
+      maxSizeMB: 10,
+      label: "transparency image",
+    });
+    if (!validation.valid) {
+      setSelectedFile(null);
+      showError(validation.error);
+      event.target.value = "";
       return;
     }
 
@@ -110,7 +126,7 @@ export const EditTransparencyModal = ({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept=".jpg,.jpeg,.png"
           onChange={handleFileChange}
           className="hidden"
         />
@@ -125,7 +141,7 @@ export const EditTransparencyModal = ({
             Upload New Transparency Picture
             <Plus className="ml-2 h-6 w-6 text-black" strokeWidth={3} />
           </Button>
-          <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 10 MB</p>
+          <p className="text-xs text-gray-400">Accepted: JPEG, PNG · Max 10 MB</p>
         </div>
 
         <div className="flex justify-end">

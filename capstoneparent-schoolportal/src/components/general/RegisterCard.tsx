@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { authApi, studentsApi, type StudentSearchResult } from "@/lib/api";
 import { setDeviceToken } from "@/lib/auth";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 type RegistrationStep = "form" | "otp" | "complete";
 
@@ -248,7 +249,19 @@ export const RegisterCard = () => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files).map((file) => ({
+      const selectedFiles = Array.from(e.target.files);
+      const validation = validateFiles(selectedFiles, {
+        acceptedTypes: [".jpg", ".jpeg", ".png", ".pdf"],
+        maxSizeMB: 10,
+        label: "supporting document",
+      });
+      if (!validation.valid) {
+        showError(validation.error);
+        e.target.value = "";
+        return;
+      }
+
+      const newFiles = selectedFiles.map((file) => ({
         id: nextFileId.current++,
         file,
       }));
@@ -271,7 +284,18 @@ export const RegisterCard = () => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files?.length) {
-      const newFiles = Array.from(e.dataTransfer.files).map((file) => ({
+      const selectedFiles = Array.from(e.dataTransfer.files);
+      const validation = validateFiles(selectedFiles, {
+        acceptedTypes: [".jpg", ".jpeg", ".png", ".pdf"],
+        maxSizeMB: 10,
+        label: "supporting document",
+      });
+      if (!validation.valid) {
+        showError(validation.error);
+        return;
+      }
+
+      const newFiles = selectedFiles.map((file) => ({
         id: nextFileId.current++,
         file,
       }));

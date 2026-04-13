@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import type { ProfileModalData } from "./profileModalData";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 interface ManageAccountModalProps {
   isOpen: boolean;
@@ -32,6 +33,18 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
   const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
+
+    const validation = validateFiles([selectedFile], {
+      acceptedTypes: [".jpg", ".jpeg", ".png"],
+      maxSizeMB: 5,
+      label: "profile picture",
+    });
+    if (!validation.valid) {
+      setProfileFile(undefined);
+      showError(validation.error);
+      event.target.value = "";
+      return;
+    }
 
     const fileReader = new FileReader();
     setProfileFile(selectedFile);
@@ -168,7 +181,7 @@ export const ManageAccountModal = ({ isOpen, onClose, profileData, isSavingProfi
                 <img src={formData.profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
               </div>
             </div>
-            <p className="text-xs text-gray-400">Accepted: JPEG, PNG, GIF, WebP · Max 5 MB</p>
+            <p className="text-xs text-gray-400">Accepted: JPEG, PNG · Max 5 MB</p>
           </div>
         </div>
 

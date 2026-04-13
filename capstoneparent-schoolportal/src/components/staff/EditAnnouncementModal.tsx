@@ -10,6 +10,7 @@ import {
 import type { AnnouncementPostItem } from "@/components/staff/AnnouncementPostFeed";
 import type { AnnouncementCategory } from "@/lib/announcementPosts";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 interface EditAnnouncementModalProps {
   isOpen: boolean;
@@ -71,7 +72,18 @@ export const EditAnnouncementModal = ({
   ): void => {
     const uploadedFiles = e.target.files;
     if (!uploadedFiles) return;
-    Array.from(uploadedFiles).forEach((file) => {
+    const fileList = Array.from(uploadedFiles);
+    const validation = validateFiles(fileList, {
+      acceptedTypes: [".jpg", ".jpeg", ".png", ".pdf"],
+      maxSizeMB: 10,
+      label: "announcement attachment",
+    });
+    if (!validation.valid) {
+      showError(validation.error);
+      e.target.value = "";
+      return;
+    }
+    fileList.forEach((file) => {
       setFiles((prev) => [
         ...prev,
         { id: Math.random().toString(), name: file.name, file },
@@ -84,7 +96,17 @@ export const EditAnnouncementModal = ({
     e.preventDefault();
     const droppedFiles = e.dataTransfer.files;
     if (!droppedFiles) return;
-    Array.from(droppedFiles).forEach((file) => {
+    const fileList = Array.from(droppedFiles);
+    const validation = validateFiles(fileList, {
+      acceptedTypes: [".jpg", ".jpeg", ".png", ".pdf"],
+      maxSizeMB: 10,
+      label: "announcement attachment",
+    });
+    if (!validation.valid) {
+      showError(validation.error);
+      return;
+    }
+    fileList.forEach((file) => {
       setFiles((prev) => [
         ...prev,
         { id: Math.random().toString(), name: file.name, file },
@@ -218,6 +240,7 @@ export const EditAnnouncementModal = ({
                 id="edit-announcement-file-input"
                 type="file"
                 multiple
+                accept=".jpg,.jpeg,.png,.pdf"
                 onChange={handleFileUpload}
                 className="hidden"
               />

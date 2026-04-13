@@ -4,6 +4,8 @@ import { resolveMediaUrl } from "@/lib/api/base";
 import type { SchoolCalendarItem } from "@/lib/schoolCalendarContent";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 export type CalendarModalMode = "add" | "edit";
 
@@ -49,6 +51,7 @@ export const EditSchoolCalendarModal = ({
   const [fileName, setFileName] = useState("No file selected");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { showError, clearFeedback } = useApiFeedbackStore();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -63,6 +66,8 @@ export const EditSchoolCalendarModal = ({
     if (!isOpen) {
       return;
     }
+
+    clearFeedback();
 
     if (mode === "add") {
       setYearInput(currentYearString());
@@ -94,6 +99,18 @@ export const EditSchoolCalendarModal = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    const validation = validateFiles([file], {
+      acceptedTypes: [".jpg", ".jpeg", ".png"],
+      maxSizeMB: 10,
+      label: "school calendar",
+    });
+    if (!validation.valid) {
+      setSelectedFile(null);
+      showError(validation.error);
+      event.target.value = "";
       return;
     }
 
@@ -195,7 +212,7 @@ export const EditSchoolCalendarModal = ({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept=".jpg,.jpeg,.png"
           onChange={handleFileChange}
           className="hidden"
         />

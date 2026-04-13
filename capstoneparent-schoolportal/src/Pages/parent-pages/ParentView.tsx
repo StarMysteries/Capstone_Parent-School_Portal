@@ -6,9 +6,12 @@ import type { Child, DeniedUploads, PendingUploads, UploadedDoc } from "@/compon
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 export const ParentView = () => {
   const navigate = useNavigate();
+  const { showError, clearFeedback } = useApiFeedbackStore();
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [activeChild, setActiveChild] = useState<Child | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -102,12 +105,34 @@ export const ParentView = () => {
   const handlePendingFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     if (!file) return;
+    clearFeedback();
+    const validation = validateFiles([file], {
+      acceptedTypes: [".pdf", ".jpg", ".jpeg", ".png"],
+      maxSizeMB: 10,
+      label: "parent registration document",
+    });
+    if (!validation.valid) {
+      showError(validation.error);
+      event.target.value = "";
+      return;
+    }
     setPendingUploads((prev) => ({ ...prev, [pendingUploadTarget]: file }));
   };
 
   const handleDeniedFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     if (!file) return;
+    clearFeedback();
+    const validation = validateFiles([file], {
+      acceptedTypes: [".pdf", ".jpg", ".jpeg", ".png"],
+      maxSizeMB: 10,
+      label: "parent registration document",
+    });
+    if (!validation.valid) {
+      showError(validation.error);
+      event.target.value = "";
+      return;
+    }
     setDeniedUploads((prev) => ({ ...prev, [deniedUploadTarget]: file.name }));
   };
 

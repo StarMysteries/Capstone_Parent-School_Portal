@@ -3,6 +3,7 @@ import { Upload, FileText } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal } from "../ui/modal";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
+import { validateFiles } from "@/lib/fileValidation";
 
 interface StudentBatchUploadModalProps {
   isOpen: boolean;
@@ -44,9 +45,14 @@ export const StudentBatchUploadModal = ({
       return;
     }
 
-    if (!file.name.toLowerCase().endsWith(".csv")) {
+    const validation = validateFiles([file], {
+      acceptedTypes: [".csv"],
+      label: "student CSV",
+    });
+    if (!validation.valid) {
       setSelectedFile(null);
-      showError("Please select a CSV file.");
+      showError(validation.error);
+      event.target.value = "";
       return;
     }
 
