@@ -47,6 +47,15 @@ const studentsService = {
         lrn_number: true,
         fname: true,
         lname: true,
+        parent_registrations: {
+          where: {
+            registration: {
+              status: "VERIFIED",
+            },
+          },
+          select: { prs_id: true },
+          take: 1,
+        },
         grade_level: {
           select: { grade_level: true },
         },
@@ -55,7 +64,10 @@ const studentsService = {
       take: 10,
     });
 
-    return students;
+    return students.map((s) => ({
+      ...s,
+      is_verified: s.parent_registrations.length > 0,
+    }));
   },
 
   async lookupStudents(queryText) {
@@ -93,6 +105,15 @@ const studentsService = {
         status: true,
         grade_level: {
           select: { grade_level: true },
+        },
+        parent_registrations: {
+          where: {
+            registration: {
+              status: "VERIFIED",
+            },
+          },
+          select: { prs_id: true },
+          take: 1,
         },
       },
       orderBy: [{ lname: "asc" }, { fname: "asc" }, { lrn_number: "asc" }],

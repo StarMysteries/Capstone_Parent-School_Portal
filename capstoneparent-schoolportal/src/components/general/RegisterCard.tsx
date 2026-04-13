@@ -648,16 +648,19 @@ export const RegisterCard = () => {
                               const alreadySelected = selectedStudents.some(
                                 (s) => s.student_id === student.student_id,
                               );
+                              const isRegistrationVerified = student.is_verified;
+                              const isDisabled = alreadySelected || isRegistrationVerified;
+
                               return (
                                 <button
                                   key={student.student_id}
                                   type="button"
-                                  disabled={alreadySelected}
+                                  disabled={isDisabled}
                                   onClick={() =>
                                     handleSelectStudent(row.rowId, student)
                                   }
                                   className={`w-full flex items-center justify-between px-5 py-3 text-left transition-colors ${
-                                    alreadySelected
+                                    isDisabled
                                       ? "opacity-40 cursor-not-allowed bg-gray-50"
                                       : "hover:bg-green-50 cursor-pointer"
                                   }`}
@@ -674,6 +677,11 @@ export const RegisterCard = () => {
                                   {alreadySelected && (
                                     <span className="text-xs text-gray-400 italic">
                                       Already added
+                                    </span>
+                                  )}
+                                  {isRegistrationVerified && (
+                                    <span className="text-xs text-red-600 font-bold italic">
+                                      Verified by a parent
                                     </span>
                                   )}
                                 </button>

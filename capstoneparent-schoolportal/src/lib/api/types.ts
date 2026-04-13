@@ -36,6 +36,7 @@ export interface StudentSearchResult {
   fname: string;
   lname: string;
   grade_level: { grade_level: string };
+  is_verified: boolean;
 }
 
 export interface GradeLevel {
