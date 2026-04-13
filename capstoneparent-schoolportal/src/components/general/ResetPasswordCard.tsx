@@ -41,6 +41,21 @@ export const ResetPasswordCard = () => {
     e.preventDefault();
     clearFeedback();
 
+    if (!token) {
+      showError("This password reset link is missing or invalid.");
+      return;
+    }
+
+    if (!newPassword) {
+      showError("New password is required.");
+      return;
+    }
+
+    if (!confirmPassword) {
+      showError("Please confirm your new password.");
+      return;
+    }
+
     if (newPassword.length < 8) {
       showError("Password must be at least 8 characters.");
       return;
@@ -148,7 +163,6 @@ export const ResetPasswordCard = () => {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewPassword(e.target.value)
               }
-              required
               disabled={isLoading}
               className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-base text-gray-800 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />
@@ -169,7 +183,6 @@ export const ResetPasswordCard = () => {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setConfirmPassword(e.target.value)
               }
-              required
               disabled={isLoading}
               className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-base text-gray-800 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />

@@ -8,14 +8,26 @@ export const ForgotPasswordCard = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearFeedback();
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      showError("Email is required.");
+      return;
+    }
+    if (!emailPattern.test(normalizedEmail)) {
+      showError("Please enter a valid email address.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await authApi.forgotPassword(email);
+      const result = await authApi.forgotPassword(normalizedEmail);
       showSuccess(
         result.message ||
           "If that email is registered, a password reset link has been sent. The link expires in 10 minutes.",
@@ -47,7 +59,6 @@ export const ForgotPasswordCard = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEmail(e.target.value)
             }
-            required
             disabled={isLoading}
             className="h-13 rounded-2xl border border-gray-500 bg-gray-100 px-6 text-3xl text-gray-800 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-(--button-green)"
           />

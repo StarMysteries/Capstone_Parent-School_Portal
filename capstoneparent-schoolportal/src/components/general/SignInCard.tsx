@@ -27,6 +27,7 @@ export const SignInCard = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const autoVerifyStartedRef = useRef(false);
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // ── Finish: store session and navigate ──────────────────────────────────────
   const finalise = (token: string, user: AuthUser, rawDeviceToken?: string) => {
@@ -42,16 +43,32 @@ export const SignInCard = () => {
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     clearFeedback();
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      showError("Email is required.");
+      return;
+    }
+    if (!emailPattern.test(normalizedEmail)) {
+      showError("Please enter a valid email address.");
+      return;
+    }
+    if (!password) {
+      showError("Password is required.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const storedDeviceToken = getDeviceToken();
 
       if (storedDeviceToken) {
-        const res = await authApi.login(email, password, storedDeviceToken);
+        const res = await authApi.login(normalizedEmail, password, storedDeviceToken);
         finalise(res.data.token, res.data.user);
       } else {
-        await authApi.sendOtp(email);
+        await authApi.sendOtp(normalizedEmail);
+        setEmail(normalizedEmail);
         setStep("otp");
       }
     } catch (err) {
@@ -60,7 +77,8 @@ export const SignInCard = () => {
       if (msg.toLowerCase().includes("unrecognized device")) {
         setDeviceToken("");
         try {
-          await authApi.sendOtp(email);
+          await authApi.sendOtp(normalizedEmail);
+          setEmail(normalizedEmail);
           setStep("otp");
         } catch {
           showError("Could not send OTP. Please try again.");
@@ -77,10 +95,21 @@ export const SignInCard = () => {
   const handleOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     clearFeedback();
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      showError("Email is required before OTP verification.");
+      return;
+    }
+    if (otpCode.length !== 6) {
+      showError("OTP code must be exactly 6 digits.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await authApi.verifyOtp(email, otpCode);
+      const res = await authApi.verifyOtp(normalizedEmail, otpCode);
       finalise(res.data.token, res.data.user, res.data.deviceToken);
     } catch (err) {
       showError(err instanceof Error ? err.message : "Invalid OTP");
@@ -91,9 +120,19 @@ export const SignInCard = () => {
 
   const handleResendOtp = async () => {
     clearFeedback();
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      showError("Email is required before resending OTP.");
+      return;
+    }
+    if (!emailPattern.test(normalizedEmail)) {
+      showError("Please enter a valid email address before resending OTP.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await authApi.sendOtp(email);
+      await authApi.sendOtp(normalizedEmail);
     } catch (err) {
       showError(err instanceof Error ? err.message : "Could not resend OTP");
     } finally {
@@ -179,7 +218,6 @@ export const SignInCard = () => {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
               disabled={loading}
               className="h-13 rounded-2xl border border-gray-500 bg-gray-100 px-6 text-3xl text-gray-800 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />
@@ -189,7 +227,6 @@ export const SignInCard = () => {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
               disabled={loading}
               className="h-13 rounded-2xl border border-gray-500 bg-gray-100 px-6 text-3xl text-gray-800 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-(--button-green)"
             />
@@ -237,7 +274,6 @@ export const SignInCard = () => {
               onChange={(e) =>
                 setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
               }
-              required
               disabled={loading}
               maxLength={6}
               className="h-13 rounded-2xl border border-gray-500 bg-gray-100 px-6 text-3xl tracking-widest text-gray-800 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-(--button-green)"

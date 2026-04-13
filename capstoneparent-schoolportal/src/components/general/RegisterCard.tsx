@@ -118,6 +118,7 @@ export const RegisterCard = () => {
   const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // ─── LRN search ─────────────────────────────────────────────────────────────
 
@@ -289,8 +290,40 @@ export const RegisterCard = () => {
     e.preventDefault();
     clearFeedback();
 
+    if (!formData.firstName.trim()) {
+      showError("First name is required.");
+      return;
+    }
+    if (!formData.lastName.trim()) {
+      showError("Last name is required.");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       showError("Passwords do not match");
+      return;
+    }
+    if (!formData.contact.trim()) {
+      showError("Contact number is required.");
+      return;
+    }
+    if (!formData.address.trim()) {
+      showError("Address is required.");
+      return;
+    }
+    if (!formData.email.trim()) {
+      showError("Email is required.");
+      return;
+    }
+    if (!emailPattern.test(formData.email.trim())) {
+      showError("Please enter a valid email address.");
+      return;
+    }
+    if (!formData.password) {
+      showError("Password is required.");
+      return;
+    }
+    if (!formData.confirmPassword) {
+      showError("Please confirm your password.");
       return;
     }
     if (formData.password.length < 8) {
@@ -344,6 +377,10 @@ export const RegisterCard = () => {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     clearFeedback();
+    if (!pendingEmail.trim()) {
+      showError("Missing email for OTP verification. Please register again.");
+      return;
+    }
     if (otpCode.length !== 6) {
       showError("OTP code must be exactly 6 digits");
       return;
