@@ -23,7 +23,7 @@ export const ChangePasswordModal = ({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { showError, showSuccess, clearFeedback } = useApiFeedbackStore();
+  const { clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
     if (!isOpen) return;
