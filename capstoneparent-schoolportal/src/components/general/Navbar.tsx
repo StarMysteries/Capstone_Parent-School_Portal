@@ -16,7 +16,7 @@ export const Navbar = () => {
   const aboutRoutes = [
     "/contactus",
     "/history",
-    "/orginizationalchart",
+    "/organizationalchart",
     "/schoolcalendar",
     "/transparency",
     "/visionandmission",

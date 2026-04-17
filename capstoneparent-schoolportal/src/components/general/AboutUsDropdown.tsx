@@ -20,10 +20,10 @@ export const AboutUsDropdown = ({ isMobile = false }: AboutUsDropdownProps) => {
         History
       </a>
       <a
-        href="/orginizationalchart"
+        href="/organizationalchart"
         className={isMobile ? "block py-2 text-lg font-normal text-gray-900 hover:text-gray-700" : "block px-4 py-2 text-gray-800 hover:bg-gray-100"}
       >
-        Orginizational Chart
+        Organizational Chart
       </a>
       <a
         href="/schoolcalendar"

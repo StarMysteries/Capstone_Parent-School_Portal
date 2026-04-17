@@ -19,7 +19,7 @@ import { ResetPassword } from "./Pages/general-pages/ResetPassword";
 }
 import { ContactUs } from "./Pages/general-pages/sub-pages/ContactUs";
 import { History } from "./Pages/general-pages/sub-pages/History";
-import { OrginizationalChart } from "./Pages/general-pages/sub-pages/OrginizationalChart";
+import { OrganizationalChart } from "./Pages/general-pages/sub-pages/OrganizationalChart";
 import { SchoolCalendar } from "./Pages/general-pages/sub-pages/SchoolCalendar";
 import { Transparency } from "./Pages/general-pages/sub-pages/Transparency";
 import { VisionAndMission } from "./Pages/general-pages/sub-pages/VisionAndMission";
@@ -141,7 +141,7 @@ const App = () => {
         {/*General Sub Pages */}
         <Route path="/contactus" element={<ContactUs />} />
         <Route path="/history" element={<History />} />
-        <Route path="/orginizationalchart" element={<OrginizationalChart />} />
+        <Route path="/organizationalchart" element={<OrganizationalChart />} />
         <Route path="/schoolcalendar" element={<SchoolCalendar />} />
         <Route path="/transparency" element={<Transparency />} />
         <Route path="/visionandmission" element={<VisionAndMission />} />
@@ -241,7 +241,7 @@ const App = () => {
         />
         <Route
           path="/add-org-chart"
-          element={<Navigate to="/orginizationalchart" replace />}
+          element={<Navigate to="/organizationalchart" replace />}
         />
         <Route
           path="/edithistory"

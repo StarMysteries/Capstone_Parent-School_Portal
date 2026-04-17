@@ -70,7 +70,7 @@ const OrganizationalChartSkeleton = ({ showActions }: { showActions: boolean }) 
   </>
 );
 
-export const OrginizationalChart = () => {
+export const OrganizationalChart = () => {
   const user = getAuthUser();
   const isAdmin = user?.role === "admin";
 
