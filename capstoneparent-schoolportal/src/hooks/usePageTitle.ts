@@ -12,7 +12,7 @@ const pageTitles: Record<string, string> = {
 
   "/contactus": "Contact Us | Parent-School Portal",
   "/history": "History | Parent-School Portal",
-  "/orginizationalchart": "Orginizational Chart | Parent-School Portal",
+  "/organizationalchart": "Organizational Chart | Parent-School Portal",
   "/schoolcalendar": "School Calendar | Parent-School Portal",
   "/transparency": "Transparency | Parent-School Portal",
   "/visionandmission": "Vision And Mission | Parent-School Portal",
