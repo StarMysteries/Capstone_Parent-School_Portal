@@ -1,7 +1,7 @@
 const prisma = require("../config/database");
 const { findOrThrow } = require("../utils/findOrThrow");
 const { deleteFileByUrl, refreshSignedUrl } = require("../utils/supabaseStorage");
-const { sendParentVerifiedEmail } = require("../utils/emailUtil");
+const { sendParentVerifiedEmail, sendParentDeniedEmail } = require("../utils/emailUtil");
 const PENDING_REGISTRATION_TTL_MS = 10 * 60 * 1000;
 
 /**
@@ -328,6 +328,18 @@ const parentsService = {
       const parentName =
         `${registration.parent.fname || ""} ${registration.parent.lname || ""}`.trim();
       await sendParentVerifiedEmail(registration.parent.email, parentName);
+    }
+
+    if (status === "DENIED" && registration.parent?.email) {
+      const parentName =
+        `${registration.parent.fname || ""} ${registration.parent.lname || ""}`.trim();
+      await sendParentDeniedEmail(registration.parent.email, parentName, remarks);
+
+      // Rename the email to free it up for reuse while keeping the record for audit
+      await prisma.user.update({
+        where: { user_id: registration.parent.user_id },
+        data: { email: `denied_${Date.now()}_${registration.parent.email}` },
+      });
     }
 
     return registration;

@@ -226,9 +226,53 @@ const sendParentVerifiedEmail = async (email, parentName) => {
   }
 };
 
+/**
+ * Send parent registration denial email
+ */
+const sendParentDeniedEmail = async (email, parentName, remarks) => {
+  try {
+    const safeName = parentName?.trim() || "Parent";
+    const reasonText = remarks?.trim() || "No specific reason provided.";
+
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: email,
+      subject: "Update Regarding Your Parent Registration",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #374151;">
+          <h2 style="color: #dc2626; margin-top: 0;">Registration Update</h2>
+          <p>Hello ${safeName},</p>
+          <p>Thank you for your interest in registering for the Parent-School Portal.</p>
+          <p>After reviewing your application, we regret to inform you that your registration has been <strong>denied</strong> at this time.</p>
+          <div style="margin-top: 16px; padding: 16px; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #991b1b;">Remarks from Administrator:</h3>
+            <p style="margin: 0; color: #b91c1c;">${reasonText}</p>
+          </div>
+          <p style="margin-top: 20px;">If you believe this was an error or you would like to try again with corrected information/documents, you may submit a new registration using the same email address.</p>
+          <div style="margin: 24px 0;">
+            <a href="${REGISTER_URL}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Submit New Registration</a>
+          </div>
+          <p>Thank you for your understanding.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend email error:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Email sending error:", error);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTPEmail,
   sendPasswordResetEmail,
   sendStaffAccountCreatedEmail,
   sendParentVerifiedEmail,
+  sendParentDeniedEmail,
 };
