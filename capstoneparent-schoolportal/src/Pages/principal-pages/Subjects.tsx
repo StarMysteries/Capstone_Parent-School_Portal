@@ -158,7 +158,7 @@ export const Subjects = ({
 
   return (
     <>
-      <div className="flex-1 p-4 md:p-6 space-y-4 overflow-y-auto">
+      <div className="flex-1 p-4 md:p-6 space-y-4 overflow-y-auto h-full">
         {/* Header Section */}
         <div className="flex flex-col gap-4">
           {/* First Row: Back Button, Search, Class Adviser */}
@@ -210,8 +210,8 @@ export const Subjects = ({
         </div>
 
         {/* Subjects Table */}
-        <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="max-h-[calc(100vh-250px)] overflow-x-auto overflow-y-auto">
             <table className="w-full min-w-[600px]">
               <thead className="bg-gray-100">
                 <tr>

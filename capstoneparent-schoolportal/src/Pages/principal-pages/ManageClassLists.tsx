@@ -603,7 +603,6 @@ export const ManageClassLists = () => {
                 </TabsContent>
 
                 {/* STUDENT LIST TAB */}
-                {/* STUDENT LIST TAB */}
                 <TabsContent value="students" className="flex-1 mt-0 overflow-hidden">
                   <StudentList
                     students={classStudents}

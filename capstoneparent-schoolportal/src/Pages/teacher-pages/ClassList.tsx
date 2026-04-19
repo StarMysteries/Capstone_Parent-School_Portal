@@ -508,7 +508,7 @@ export const ClassList = () => {
 
         {/* RIGHT PANEL */}
         <div className={`
-            bg-(--div-bg) h-full overflow-hidden flex flex-col
+            bg-(--div-bg) h-full overflow-y-auto flex flex-col
             w-full md:flex-1
             rounded-xl border border-gray-200 shadow-sm
             ${isDetailView ? 'flex' : 'hidden md:flex'}
@@ -626,8 +626,8 @@ export const ClassList = () => {
                         </Button>
                       </div>
 
-                      <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-                        <div className="overflow-x-auto">
+                      <div className="bg-white rounded-lg border border-gray-200">
+                        <div className="max-h-[calc(100vh-250px)] overflow-x-auto overflow-y-auto">
                           <table className="w-full min-w-150">
                             <thead className="bg-gray-100">
                               <tr>
@@ -794,7 +794,7 @@ export const ClassList = () => {
                       </Button>
                     </div>
 
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
+                    <div className="bg-white rounded-lg overflow-y-auto border border-gray-200">
                       <div className="overflow-x-auto">
                         <table className="w-full min-w-150">
                           <thead className="bg-gray-100">
