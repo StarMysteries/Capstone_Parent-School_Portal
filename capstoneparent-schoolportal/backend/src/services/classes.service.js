@@ -2,10 +2,10 @@ const prisma = require("../config/database");
 const { findOrThrow } = require("../utils/findOrThrow");
 const { replaceFile } = require("../utils/supabaseStorage");
 const {
-  buildStudentGradePdf,
   createZipBuffer,
   sanitizeFileName,
 } = require("../utils/gradeExport");
+const { generateReportCard } = require("../utils/gradeConfig");
 
 const normalizeSex = (sex) => {
   if (sex === "Female" || sex === "F") return "F";
@@ -1549,38 +1549,56 @@ const classesService = {
   },
 
   async exportAllQuartersGrades(classId) {
-    const classData = await prisma.classList.findUnique({
-      where: { clist_id: classId },
-      include: {
-        grade_level: true,
-        section: true,
-        students: {
-          include: {
-            student: {
-              include: {
-                grade_level: true,
-                subject_records: {
-                  include: {
-                    subject_record: true,
+    // Fetch class data including the adviser user for their name
+    const [classData, principalRecord] = await Promise.all([
+      prisma.classList.findUnique({
+        where: { clist_id: classId },
+        include: {
+          grade_level: true,
+          section: true,
+          adviser: { select: { fname: true, lname: true } },
+          students: {
+            include: {
+              student: {
+                include: {
+                  grade_level: true,
+                  subject_records: {
+                    include: {
+                      subject_record: true,
+                    },
                   },
+                  attendance_records: true,
                 },
-                attendance_records: true,
               },
             },
           },
         },
-      },
-    });
+      }),
+      // Fetch first Principal user for the report card signature field
+      prisma.userRole_Model.findFirst({
+        where: { role: "Principal" },
+        include: { user: { select: { fname: true, lname: true } } },
+      }),
+    ]);
 
     if (!classData) {
       throw new Error("Class not found");
     }
 
+    const adviserName = classData.adviser
+      ? `${classData.adviser.fname} ${classData.adviser.lname}`
+      : "";
+    const principalName = principalRecord?.user
+      ? `${principalRecord.user.fname} ${principalRecord.user.lname}`
+      : "";
+
     const classInfo = {
-      grade_level: classData.grade_level?.grade_level ?? "",
-      section_name: classData.section?.section_name ?? "",
-      syear_start: classData.syear_start,
-      syear_end: classData.syear_end,
+      grade_level:    classData.grade_level?.grade_level ?? "",
+      section_name:   classData.section?.section_name ?? "",
+      syear_start:    classData.syear_start,
+      syear_end:      classData.syear_end,
+      adviser_name:   adviserName,
+      principal_name: principalName,
     };
 
     const students = classData.students
@@ -1589,10 +1607,25 @@ const classesService = {
         `${left.lname} ${left.fname}`.localeCompare(`${right.lname} ${right.fname}`),
       );
 
-    const zipEntries = students.map((student) => ({
-      name: `${sanitizeFileName(student.lname)}_${sanitizeFileName(student.fname)}_${sanitizeFileName(student.lrn_number)}_grades.pdf`,
-      content: buildStudentGradePdf({ student, classInfo }),
-    }));
+    // generateReportCard returns the appropriate async generator function,
+    // or null when there is no template for that grade level.
+    const gradeLevel = classInfo.grade_level;
+    const generator = generateReportCard(gradeLevel);
+
+    if (!generator) {
+      throw new Error(`No report card template available for grade level: "${gradeLevel}"`);
+    }
+
+    // Generate all PDFs concurrently — generators are async (pdf-lib).
+    const zipEntries = await Promise.all(
+      students.map(async (student) => {
+        const pdfBytes = await generator({ student, classInfo });
+        return {
+          name: `${sanitizeFileName(student.lname)}_${sanitizeFileName(student.fname)}_${sanitizeFileName(student.lrn_number)}_ReportCard.pdf`,
+          content: Buffer.from(pdfBytes),
+        };
+      }),
+    );
 
     return {
       fileName: `class-${classId}-quarterly-grades.zip`,

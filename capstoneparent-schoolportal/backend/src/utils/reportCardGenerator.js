@@ -212,6 +212,8 @@ async function generateElementaryReportCard({ student, classInfo }) {
   if (principalName) {
     const pnW = helveticaBold.widthOfTextAtSize(principalName.toUpperCase(), 8);
     d1(principalName.toUpperCase(), 469 + (110 - pnW) / 2, PH - 380, 8, true);
+    // Certificate of Transfer section
+    d1(principalName.toUpperCase(), 469 + (110 - pnW) / 2, PH - 501, 8, true);
   }
 
   // Adviser

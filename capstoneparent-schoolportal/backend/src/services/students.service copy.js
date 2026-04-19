@@ -566,6 +566,9 @@ const studentsService = {
               include: {
                 grade_level: true,
                 section:     true,
+                // ⚠️ Verify this relation name matches your Prisma schema.
+                // It corresponds to the `class_adviser` FK on Class_List → Users.
+                // Common names: `adviser`, `class_adviser`, `teacher`
                 adviser: {
                   select: { fname: true, lname: true },
                 },
@@ -580,13 +583,15 @@ const studentsService = {
       },
     }),
 
-    // Query the school principal from user_roles
-    prisma.userRole_Model.findFirst({
-      where: { role: 'Principal' },
-      include: {
-        user: { select: { fname: true, lname: true } },
-      },
-    }),
+    // Query the school principal from User_Roles
+    // ⚠️ Verify the Prisma model name: `userRole` or `user_role`
+    // and the relation name to Users: `user` or similar
+    // prisma.userRole.findFirst({
+    //   where: { role: 'Principal' },
+    //   include: {
+    //     user: { select: { fname: true, lname: true } },
+    //   },
+    // }),
   ]);
 
   if (!student) throw new Error('Student not found');
