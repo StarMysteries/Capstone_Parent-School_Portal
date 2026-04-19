@@ -147,10 +147,10 @@ export const ManageLearningResources = () => {
 
               <div className="flex gap-2">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-40 bg-white">
+                  <SelectTrigger className="w-40 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-none focus:outline-none focus:ring-2 focus:ring-(--button-green)">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-md border border-gray-300 bg-white shadow-lg">
                     <SelectItem value="all">All</SelectItem>
                     {categories.map((category) => (
                       <SelectItem
@@ -164,10 +164,10 @@ export const ManageLearningResources = () => {
                 </Select>
 
                 <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                  <SelectTrigger className="w-40 bg-white">
+                  <SelectTrigger className="w-40 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-none focus:outline-none focus:ring-2 focus:ring-(--button-green)">
                     <SelectValue placeholder="Grade Level" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-md border border-gray-300 bg-white shadow-lg">
                     <SelectItem value="all">All</SelectItem>
                     {GRADE_LEVELS.map((grade) => (
                       <SelectItem key={grade.id} value={grade.id.toString()}>
