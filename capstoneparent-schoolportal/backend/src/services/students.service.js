@@ -1,3 +1,5 @@
+const { generateReportCard } = require("../utils/gradeConfig");
+
 const prisma = require("../config/database");
 const {
   buildStudentGradePdf,
@@ -552,7 +554,9 @@ const studentsService = {
   },
 
   async exportQuarterlyGrades(studentId) {
-    const student = await prisma.student.findUnique({
+  // Query student with full relations needed for report card
+  const [student, principalRole] = await Promise.all([
+    prisma.student.findUnique({
       where: { student_id: studentId },
       include: {
         grade_level: true,
@@ -561,40 +565,74 @@ const studentsService = {
             class_list: {
               include: {
                 grade_level: true,
-                section: true,
+                section:     true,
+                // ⚠️ Verify this relation name matches your Prisma schema.
+                // It corresponds to the `class_adviser` FK on Class_List → Users.
+                // Common names: `adviser`, `class_adviser`, `teacher`
+                adviser: {
+                  select: { fname: true, lname: true },
+                },
               },
             },
           },
         },
         subject_records: {
-          include: {
-            subject_record: true,
-          },
+          include: { subject_record: true },
         },
         attendance_records: true,
       },
-    });
+    }),
 
-    if (!student) {
-      throw new Error("Student not found");
-    }
+    // Query the school principal from User_Roles
+    // ⚠️ Verify the Prisma model name: `userRole` or `user_role`
+    // and the relation name to Users: `user` or similar
+    // prisma.userRole.findFirst({
+    //   where: { role: 'Principal' },
+    //   include: {
+    //     user: { select: { fname: true, lname: true } },
+    //   },
+    // }),
+  ]);
 
-    const firstClass = student.class_lists?.[0]?.class_list;
-    const classInfo = firstClass
-      ? {
-          grade_level: firstClass.grade_level?.grade_level ?? "",
-          section_name: firstClass.section?.section_name ?? "",
-          syear_start: firstClass.syear_start,
-          syear_end: firstClass.syear_end,
-        }
-      : null;
+  if (!student) throw new Error('Student not found');
 
-    return {
-      fileName: `${sanitizeFileName(student.lname)}_${sanitizeFileName(student.fname)}_${sanitizeFileName(student.lrn_number)}_grades.pdf`,
-      contentType: "application/pdf",
-      buffer: buildStudentGradePdf({ student, classInfo }),
-    };
-  },
+  const firstClass    = student.class_lists?.[0]?.class_list;
+  const adviserUser   = firstClass?.adviser;
+  const principalUser = principalRole?.user;
+
+  const classInfo = firstClass
+    ? {
+        grade_level:    firstClass.grade_level?.grade_level ?? '',
+        section_name:   firstClass.section?.section_name   ?? '',
+        syear_start:    firstClass.syear_start,
+        syear_end:      firstClass.syear_end,
+        adviser_name:   adviserUser
+          ? `${adviserUser.fname} ${adviserUser.lname}` : '',
+        principal_name: principalUser
+          ? `${principalUser.fname} ${principalUser.lname}` : '',
+      }
+    : {
+        principal_name: principalUser
+          ? `${principalUser.fname} ${principalUser.lname}` : '',
+      };
+
+  const gradeLevel = classInfo.grade_level ?? student.grade_level?.grade_level ?? '';
+  const generator  = generateReportCard(gradeLevel);
+
+  let buffer;
+  if (generator) {
+    const uint8 = await generator({ student, classInfo });
+    buffer = Buffer.from(uint8);
+  } else {
+    buffer = buildStudentGradePdf({ student, classInfo });
+  }
+
+  return {
+    fileName: `${sanitizeFileName(student.lname)}_${sanitizeFileName(student.fname)}_${sanitizeFileName(student.lrn_number)}_ReportCard.pdf`,
+    contentType: 'application/pdf',
+    buffer,
+  };
+},
 };
 
 module.exports = studentsService;

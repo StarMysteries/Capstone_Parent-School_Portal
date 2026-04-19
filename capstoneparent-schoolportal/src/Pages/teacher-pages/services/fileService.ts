@@ -88,7 +88,7 @@ export const exportStudentQuarterlyGrades = async (studentId: number, fallbackNa
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = fallbackName ?? `student-${studentId}-quarterly-grades.pdf`;
+    a.download = fallbackName ?? `student-${studentId}-ReportCard.pdf`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

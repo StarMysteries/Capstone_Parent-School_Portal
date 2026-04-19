@@ -593,21 +593,21 @@ export const ClassList = () => {
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={() => setIsImportGradeSheetModalOpen(true)}
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Import Grade Sheet (.csv)
+                          <Upload className="mr-2 h-4 w-4" />
+                          Import Grade Sheet (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={() => setIsImportAttendanceModalOpen(true)}
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Import Attendance (.csv)
+                          <Upload className="mr-2 h-4 w-4" />
+                          Import Attendance (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={handleExportAllQuartersGrades}
                         >
-                          <Upload className="mr-2 h-4 w-4" />
+                          <Download className="mr-2 h-4 w-4" />
                           Export Quarterly Grade Sheet (.zip)
                         </Button>
                         <Button 
@@ -615,7 +615,7 @@ export const ClassList = () => {
                           onClick={handleDownloadTemplate}
                         >
                           <Download className="mr-2 h-4 w-4" />
-                          Download Grade Sheet Template (.csv)
+                          Download Grade Sheet Template (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
