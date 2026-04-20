@@ -4,7 +4,14 @@ import EditLearningResourceModal from "@/components/librarian/EditLearningResour
 import BookCopyModal from "@/components/librarian/BookCopyModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Pencil, ChevronDown } from "lucide-react";
+import { Search, Pencil } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { libraryApi } from "@/lib/api/libraryApi";
 import type { LearningMaterial, LibraryCategory } from "@/lib/api/types";
@@ -146,12 +153,12 @@ export const ManageLearningResources = () => {
                   <SelectContent className="bg-white">
                     <SelectItem value="all">All</SelectItem>
                     {categories.map((category) => (
-                      <option
+                      <SelectItem
                         key={category.category_id}
                         value={category.category_id.toString()}
                       >
                         {category.category_name}
-                      </option>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -163,13 +170,12 @@ export const ManageLearningResources = () => {
                   <SelectContent className="bg-white">
                     <SelectItem value="all">All</SelectItem>
                     {GRADE_LEVELS.map((grade) => (
-                      <option key={grade.id} value={grade.id.toString()}>
+                      <SelectItem key={grade.id.toString()} value={grade.id.toString()}>
                         {grade.label}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                </div>
+                  </SelectContent>
+                </Select>
               </div>
             </section>
 
