@@ -3,7 +3,6 @@ import type { PendingUploads } from "./parentModalTypes";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { studentsApi } from "@/lib/api/studentsApi";
 import type { StudentSearchResult } from "@/lib/api";
-import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
 function useDebouncedCallback<T extends unknown[]>(
   fn: (...args: T) => void,
@@ -21,7 +20,6 @@ function useDebouncedCallback<T extends unknown[]>(
 
 interface ApplyRegistrationModalProps {
   isOpen: boolean;
-  pendingUploadTarget: keyof PendingUploads;
   pendingUploads: PendingUploads;
   isFormValid: boolean;
   onSetUploadTarget: (target: keyof PendingUploads) => void;
@@ -34,7 +32,6 @@ interface ApplyRegistrationModalProps {
 
 export const ApplyRegistrationModal = ({
   isOpen,
-  pendingUploadTarget,
   pendingUploads,
   isFormValid,
   onSetUploadTarget,
@@ -49,7 +46,6 @@ export const ApplyRegistrationModal = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [foundStudent, setFoundStudent] = useState<any>(null);
-  const { showError } = useApiFeedbackStore();
 
   const doSearch = useCallback(async (lrn: string) => {
     if (!lrn) {
