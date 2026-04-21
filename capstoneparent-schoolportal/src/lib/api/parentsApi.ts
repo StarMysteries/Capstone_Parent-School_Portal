@@ -1,5 +1,5 @@
 import { apiFetch, bearerHeaders, resolveMediaUrl } from "./base";
-import type { ApiData, PaginationMeta } from "./types";
+import type { ApiData, PaginationMeta, ApiPaginatedData } from "./types";
 
 export type ParentRegistrationStatus = "PENDING" | "VERIFIED" | "DENIED";
 
@@ -68,6 +68,7 @@ export interface ParentChild {
   fname: string;
   lname: string;
   lrn_number: string;
+  status: string;
   grade_level?: {
     grade_level: string;
   };
@@ -204,7 +205,7 @@ export const parentsApi = {
     if (params?.page) query.append("page", String(params.page));
     if (params?.limit) query.append("limit", String(params.limit));
 
-    return apiFetch<ApiData<any>>(`/parents/children/${studentId}/library?${query.toString()}`, {
+    return apiFetch<ApiPaginatedData<any>>(`/parents/children/${studentId}/library?${query.toString()}`, {
       method: "GET",
       headers: bearerHeaders(),
     });

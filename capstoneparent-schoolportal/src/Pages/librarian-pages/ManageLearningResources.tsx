@@ -4,14 +4,14 @@ import EditLearningResourceModal from "@/components/librarian/EditLearningResour
 import BookCopyModal from "@/components/librarian/BookCopyModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Search, Pencil } from "lucide-react";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Search, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { libraryApi } from "@/lib/api/libraryApi";
 import type { LearningMaterial, LibraryCategory } from "@/lib/api/types";
@@ -170,7 +170,7 @@ export const ManageLearningResources = () => {
                   <SelectContent className="bg-white">
                     <SelectItem value="all">All</SelectItem>
                     {GRADE_LEVELS.map((grade) => (
-                      <SelectItem key={grade.id} value={grade.id.toString()}>
+                      <SelectItem key={grade.id.toString()} value={grade.id.toString()}>
                         {grade.label}
                       </SelectItem>
                     ))}

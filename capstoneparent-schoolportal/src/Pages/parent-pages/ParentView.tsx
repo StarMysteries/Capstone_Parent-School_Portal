@@ -396,7 +396,6 @@ export const ParentView = () => {
 
       <ApplyRegistrationModal
         isOpen={isApplyModalOpen}
-        pendingUploadTarget={pendingUploadTarget}
         pendingUploads={pendingUploads}
         isFormValid={isPendingFormValid}
         onSetUploadTarget={setPendingUploadTarget}

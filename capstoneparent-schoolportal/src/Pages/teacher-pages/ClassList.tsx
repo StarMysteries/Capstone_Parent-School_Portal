@@ -330,7 +330,7 @@ export const ClassList = () => {
                       }}
                       title="Clear Filters"
                     >
-                      Clear
+                      Clear Filters
                     </Button>
                   </div>
                 </div>
@@ -390,7 +390,7 @@ export const ClassList = () => {
                   
                   <div className="flex gap-2">
                     <Select value={subjectGradeLevel} onValueChange={setSubjectGradeLevel}>
-                      <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                      <SelectTrigger className="flex-1 min-w-0 bg-(--navbar-bg) border-none font-semibold">
                         <SelectValue placeholder="Grade Level" />
                       </SelectTrigger>
                       <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
@@ -406,7 +406,7 @@ export const ClassList = () => {
                     </Select>
 
                     <Select value={subjectSection} onValueChange={setSubjectSection}>
-                      <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                      <SelectTrigger className=" flex-1 min-w-0 bg-(--navbar-bg) border-none font-semibold">
                         <SelectValue placeholder="Section" />
                       </SelectTrigger>
                       <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
@@ -420,7 +420,7 @@ export const ClassList = () => {
                     </Select>
 
                     <Select value={subjectYear} onValueChange={setSubjectYear}>
-                      <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                      <SelectTrigger className="flex-1 min-w-0 bg-(--navbar-bg) border-none font-semibold">
                         <SelectValue placeholder="Year" />
                       </SelectTrigger>
                       <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
@@ -443,7 +443,7 @@ export const ClassList = () => {
                       }}
                       title="Clear Filters"
                     >
-                      Clear
+                      Clear Filters
                     </Button>
                   </div>
                 </div>
@@ -508,7 +508,7 @@ export const ClassList = () => {
 
         {/* RIGHT PANEL */}
         <div className={`
-            bg-(--div-bg) h-full overflow-hidden flex flex-col
+            bg-(--div-bg) h-full overflow-y-auto flex flex-col
             w-full md:flex-1
             rounded-xl border border-gray-200 shadow-sm
             ${isDetailView ? 'flex' : 'hidden md:flex'}
@@ -584,7 +584,7 @@ export const ClassList = () => {
                           }}
                           title="Clear Filters"
                         >
-                          Clear
+                          Clear Filters
                         </Button>
                       </div>
 
@@ -593,21 +593,21 @@ export const ClassList = () => {
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={() => setIsImportGradeSheetModalOpen(true)}
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Import Grade Sheet (.csv)
+                          <Upload className="mr-2 h-4 w-4" />
+                          Import Grade Sheet (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={() => setIsImportAttendanceModalOpen(true)}
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Import Attendance (.csv)
+                          <Upload className="mr-2 h-4 w-4" />
+                          Import Attendance (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={handleExportAllQuartersGrades}
                         >
-                          <Upload className="mr-2 h-4 w-4" />
+                          <Download className="mr-2 h-4 w-4" />
                           Export Quarterly Grade Sheet (.zip)
                         </Button>
                         <Button 
@@ -615,7 +615,7 @@ export const ClassList = () => {
                           onClick={handleDownloadTemplate}
                         >
                           <Download className="mr-2 h-4 w-4" />
-                          Download Grade Sheet Template (.csv)
+                          Download Grade Sheet Template (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
@@ -626,8 +626,8 @@ export const ClassList = () => {
                         </Button>
                       </div>
 
-                      <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-                        <div className="overflow-x-auto">
+                      <div className="bg-white rounded-lg border border-gray-200">
+                        <div className="max-h-[calc(100vh-250px)] overflow-x-auto overflow-y-auto">
                           <table className="w-full min-w-150">
                             <thead className="bg-gray-100">
                               <tr>
@@ -773,7 +773,7 @@ export const ClassList = () => {
                           }}
                           title="Clear Filters"
                         >
-                          Clear
+                          Clear Filters
                         </Button>
                     </div>
 
@@ -794,7 +794,7 @@ export const ClassList = () => {
                       </Button>
                     </div>
 
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
+                    <div className="bg-white rounded-lg overflow-y-auto border border-gray-200">
                       <div className="overflow-x-auto">
                         <table className="w-full min-w-150">
                           <thead className="bg-gray-100">
