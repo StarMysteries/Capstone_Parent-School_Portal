@@ -29,7 +29,7 @@ export const StudentList = ({
   );
 
   return (
-    <div className="flex-1 p-4 md:p-6 space-y-4 overflow-y-auto">
+    <div className="flex-1 p-4 md:p-6 space-y-4 overflow-y-auto h-full">
       <div className="flex flex-col gap-4">
         {/* Back Button & Search */}
         <div className="flex gap-3 items-center flex-wrap">
@@ -65,8 +65,8 @@ export const StudentList = ({
       </div>
 
       {/* Students Table */}
-      <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-lg overflow-y-auto border border-gray-200">
+        <div className="max-h-[calc(100vh-250px)] overflow-x-auto overflow-y-auto">
           <table className="w-full min-w-[600px]">
             <thead className="bg-gray-100">
               <tr>

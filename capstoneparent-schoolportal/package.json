@@ -16,6 +16,7 @@
     "postinstall": "npx prisma generate --schema=backend/prisma/schema.prisma"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@prisma/config": "^7.4.0",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-separator": "^1.1.8",
@@ -37,6 +38,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "nodemailer": "^8.0.1",
+    "prisma": "^5.22.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -45,9 +47,7 @@
     "resend": "^6.9.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
-    "zustand": "^5.0.12",
-    "@prisma/client": "^5.22.0",
-    "prisma": "^5.22.0"
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

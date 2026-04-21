@@ -395,7 +395,7 @@ export const ManageClassLists = () => {
             <div className="flex flex-col md:flex-row gap-2">
               <div className="flex gap-2 flex-wrap">
                 <Select value={gradeLevel} onValueChange={setGradeLevel}>
-                  <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                  <SelectTrigger className="flex-1 min-w-0 bg-(--navbar-bg) border-none font-semibold">
                     <SelectValue placeholder="Grade Level" />
                   </SelectTrigger>
                   <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
@@ -411,7 +411,7 @@ export const ManageClassLists = () => {
                 </Select>
 
                 <Select value={section} onValueChange={setSection}>
-                  <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                  <SelectTrigger className="flex-1 min-w-0 bg-(--navbar-bg) border-none font-semibold">
                     <SelectValue placeholder="Section" />
                   </SelectTrigger>
                   <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
@@ -425,7 +425,7 @@ export const ManageClassLists = () => {
                 </Select>
 
                 <Select value={year} onValueChange={setYear}>
-                  <SelectTrigger className="bg-(--navbar-bg) border-none font-semibold">
+                  <SelectTrigger className="flex-1 min-w-0 bg-(--navbar-bg) border-none font-semibold">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent className="bg-(--navbar-bg) border-none font-semibold">
@@ -447,7 +447,7 @@ export const ManageClassLists = () => {
                   }}
                   title="Clear Filters"
                 >
-                  Clear
+                  Clear Filters
                 </Button>
               </div>
             </div>
@@ -580,7 +580,6 @@ export const ManageClassLists = () => {
                   />
                 </TabsContent>
 
-                {/* STUDENT LIST TAB */}
                 {/* STUDENT LIST TAB */}
                 <TabsContent value="students" className="flex-1 mt-0 overflow-hidden">
                   <StudentList
