@@ -18,6 +18,7 @@ import { ClassSummary } from "./ClassSummary";
 import { StudentGrades } from "./StudentGrades";
 import { SubjectSummary } from "./SubjectSummary";
 import { FileUploadModal } from './FileUploadModal';
+import { ClassScheduleModal } from './ClassScheduleModal';
 import {
   downloadGradeSheetTemplate,
   exportAllQuartersGradeSheet,
@@ -196,7 +197,16 @@ export const ClassList = () => {
     if (!selectedClass) return;
     
     try {
-      await uploadClassSchedulePicture(selectedClass.clist_id, file);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await uploadClassSchedulePicture(selectedClass.clist_id, file) as any;
+      // Sync the new signed URL back into selectedClass so the modal preview
+      // refreshes immediately without a full page reload.
+      const newUrl: string | null = result?.data?.class_sched ?? null;
+      if (newUrl !== undefined) {
+        setSelectedClass((prev) =>
+          prev ? { ...prev, class_sched: newUrl } : prev,
+        );
+      }
     } catch (error) {
       throw error instanceof Error ? error : new Error('Failed to upload class schedule');
     }
@@ -626,7 +636,7 @@ export const ClassList = () => {
                           onClick={() => setIsUploadScheduleModalOpen(true)}
                         >
                           <Image className="mr-2 h-4 w-4" />
-                          Upload Class Schedule Picture
+                          View/Upload Class Schedule
                         </Button>
                       </div>
 
@@ -895,13 +905,17 @@ export const ClassList = () => {
         maxSizeMB={5}
       />
 
-      <FileUploadModal 
+      <ClassScheduleModal
         isOpen={isUploadScheduleModalOpen}
         onClose={() => setIsUploadScheduleModalOpen(false)}
         onUpload={handleUploadSchedulePicture}
-        title="Upload Class Schedule"
-        maxSizeMB={15}
-        acceptedFileTypes={['.png', '.jpg', '.jpeg', '.webp']}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        currentScheduleUrl={(selectedClass as any)?.class_sched ?? null}
+        classLabel={
+          selectedClass
+            ? `${selectedClass.grade} - ${selectedClass.section_name} · ${selectedClass.syear_start}–${selectedClass.syear_end}`
+            : undefined
+        }
       />
 
       <FileUploadModal
