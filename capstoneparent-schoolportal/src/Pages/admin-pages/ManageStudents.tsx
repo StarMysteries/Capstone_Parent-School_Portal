@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil,
   ChevronLeft,
@@ -91,9 +91,18 @@ export const ManageStudents = () => {
   const { clearFeedback } = useApiFeedbackStore();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [gradeLevelFilter, setGradeLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -101,8 +110,10 @@ export const ManageStudents = () => {
   const [formData, setFormData] = useState<StudentFormData>(emptyForm);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
+  const requestRef = useRef(0);
 
   const loadStudents = async (page = currentPage) => {
+    const requestId = ++requestRef.current;
     setIsLoading(true);
     clearFeedback();
 
@@ -117,16 +128,22 @@ export const ManageStudents = () => {
         limit: ITEMS_PER_PAGE,
         status,
         grade_level: gradeLevelId,
+        search: debouncedSearchQuery || undefined,
       });
+
+      if (requestId !== requestRef.current) return;
 
       setStudents(response.data);
       setPagination(response.pagination);
     } catch (err) {
+      if (requestId !== requestRef.current) return;
       showError(
         err instanceof Error ? err.message : "Failed to fetch students",
       );
     } finally {
-      setIsLoading(false);
+      if (requestId === requestRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -151,25 +168,12 @@ export const ManageStudents = () => {
 
   useEffect(() => {
     loadStudents(currentPage);
-  }, [currentPage, gradeLevelFilter, statusFilter]);
+  }, [currentPage, gradeLevelFilter, statusFilter, debouncedSearchQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [gradeLevelFilter, statusFilter]);
+  }, [gradeLevelFilter, statusFilter, debouncedSearchQuery]);
 
-  const filteredStudents = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-
-    if (!normalizedQuery) return students;
-
-    return students.filter((student) => {
-      const fullName = `${student.fname} ${student.lname}`.toLowerCase();
-      return (
-        fullName.includes(normalizedQuery) ||
-        student.lrn_number.includes(searchQuery)
-      );
-    });
-  }, [students, searchQuery]);
 
   const resetForm = () => {
     setFormData(emptyForm());
@@ -335,12 +339,12 @@ export const ManageStudents = () => {
 
   const totalPages = pagination.totalPages;
   const showingStart =
-    filteredStudents.length === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
+    students.length === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
   const showingEnd =
-    filteredStudents.length === 0
+    students.length === 0
       ? 0
       : Math.min(
-          (pagination.page - 1) * pagination.limit + filteredStudents.length,
+          (pagination.page - 1) * pagination.limit + students.length,
           pagination.total,
         );
 
@@ -443,7 +447,7 @@ export const ManageStudents = () => {
               <p>Loading students...</p>
             </div>
 
-          ) : filteredStudents.length === 0 ? (
+          ) : students.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-gray-500">
               No students found.
             </div>
@@ -473,7 +477,7 @@ export const ManageStudents = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStudents.map((student) => (
+                  {students.map((student) => (
                     <tr
                       key={student.student_id}
                       className="border-b border-gray-200 hover:bg-gray-50"
