@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import { validateFiles } from "@/lib/fileValidation";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 export type CalendarModalMode = "add" | "edit";
 
@@ -54,6 +55,7 @@ export const EditSchoolCalendarModal = ({
   const [fileName, setFileName] = useState("No file selected");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -130,17 +132,31 @@ export const EditSchoolCalendarModal = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
+  const hasChanges =
+    mode === "edit"
+      ? yearInput !== (calendarForEdit?.year ?? "") || Boolean(selectedFile)
+      : Boolean(selectedFile);
+
+  const handleSaveClick = () => {
+    if (mode === "add" && !selectedFile) {
+      showError("Please upload a school calendar image.");
+      return;
+    }
+    if (mode === "edit" && !hasChanges) {
+      showError("No changes to save.");
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const handleSaveConfirm = async () => {
+    setShowConfirm(false);
     const base: SchoolCalendarItem = {
       year: yearInput,
       label: calendarForEdit?.label || "",
       imageUrl: previewImageUrl || calendarForEdit?.imageUrl || "",
       fileName,
     };
-
-    if (mode === "add" && !selectedFile) {
-      return;
-    }
 
     try {
       setIsSaving(true);
@@ -157,11 +173,6 @@ export const EditSchoolCalendarModal = ({
   };
 
   const title = mode === "add" ? "Add school calendar" : "Edit school calendar";
-  const hasChanges =
-    mode === "edit"
-      ? yearInput !== (calendarForEdit?.year ?? "") || Boolean(selectedFile)
-      : Boolean(selectedFile);
-  const canSubmit = isSaving ? false : mode === "edit" ? hasChanges : Boolean(selectedFile);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} contentClassName="max-w-3xl">
@@ -238,8 +249,8 @@ export const EditSchoolCalendarModal = ({
 
           <Button
             type="button"
-            onClick={handleSave}
-            disabled={!canSubmit}
+            onClick={handleSaveClick}
+            disabled={isSaving}
             className="bg-(--button-green) hover:bg-(--button-hover-green) rounded-full px-8 py-3 text-lg text-white disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 inline-flex items-center gap-2"
           >
             {isSaving && (
@@ -249,6 +260,20 @@ export const EditSchoolCalendarModal = ({
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => void handleSaveConfirm()}
+        title={mode === "add" ? "Confirm Add School Calendar" : "Confirm Save Changes"}
+        message={
+          mode === "add"
+            ? `Are you sure you want to add the school calendar for school year ${yearInput}?`
+            : "Are you sure you want to save changes to this school calendar?"
+        }
+        confirmLabel={mode === "add" ? "Add Calendar" : "Save Changes"}
+        isLoading={isSaving}
+      />
     </Modal>
   );
 };

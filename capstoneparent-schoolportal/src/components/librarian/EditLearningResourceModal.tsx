@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
 import { FormInputError } from '../ui/FormInputError';
 import type { LibraryCategory } from '@/lib/api/types';
 import { GRADE_LEVELS } from '@/lib/libraryHelpers';
+import { ActionConfirmationModal } from '../general/ActionConfirmationModal';
 
 interface EditLearningResourceModalProps {
 	onClose: () => void;
@@ -27,13 +28,9 @@ const EditLearningResourceModal: React.FC<EditLearningResourceModalProps> = ({
 	const [glId, setGlId] = React.useState<number | ''>(initialResource?.gl_id ?? '');
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
 	const [errors, setErrors] = React.useState<Record<string, string>>({});
+	const [showConfirm, setShowConfirm] = useState(false);
 
-	const hasChanges =
-		resourceTitle.trim() !== (initialResource?.title ?? '').trim() ||
-		categoryId !== (initialResource?.category_id ?? '') ||
-		glId !== (initialResource?.gl_id ?? '');
-
-	const handleSave = async () => {
+	const handleSaveClick = () => {
 		const newErrors: Record<string, string> = {};
 		if (!resourceTitle.trim()) newErrors.title = "Resource title is required.";
 		if (categoryId === '') newErrors.category = "Category is required.";
@@ -45,6 +42,11 @@ const EditLearningResourceModal: React.FC<EditLearningResourceModalProps> = ({
 		}
 
 		setErrors({});
+		setShowConfirm(true);
+	};
+
+	const handleSaveConfirm = async () => {
+		setShowConfirm(false);
 		if (isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -122,14 +124,24 @@ const EditLearningResourceModal: React.FC<EditLearningResourceModalProps> = ({
 					</Button>
 					<Button
 						type="button"
-						onClick={() => void handleSave()}
-						disabled={!hasChanges || isSubmitting}
+						onClick={handleSaveClick}
+						disabled={isSubmitting}
 						className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
 					>
 						{isSubmitting ? "Saving..." : "Save"}
 					</Button>
 				</div>
 			</div>
+
+			<ActionConfirmationModal
+				isOpen={showConfirm}
+				onClose={() => setShowConfirm(false)}
+				onConfirm={() => void handleSaveConfirm()}
+				title="Confirm Save Changes"
+				message="Are you sure you want to save the changes to this learning resource?"
+				confirmLabel="Save Changes"
+				isLoading={isSubmitting}
+			/>
 		</Modal>
 	);
 };

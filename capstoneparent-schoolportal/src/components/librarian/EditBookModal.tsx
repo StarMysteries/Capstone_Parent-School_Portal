@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
 import type { LibrarySubject } from '@/lib/api/types';
 import { GRADE_LEVELS } from '@/lib/libraryHelpers';
+import { ActionConfirmationModal } from '../general/ActionConfirmationModal';
 
 interface EditBookModalProps {
 	onClose: () => void;
@@ -22,15 +23,18 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ onClose, onSave, initialB
 	const [subjectId, setSubjectId] = React.useState<number | ''>(initialBook?.subject_id ?? '');
 	const [glId, setGlId] = React.useState<number | ''>(initialBook?.gl_id ?? '');
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
+	const [showConfirm, setShowConfirm] = useState(false);
 
-	const hasChanges =
-		bookTitle.trim() !== (initialBook?.title ?? '').trim() ||
-		authorName.trim() !== (initialBook?.author ?? '').trim() ||
-		subjectId !== (initialBook?.subject_id ?? '') ||
-		glId !== (initialBook?.gl_id ?? '');
+	const handleSaveClick = () => {
+		if (!bookTitle.trim() || subjectId === '' || glId === '') {
+			return;
+		}
+		setShowConfirm(true);
+	};
 
-	const handleSave = async () => {
-		if (!bookTitle.trim() || subjectId === '' || glId === '' || isSubmitting) {
+	const handleSaveConfirm = async () => {
+		setShowConfirm(false);
+		if (isSubmitting) {
 			return;
 		}
 
@@ -100,14 +104,24 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ onClose, onSave, initialB
 					</Button>
 					<Button
 						type="button"
-						onClick={() => void handleSave()}
-						disabled={!hasChanges || isSubmitting}
+						onClick={handleSaveClick}
+						disabled={isSubmitting}
 						className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
 					>
 						{isSubmitting ? "Saving..." : "Save"}
 					</Button>
 				</div>
 			</div>
+
+			<ActionConfirmationModal
+				isOpen={showConfirm}
+				onClose={() => setShowConfirm(false)}
+				onConfirm={() => void handleSaveConfirm()}
+				title="Confirm Save Changes"
+				message="Are you sure you want to save the changes to this book?"
+				confirmLabel="Save Changes"
+				isLoading={isSubmitting}
+			/>
 		</Modal>
 	);
 };

@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { studentsApi } from "@/lib/api/studentsApi";
 import { FormInputError } from "../ui/FormInputError";
 import type { StudentSearchResult } from "@/lib/api";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 function useDebouncedCallback<T extends unknown[]>(
   fn: (...args: T) => void,
@@ -47,6 +48,7 @@ export const ApplyRegistrationModal = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [foundStudent, setFoundStudent] = useState<any>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const doSearch = useCallback(async (lrn: string) => {
     if (!lrn) {
@@ -100,6 +102,19 @@ export const ApplyRegistrationModal = ({
     setQuery("");
     setResults([]);
     setShowDropdown(false);
+  };
+
+  const handleSubmitClick = () => {
+    if (!isFormValid) {
+      // The error message is already shown in the UI if < 2 files
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const handleSubmitConfirm = () => {
+    setShowConfirm(false);
+    onSubmit(foundStudent);
   };
 
   if (!isOpen) return null;
@@ -312,8 +327,8 @@ export const ApplyRegistrationModal = ({
               )}
               <button
                 type="button"
-                onClick={() => onSubmit(foundStudent)}
-                disabled={!isFormValid || isSubmitting}
+                onClick={handleSubmitClick}
+                disabled={isSubmitting}
                 className="px-12 py-3 text-xl font-bold text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
                 style={{ backgroundColor: "var(--button-green)" }}
               >
@@ -330,6 +345,16 @@ export const ApplyRegistrationModal = ({
           </>
         )}
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleSubmitConfirm}
+        title="Confirm Registration Application"
+        message={`Are you sure you want to apply for registration for ${foundStudent?.fname} ${foundStudent?.lname}?`}
+        confirmLabel="Submit Application"
+        isLoading={isSubmitting}
+      />
     </div>
   );
 };

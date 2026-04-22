@@ -27,7 +27,6 @@ interface StaffFormModalProps {
   selectedRoles: string[];
   availableRoles: string[];
   onToggleRole: (role: string) => void;
-  disableSubmit?: boolean;
   temporaryPassword?: string;
   showStatusField?: boolean;
   isSubmitting?: boolean;
@@ -47,7 +46,6 @@ export const StaffFormModal = ({
   selectedRoles,
   availableRoles,
   onToggleRole,
-  disableSubmit = false,
   temporaryPassword,
   showStatusField = true,
   isSubmitting = false,
@@ -269,7 +267,7 @@ export const StaffFormModal = ({
         <div className={`flex justify-end ${useEditDisplayStyle ? "pt-3" : "pt-1"}`}>
           <Button
             onClick={onSubmit}
-            disabled={disableSubmit || isSubmitting}
+            disabled={isSubmitting}
             className={`${useEditDisplayStyle ? "h-12 min-w-[205px] text-[18px]" : "h-12 min-w-32 text-2xl"} rounded-full bg-(--button-green) px-8 font-semibold text-white hover:bg-(--button-hover-green) disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400`}
           >
             {isSubmitting ? (

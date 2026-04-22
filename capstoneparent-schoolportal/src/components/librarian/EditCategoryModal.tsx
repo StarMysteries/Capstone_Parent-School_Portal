@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal } from "../ui/modal";
 import { Button } from "../ui/button";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 interface EditCategoryModalProps {
 	onClose: () => void;
@@ -15,9 +16,18 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
 }) => {
 	const [categoryName, setCategoryName] = React.useState(initialCategoryName);
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
-	const hasChanges = categoryName.trim() !== initialCategoryName.trim();
+	const [showConfirm, setShowConfirm] = React.useState(false);
 
-	const handleEdit = async () => {
+	const handleEditClick = () => {
+		const trimmedCategoryName = categoryName.trim();
+		if (!trimmedCategoryName) {
+			return;
+		}
+		setShowConfirm(true);
+	};
+
+	const handleEditConfirm = async () => {
+		setShowConfirm(false);
 		const trimmedCategoryName = categoryName.trim();
 		if (!trimmedCategoryName || isSubmitting) {
 			return;
@@ -53,14 +63,24 @@ const EditCategoryModal: React.FC<EditCategoryModalProps> = ({
 					</Button>
 					<Button
 						type="button"
-						onClick={() => void handleEdit()}
-						disabled={!hasChanges || isSubmitting}
+						onClick={handleEditClick}
+						disabled={isSubmitting}
 						className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
 					>
 						{isSubmitting ? "Saving..." : "Save"}
 					</Button>
 				</div>
 			</div>
+
+			<ActionConfirmationModal
+				isOpen={showConfirm}
+				onClose={() => setShowConfirm(false)}
+				onConfirm={() => void handleEditConfirm()}
+				title="Confirm Save Changes"
+				message="Are you sure you want to save changes to this category?"
+				confirmLabel="Save Changes"
+				isLoading={isSubmitting}
+			/>
 		</Modal>
 	);
 };

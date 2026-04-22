@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import { validateFiles } from "@/lib/fileValidation";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 type AnnouncementCategory = "general" | "staffs" | "memorandum";
 
@@ -43,6 +44,7 @@ export const CreateAnnouncementModal = ({
   const [category, setCategory] = useState<AnnouncementCategory>("general");
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export const CreateAnnouncementModal = ({
   const handleDeleteFile = (id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
-  const handlePost = async () => {
+  const handlePost = () => {
     if (!title.trim()) {
       showError("Please enter an announcement title.");
       return;
@@ -117,7 +119,11 @@ export const CreateAnnouncementModal = ({
       showError("Please enter announcement details.");
       return;
     }
+    setShowConfirm(true);
+  };
 
+  const handlePostConfirm = async () => {
+    setShowConfirm(false);
     clearFeedback();
 
     setSubmitting(true);
@@ -255,6 +261,16 @@ export const CreateAnnouncementModal = ({
           </div>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => void handlePostConfirm()}
+        title="Confirm Post Announcement"
+        message={`Are you sure you want to post "${title}" to the ${category} category?`}
+        confirmLabel="Post Now"
+        isLoading={submitting}
+      />
     </div>
   );
 };

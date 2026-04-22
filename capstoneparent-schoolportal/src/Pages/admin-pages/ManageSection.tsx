@@ -13,6 +13,7 @@ import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
 import { Button } from "../../components/ui/button";
 import { SectionFormModal } from "../../components/admin/SectionFormModal";
 import { SectionDeleteModal } from "../../components/admin/SectionDeleteModal";
+import { ActionConfirmationModal } from "../../components/general/ActionConfirmationModal";
 import { classesApi, type Section } from "../../lib/api/classesApi";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 
@@ -30,6 +31,9 @@ export const ManageSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof Section | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const [isAddConfirmOpen, setIsAddConfirmOpen] = useState(false);
+  const [isEditConfirmOpen, setIsEditConfirmOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -93,13 +97,17 @@ export const ManageSection = () => {
   }, [sections, searchQuery, sortField, sortDirection]);
 
 
-  const handleAddSection = async () => {
+  const handleAddSection = () => {
     if (!formData.name.trim()) {
       setFormErrors({ name: "Section name is required" });
       return;
     }
     setFormErrors({});
+    setIsAddConfirmOpen(true);
+  };
 
+  const handleAddSectionConfirm = async () => {
+    setIsAddConfirmOpen(false);
     setIsSubmitting(true);
     try {
       await classesApi.createSection(formData.name);
@@ -121,7 +129,7 @@ export const ManageSection = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateSection = async () => {
+  const handleUpdateSection = () => {
     if (!editingSection) return;
 
     if (!formData.name.trim()) {
@@ -129,7 +137,11 @@ export const ManageSection = () => {
       return;
     }
     setFormErrors({});
+    setIsEditConfirmOpen(true);
+  };
 
+  const handleUpdateSectionConfirm = async () => {
+    setIsEditConfirmOpen(false);
     setIsSubmitting(true);
     try {
       await classesApi.updateSection(editingSection.section_id, formData.name);
@@ -302,7 +314,6 @@ export const ManageSection = () => {
         submitLabel="Add"
         formData={formData}
         setFormData={setFormData}
-        disableSubmit={!formData.name.trim()}
         isLoading={isSubmitting}
         errors={formErrors}
       />
@@ -320,7 +331,6 @@ export const ManageSection = () => {
         submitLabel="Update"
         formData={formData}
         setFormData={setFormData}
-        disableSubmit={!editFormHasChanges}
         isLoading={isSubmitting}
         errors={formErrors}
       />
@@ -333,6 +343,26 @@ export const ManageSection = () => {
         }}
         onConfirm={handleDeleteSection}
         sectionName={deletingSection?.section_name}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isAddConfirmOpen}
+        onClose={() => setIsAddConfirmOpen(false)}
+        onConfirm={handleAddSectionConfirm}
+        title="Confirm Add Section"
+        message={`Are you sure you want to add the section "${formData.name}"?`}
+        confirmLabel="Add Section"
+        isLoading={isSubmitting}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isEditConfirmOpen}
+        onClose={() => setIsEditConfirmOpen(false)}
+        onConfirm={handleUpdateSectionConfirm}
+        title="Confirm Update Section"
+        message={`Are you sure you want to update this section to "${formData.name}"?`}
+        confirmLabel="Update Section"
+        isLoading={isSubmitting}
       />
     </div>
   );

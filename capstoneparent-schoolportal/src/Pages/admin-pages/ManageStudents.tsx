@@ -14,6 +14,7 @@ import {
   type StudentFormData,
 } from "../../components/admin/StudentFormModal";
 import { StudentBatchUploadModal } from "../../components/admin/StudentBatchUploadModal";
+import { ActionConfirmationModal } from "../../components/general/ActionConfirmationModal";
 import { studentsApi, type StudentPayload } from "@/lib/api/studentsApi";
 import type {
   GradeLevel,
@@ -107,6 +108,8 @@ export const ManageStudents = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [isAddConfirmOpen, setIsAddConfirmOpen] = useState(false);
+  const [isEditConfirmOpen, setIsEditConfirmOpen] = useState(false);
   const [formData, setFormData] = useState<StudentFormData>(emptyForm);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
@@ -239,14 +242,18 @@ export const ManageStudents = () => {
     status: formData.status as StudentStatus,
   });
 
-  const handleAddStudent = async () => {
+  const handleAddStudent = () => {
     const errors = validateForm();
     if (errors) {
       setFormErrors(errors);
       return;
     }
     setFormErrors({});
+    setIsAddConfirmOpen(true);
+  };
 
+  const handleAddStudentConfirm = async () => {
+    setIsAddConfirmOpen(false);
     setIsSubmitting(true);
     try {
       await studentsApi.create(toPayload());
@@ -273,7 +280,7 @@ export const ManageStudents = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateStudent = async () => {
+  const handleUpdateStudent = () => {
     if (!editingStudent) return;
 
     const errors = validateForm();
@@ -282,10 +289,14 @@ export const ManageStudents = () => {
       return;
     }
     setFormErrors({});
+    setIsEditConfirmOpen(true);
+  };
 
+  const handleUpdateStudentConfirm = async () => {
+    setIsEditConfirmOpen(false);
     setIsSubmitting(true);
     try {
-      await studentsApi.update(editingStudent.student_id, toPayload());
+      await studentsApi.update(editingStudent!.student_id, toPayload());
       setIsEditModalOpen(false);
       setEditingStudent(null);
       resetForm();
@@ -580,7 +591,6 @@ export const ManageStudents = () => {
         setFormData={setFormData}
         gradeLevels={gradeLevels}
         isSubmitting={isSubmitting}
-        disableSubmit={!addFormIsValid}
         errors={formErrors}
       />
 
@@ -598,7 +608,6 @@ export const ManageStudents = () => {
         setFormData={setFormData}
         gradeLevels={gradeLevels}
         isSubmitting={isSubmitting}
-        disableSubmit={!editFormHasChanges}
         errors={formErrors}
       />
 
@@ -607,6 +616,26 @@ export const ManageStudents = () => {
         onClose={() => setIsBatchModalOpen(false)}
         onUpload={handleBatchUpload}
         isUploading={isSubmitting}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isAddConfirmOpen}
+        onClose={() => setIsAddConfirmOpen(false)}
+        onConfirm={handleAddStudentConfirm}
+        title="Confirm Add Student"
+        message={`Are you sure you want to add ${formData.firstName} ${formData.lastName} to the database?`}
+        confirmLabel="Add Student"
+        isLoading={isSubmitting}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isEditConfirmOpen}
+        onClose={() => setIsEditConfirmOpen(false)}
+        onConfirm={handleUpdateStudentConfirm}
+        title="Confirm Update Student"
+        message={`Are you sure you want to save changes for ${formData.firstName} ${formData.lastName}?`}
+        confirmLabel="Update Student"
+        isLoading={isSubmitting}
       />
     </div>
   );
