@@ -102,6 +102,14 @@ export const ManageClassLists = () => {
     () => filterClasses(classes, gradeLevel, section, year),
     [classes, gradeLevel, section, year]
   );
+  const hasActiveClassFilters =
+    gradeLevel !== 'allgrades' || section !== 'all' || year !== 'all';
+
+  const handleClearClassFilters = () => {
+    setGradeLevel('allgrades');
+    setSection('all');
+    setYear('all');
+  };
 
   const rankedTeachersForEditModal = useMemo(() => {
     const query = editTeacherSearchQuery.trim().toLowerCase();
@@ -464,17 +472,15 @@ export const ManageClassLists = () => {
                   </SelectContent>
                 </Select>
 
-                <Button
-                  className="flex-none bg-(--status-inactive) text-white transition-all duration-200 hover:brightness-110 hover:shadow-md active:scale-95"
-                  onClick={() => {
-                    setGradeLevel('allgrades');
-                    setSection('all');
-                    setYear('all');
-                  }}
-                  title="Clear Filters"
-                >
-                  Clear Filters
-                </Button>
+                {hasActiveClassFilters ? (
+                  <Button
+                    className="flex-none bg-(--status-inactive) text-white transition-all duration-200 hover:brightness-110 hover:shadow-md active:scale-95"
+                    onClick={handleClearClassFilters}
+                    title="Clear Filters"
+                  >
+                    Clear Filters
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>
