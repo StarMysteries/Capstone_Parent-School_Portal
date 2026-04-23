@@ -351,6 +351,11 @@ export const ManageStudents = () => {
           (pagination.page - 1) * pagination.limit + students.length,
           pagination.total,
         );
+  const hasActiveFilters =
+    searchQuery.trim() !== "" ||
+    debouncedSearchQuery.trim() !== "" ||
+    gradeLevelFilter !== "all" ||
+    statusFilter !== "all";
 
   return (
     <div className="min-h-screen">
@@ -452,6 +457,20 @@ export const ManageStudents = () => {
                 },
               ]}
             />
+            {hasActiveFilters ? (
+              <Button
+                type="button"
+                className="bg-(--status-inactive) text-white hover:brightness-110"
+                onClick={() => {
+                  setSearchQuery("");
+                  setDebouncedSearchQuery("");
+                  setGradeLevelFilter("all");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear Filters
+              </Button>
+            ) : null}
           </div>
 
           {isLoading ? (

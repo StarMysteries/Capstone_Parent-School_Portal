@@ -20,6 +20,7 @@ export const StudentList = ({
   onAddStudent,
 }: StudentListProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const hasActiveFilters = searchQuery.trim() !== '';
 
   // Filter students by search
   const filteredStudents = students.filter(
@@ -51,6 +52,15 @@ export const StudentList = ({
               className="pl-10 bg-white border-gray-300"
             />
           </div>
+          {hasActiveFilters ? (
+            <Button
+              type="button"
+              className="bg-(--status-inactive) text-white hover:brightness-110"
+              onClick={() => setSearchQuery('')}
+            >
+              Clear Filters
+            </Button>
+          ) : null}
         </div>
 
         <div className="flex gap-3 flex-wrap">
