@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Modal } from "../ui/modal";
 import { Button } from "../ui/button";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 interface AddCategoryModalProps {
 	onClose: () => void;
@@ -10,8 +11,18 @@ interface AddCategoryModalProps {
 const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ onClose, onAdd }) => {
 	const [categoryName, setCategoryName] = React.useState("");
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
+	const [showConfirm, setShowConfirm] = useState(false);
 
-	const handleAdd = async () => {
+	const handleAddClick = () => {
+		const trimmedCategoryName = categoryName.trim();
+		if (!trimmedCategoryName) {
+			return;
+		}
+		setShowConfirm(true);
+	};
+
+	const handleAddConfirm = async () => {
+		setShowConfirm(false);
 		const trimmedCategoryName = categoryName.trim();
 		if (!trimmedCategoryName || isSubmitting) {
 			return;
@@ -47,14 +58,24 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({ onClose, onAdd }) =
 					</Button>
 					<Button
 						type="button"
-						onClick={() => void handleAdd()}
-						disabled={isSubmitting || !categoryName.trim()}
+						onClick={handleAddClick}
+						disabled={isSubmitting}
 						className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:hover:bg-gray-400"
 					>
 						{isSubmitting ? "Adding..." : "Add"}
 					</Button>
 				</div>
 			</div>
+
+			<ActionConfirmationModal
+				isOpen={showConfirm}
+				onClose={() => setShowConfirm(false)}
+				onConfirm={() => void handleAddConfirm()}
+				title="Confirm Add Category"
+				message={`Are you sure you want to add "${categoryName}" as a new category?`}
+				confirmLabel="Add Category"
+				isLoading={isSubmitting}
+			/>
 		</Modal>
 	);
 };

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
 import { FormInputError } from '../ui/FormInputError';
 import type { LibraryCategory } from '@/lib/api/types';
 import { GRADE_LEVELS } from '@/lib/libraryHelpers';
+import { ActionConfirmationModal } from '../general/ActionConfirmationModal';
 
 interface AddLearningResourceModalProps {
 	onClose: () => void;
@@ -21,8 +22,9 @@ const AddLearningResourceModal: React.FC<AddLearningResourceModalProps> = ({
 	const [glId, setGlId] = React.useState<number | ''>('');
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
 	const [errors, setErrors] = React.useState<Record<string, string>>({});
+	const [showConfirm, setShowConfirm] = useState(false);
 
-	const handleAdd = async () => {
+	const handleAddClick = () => {
 		const newErrors: Record<string, string> = {};
 		if (!resourceTitle.trim()) newErrors.title = "Resource title is required.";
 		if (categoryId === '') newErrors.category = "Category is required.";
@@ -34,6 +36,11 @@ const AddLearningResourceModal: React.FC<AddLearningResourceModalProps> = ({
 		}
 
 		setErrors({});
+		setShowConfirm(true);
+	};
+
+	const handleAddConfirm = async () => {
+		setShowConfirm(false);
 		if (isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -111,14 +118,24 @@ const AddLearningResourceModal: React.FC<AddLearningResourceModalProps> = ({
 					</Button>
 					<Button
 						type="button"
-						onClick={() => void handleAdd()}
-						disabled={isSubmitting || !resourceTitle.trim() || categoryId === '' || glId === ''}
+						onClick={handleAddClick}
+						disabled={isSubmitting}
 						className="bg-(--button-green) hover:bg-(--button-hover-green) text-white px-8 py-3 text-lg rounded-full disabled:bg-gray-400 disabled:hover:bg-gray-400"
 					>
 						{isSubmitting ? "Adding..." : "Add"}
 					</Button>
 				</div>
 			</div>
+
+			<ActionConfirmationModal
+				isOpen={showConfirm}
+				onClose={() => setShowConfirm(false)}
+				onConfirm={() => void handleAddConfirm()}
+				title="Confirm Add Learning Resource"
+				message={`Are you sure you want to add "${resourceTitle}" as a learning resource?`}
+				confirmLabel="Add Resource"
+				isLoading={isSubmitting}
+			/>
 		</Modal>
 	);
 };

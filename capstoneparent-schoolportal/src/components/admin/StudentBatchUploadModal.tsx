@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Modal } from "../ui/modal";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import { validateFiles } from "@/lib/fileValidation";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 interface StudentBatchUploadModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const StudentBatchUploadModal = ({
 }: StudentBatchUploadModalProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
   const resetState = () => {
@@ -59,11 +61,17 @@ export const StudentBatchUploadModal = ({
     setSelectedFile(file);
   };
 
-  const handleUpload = async () => {
+  const handleUploadClick = () => {
     if (!selectedFile) {
       showError("Please choose a CSV file to upload.");
       return;
     }
+    setShowConfirm(true);
+  };
+
+  const handleUploadConfirm = async () => {
+    setShowConfirm(false);
+    if (!selectedFile) return;
 
     clearFeedback();
 
@@ -119,7 +127,7 @@ export const StudentBatchUploadModal = ({
 
         <div className="flex justify-end">
           <Button
-            onClick={handleUpload}
+            onClick={handleUploadClick}
             disabled={isUploading}
             className="rounded-full bg-(--button-green) px-8 py-3 text-lg text-white hover:bg-(--button-hover-green)"
           >
@@ -127,6 +135,16 @@ export const StudentBatchUploadModal = ({
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleUploadConfirm}
+        title="Confirm Batch Upload"
+        message={`Are you sure you want to upload the students from "${selectedFile?.name}"?`}
+        confirmLabel="Upload"
+        isLoading={isUploading}
+      />
     </Modal>
   );
 };

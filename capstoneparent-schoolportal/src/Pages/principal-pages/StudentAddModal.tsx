@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { addStudentToClass, lookupStudents } from '@/Pages/principal-pages/services/api';
 import type { ClassItem, Student, StudentAddSummary, StudentLookupResult } from '@/Pages/principal-pages/types';
+import { ActionConfirmationModal } from '@/components/general/ActionConfirmationModal';
 
 interface StudentAddModalProps {
   isOpen: boolean;
@@ -71,6 +72,8 @@ export const StudentAddModal = ({
   const [summary, setSummary] = useState<StudentAddSummary | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSingleConfirm, setShowSingleConfirm] = useState(false);
+  const [showBatchConfirm, setShowBatchConfirm] = useState(false);
 
   const enrolledStudentIds = useMemo(
     () => new Set(existingStudents.map((student) => student.id)),
@@ -137,7 +140,13 @@ export const StudentAddModal = ({
     }
   };
 
-  const handleAddSingleStudent = async () => {
+  const handleAddSingleStudent = () => {
+    if (!selectedClass || !selectedStudent) return;
+    setShowSingleConfirm(true);
+  };
+
+  const handleAddSingleStudentConfirm = async () => {
+    setShowSingleConfirm(false);
     if (!selectedClass || !selectedStudent) return;
 
     if (enrolledStudentIds.has(selectedStudent.id)) {
@@ -176,7 +185,13 @@ export const StudentAddModal = ({
     }
   };
 
-  const handleBatchAdd = async () => {
+  const handleBatchAdd = () => {
+    if (!selectedClass) return;
+    setShowBatchConfirm(true);
+  };
+
+  const handleBatchAddConfirm = async () => {
+    setShowBatchConfirm(false);
     if (!selectedClass) return;
 
     const entries = parseBatchEntries(batchInput);
@@ -423,8 +438,8 @@ export const StudentAddModal = ({
 
                 <Button
                   type="button"
-                  onClick={() => void handleAddSingleStudent()}
-                  disabled={!selectedStudent || isSearching || isSubmitting}
+                  onClick={handleAddSingleStudent}
+                  disabled={isSubmitting}
                   className="h-12 w-full bg-(--button-green) text-lg font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <UserPlus className="mr-2 h-5 w-5" />
@@ -451,8 +466,8 @@ export const StudentAddModal = ({
 
                 <Button
                   type="button"
-                  onClick={() => void handleBatchAdd()}
-                  disabled={isSubmitting || parseBatchEntries(batchInput).length === 0}
+                  onClick={handleBatchAdd}
+                  disabled={isSubmitting}
                   className="h-12 w-full bg-(--button-green) text-lg font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <UserPlus className="mr-2 h-5 w-5" />
@@ -462,6 +477,26 @@ export const StudentAddModal = ({
             </Tabs>
           )}
         </div>
+
+        <ActionConfirmationModal
+          isOpen={showSingleConfirm}
+          onClose={() => setShowSingleConfirm(false)}
+          onConfirm={handleAddSingleStudentConfirm}
+          title="Confirm Add Student"
+          message={`Are you sure you want to add ${selectedStudent?.name} to this class?`}
+          confirmLabel="Add Student"
+          isLoading={isSubmitting}
+        />
+
+        <ActionConfirmationModal
+          isOpen={showBatchConfirm}
+          onClose={() => setShowBatchConfirm(false)}
+          onConfirm={handleBatchAddConfirm}
+          title="Confirm Batch Add"
+          message={`Are you sure you want to process and add students from the batch list?`}
+          confirmLabel="Process and Add"
+          isLoading={isSubmitting}
+        />
       </DialogContent>
     </Dialog>
   );

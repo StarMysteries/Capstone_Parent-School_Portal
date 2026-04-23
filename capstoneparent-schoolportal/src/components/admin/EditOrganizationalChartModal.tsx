@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import { validateFiles } from "@/lib/fileValidation";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 export type OrgChartModalMode = "add" | "edit";
 
@@ -56,9 +57,14 @@ export const EditOrganizationalChartModal = ({
   const [fileName, setFileName] = useState("No file selected");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 21 }, (_, i) =>
+    String(currentYear - 10 + i)
+  );
 
   const chartForEdit = useMemo(() => {
     if (mode !== "edit") {
@@ -137,7 +143,25 @@ export const EditOrganizationalChartModal = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
+  const hasChanges =
+    mode === "edit"
+      ? yearInput !== (chartForEdit?.year ?? "") || Boolean(selectedFile)
+      : Boolean(selectedFile);
+
+  const handleSaveClick = () => {
+    if (mode === "add" && !selectedFile) {
+      showError("Please upload an organizational chart image.");
+      return;
+    }
+    if (mode === "edit" && !hasChanges) {
+      showError("No changes to save.");
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const handleSaveConfirm = async () => {
+    setShowConfirm(false);
     clearFeedback();
     const base: OrganizationalChartItem = {
       id: chartForEdit?.id,
@@ -145,10 +169,6 @@ export const EditOrganizationalChartModal = ({
       imageUrl: previewImageUrl || chartForEdit?.imageUrl || "",
       fileName,
     };
-
-    if (mode === "add" && !selectedFile) {
-      return;
-    }
 
     try {
       setIsSaving(true);
@@ -174,11 +194,6 @@ export const EditOrganizationalChartModal = ({
   };
 
   const title = mode === "add" ? "Add organizational chart" : "Edit organizational chart";
-  const hasChanges =
-    mode === "edit"
-      ? yearInput !== (chartForEdit?.year ?? "") || Boolean(selectedFile)
-      : Boolean(selectedFile);
-  const canSubmit = isSaving ? false : mode === "edit" ? hasChanges : Boolean(selectedFile);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} contentClassName="max-w-3xl">
@@ -199,9 +214,8 @@ export const EditOrganizationalChartModal = ({
           <label htmlFor="org-chart-year" className="text-lg font-semibold">
             School year
           </label>
-          <input
+          <select
             id="org-chart-year"
-            type="number"
             value={yearInput}
             onChange={(event) => setYearInput(event.target.value)}
             disabled={isSaving}
@@ -210,9 +224,14 @@ export const EditOrganizationalChartModal = ({
                 ? "border-red-500 focus:ring-red-500"
                 : "border-black focus:ring-(--button-green)"
             }`}
-            min={1900}
-            max={2100}
-          />
+          >
+            <option value="">Select school year</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
           {errors.yearInput && (
             <p className="mt-1 text-sm font-medium text-red-600">{errors.yearInput}</p>
           )}
@@ -260,8 +279,8 @@ export const EditOrganizationalChartModal = ({
 
           <Button
             type="button"
-            onClick={handleSave}
-            disabled={!canSubmit}
+            onClick={handleSaveClick}
+            disabled={isSaving}
             className="bg-(--button-green) hover:bg-(--button-hover-green) rounded-full px-8 py-3 text-lg text-white disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 inline-flex items-center gap-2"
           >
             {isSaving && (
@@ -271,6 +290,20 @@ export const EditOrganizationalChartModal = ({
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => void handleSaveConfirm()}
+        title={mode === "add" ? "Confirm Add Organizational Chart" : "Confirm Save Changes"}
+        message={
+          mode === "add"
+            ? `Are you sure you want to add the organizational chart for school year ${yearInput}?`
+            : "Are you sure you want to save changes to this organizational chart?"
+        }
+        confirmLabel={mode === "add" ? "Add Chart" : "Save Changes"}
+        isLoading={isSaving}
+      />
     </Modal>
   );
 };

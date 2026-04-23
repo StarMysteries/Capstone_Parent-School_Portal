@@ -11,6 +11,7 @@ import type { AnnouncementPostItem } from "@/components/staff/AnnouncementPostFe
 import type { AnnouncementCategory } from "@/lib/announcementPosts";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import { validateFiles } from "@/lib/fileValidation";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 interface EditAnnouncementModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export const EditAnnouncementModal = ({
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [removedFileIds, setRemovedFileIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
   useEffect(() => {
@@ -129,20 +131,7 @@ export const EditAnnouncementModal = ({
     post.files?.filter(({ file }) => !removedFileIds.includes(file.file_id ?? -1)) ||
     [];
 
-  const initialAnnouncementType =
-    post.announcement_type === "Staff_only"
-      ? "staffs"
-      : post.announcement_type === "Memorandum"
-        ? "memorandum"
-        : "general";
-
-  const hasChanges =
-    title.trim() !== (post.announcement_title ?? "").trim() ||
-    content.trim() !== (post.announcement_desc ?? "").trim() ||
-    announcementType !== initialAnnouncementType ||
-    files.length > 0 ||
-    removedFileIds.length > 0;
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
     if (!title.trim()) {
       showError("Please enter an announcement title.");
       return;
@@ -151,7 +140,11 @@ export const EditAnnouncementModal = ({
       showError("Please enter announcement details.");
       return;
     }
+    setShowConfirm(true);
+  };
 
+  const handleUpdateConfirm = async () => {
+    setShowConfirm(false);
     clearFeedback();
 
     setSubmitting(true);
@@ -322,7 +315,7 @@ export const EditAnnouncementModal = ({
 
             <button
               onClick={handleUpdate}
-              disabled={submitting || !hasChanges}
+              disabled={submitting}
               className="bg-green-500 hover:bg-green-600 text-white px-6 sm:px-10 py-2 sm:py-3 rounded-full font-semibold text-sm sm:text-lg transition-colors disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 shrink-0"
             >
               {submitting ? "Updating..." : "Update"}
@@ -330,6 +323,16 @@ export const EditAnnouncementModal = ({
           </div>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => void handleUpdateConfirm()}
+        title="Confirm Save Changes"
+        message="Are you sure you want to save the changes to this announcement?"
+        confirmLabel="Save Changes"
+        isLoading={submitting}
+      />
     </div>
   );
 };

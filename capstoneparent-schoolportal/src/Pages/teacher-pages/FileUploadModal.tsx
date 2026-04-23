@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
 import { validateFiles } from '@/lib/fileValidation';
+import { ActionConfirmationModal } from '@/components/general/ActionConfirmationModal';
 
 interface FileUploadModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const FileUploadModal = ({
 }: FileUploadModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
@@ -52,11 +54,17 @@ export const FileUploadModal = ({
     setSelectedFile(file);
   };
 
-  const handleUpload = async () => {
+  const handleUploadClick = () => {
     if (!selectedFile) {
       showError(`Please select a valid file for ${title.toLowerCase()}.`);
       return;
     }
+    setShowConfirm(true);
+  };
+
+  const handleUploadConfirm = async () => {
+    setShowConfirm(false);
+    if (!selectedFile) return;
 
     setIsUploading(true);
     try {
@@ -169,13 +177,23 @@ export const FileUploadModal = ({
 
           {/* Upload Button */}
           <Button
-            onClick={handleUpload}
-            disabled={!selectedFile || isUploading}
+            onClick={handleUploadClick}
+            disabled={isUploading}
             className="w-full h-12 bg-(--button-green) hover:bg-green-700 text-white text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUploading ? 'Uploading...' : 'Upload'}
           </Button>
         </div>
+
+        <ActionConfirmationModal
+          isOpen={showConfirm}
+          onClose={() => setShowConfirm(false)}
+          onConfirm={() => void handleUploadConfirm()}
+          title="Confirm File Upload"
+          message={`Are you sure you want to upload "${selectedFile?.name}"?`}
+          confirmLabel="Upload"
+          isLoading={isUploading}
+        />
       </DialogContent>
     </Dialog>
   );

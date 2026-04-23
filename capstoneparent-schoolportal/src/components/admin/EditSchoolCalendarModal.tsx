@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApiFeedbackStore } from "@/lib/store/apiFeedbackStore";
 import { validateFiles } from "@/lib/fileValidation";
+import { ActionConfirmationModal } from "../general/ActionConfirmationModal";
 
 export type CalendarModalMode = "add" | "edit";
 
@@ -54,9 +55,14 @@ export const EditSchoolCalendarModal = ({
   const [fileName, setFileName] = useState("No file selected");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { showError, clearFeedback } = useApiFeedbackStore();
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 21 }, (_, i) =>
+    String(currentYear - 10 + i)
+  );
 
   const calendarForEdit = useMemo(() => {
     if (mode !== "edit" || !editYear) {
@@ -130,17 +136,31 @@ export const EditSchoolCalendarModal = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
+  const hasChanges =
+    mode === "edit"
+      ? yearInput !== (calendarForEdit?.year ?? "") || Boolean(selectedFile)
+      : Boolean(selectedFile);
+
+  const handleSaveClick = () => {
+    if (mode === "add" && !selectedFile) {
+      showError("Please upload a school calendar image.");
+      return;
+    }
+    if (mode === "edit" && !hasChanges) {
+      showError("No changes to save.");
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const handleSaveConfirm = async () => {
+    setShowConfirm(false);
     const base: SchoolCalendarItem = {
       year: yearInput,
       label: calendarForEdit?.label || "",
       imageUrl: previewImageUrl || calendarForEdit?.imageUrl || "",
       fileName,
     };
-
-    if (mode === "add" && !selectedFile) {
-      return;
-    }
 
     try {
       setIsSaving(true);
@@ -157,11 +177,6 @@ export const EditSchoolCalendarModal = ({
   };
 
   const title = mode === "add" ? "Add school calendar" : "Edit school calendar";
-  const hasChanges =
-    mode === "edit"
-      ? yearInput !== (calendarForEdit?.year ?? "") || Boolean(selectedFile)
-      : Boolean(selectedFile);
-  const canSubmit = isSaving ? false : mode === "edit" ? hasChanges : Boolean(selectedFile);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} contentClassName="max-w-3xl">
@@ -180,9 +195,8 @@ export const EditSchoolCalendarModal = ({
           <label htmlFor="school-calendar-year" className="text-lg font-semibold">
             School year
           </label>
-          <input
+          <select
             id="school-calendar-year"
-            type="number"
             value={yearInput}
             onChange={(event) => setYearInput(event.target.value)}
             className={`w-full rounded-md border-2 bg-white px-4 py-3 text-lg focus:outline-none focus:ring-2 transition-all ${
@@ -190,9 +204,15 @@ export const EditSchoolCalendarModal = ({
                 ? "border-red-500 focus:ring-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]"
                 : "border-black focus:ring-(--button-green)"
             }`}
-            min={1900}
-            max={2100}
-          />
+            disabled={isSaving}
+          >
+            <option value="">Select school year</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
           <FormInputError message={errors.yearInput} />
         </div>
 
@@ -238,8 +258,8 @@ export const EditSchoolCalendarModal = ({
 
           <Button
             type="button"
-            onClick={handleSave}
-            disabled={!canSubmit}
+            onClick={handleSaveClick}
+            disabled={isSaving}
             className="bg-(--button-green) hover:bg-(--button-hover-green) rounded-full px-8 py-3 text-lg text-white disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400 inline-flex items-center gap-2"
           >
             {isSaving && (
@@ -249,6 +269,20 @@ export const EditSchoolCalendarModal = ({
           </Button>
         </div>
       </div>
+
+      <ActionConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => void handleSaveConfirm()}
+        title={mode === "add" ? "Confirm Add School Calendar" : "Confirm Save Changes"}
+        message={
+          mode === "add"
+            ? `Are you sure you want to add the school calendar for school year ${yearInput}?`
+            : "Are you sure you want to save changes to this school calendar?"
+        }
+        confirmLabel={mode === "add" ? "Add Calendar" : "Save Changes"}
+        isLoading={isSaving}
+      />
     </Modal>
   );
 };

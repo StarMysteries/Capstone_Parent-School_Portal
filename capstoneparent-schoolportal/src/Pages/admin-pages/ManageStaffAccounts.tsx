@@ -4,6 +4,7 @@ import { NavbarAdmin } from "../../components/admin/NavbarAdmin";
 import { Button } from "../../components/ui/button";
 import { StatusDropdown } from "../../components/general/StatusDropdown";
 import { StaffFormModal } from "../../components/admin/StaffFormModal";
+import { ActionConfirmationModal } from "../../components/general/ActionConfirmationModal";
 import { authApi, usersApi, type AuthUser } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/authStore";
 
@@ -32,6 +33,8 @@ export const ManageStaffAccounts = () => {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddConfirmOpen, setIsAddConfirmOpen] = useState(false);
+  const [isEditConfirmOpen, setIsEditConfirmOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -261,7 +264,7 @@ export const ManageStaffAccounts = () => {
   };
 
   // Add staff handler
-  const handleAddStaff = async () => {
+  const handleAddStaff = () => {
     const errors: Partial<Record<keyof typeof emptyFormState, string>> = {};
     
     if (!formData.firstName.trim()) errors.firstName = "First name is required";
@@ -278,7 +281,7 @@ export const ManageStaffAccounts = () => {
     }
     
     if (selectedRoles.length === 0) {
-      // Roles doesn't have a specific field in emptyFormState, but we can handle it if needed
+      // Roles doesn't have a specific field
     }
 
     if (Object.keys(errors).length > 0) {
@@ -287,6 +290,12 @@ export const ManageStaffAccounts = () => {
     }
 
     setFormErrors({});
+    setIsAddConfirmOpen(true);
+  };
+
+  const handleAddStaffConfirm = async () => {
+    setIsAddConfirmOpen(false);
+    setIsAddingStaff(true);
 
     const payload = new FormData();
     payload.append("fname", formData.firstName.trim());
@@ -349,41 +358,52 @@ export const ManageStaffAccounts = () => {
     );
   }, [formData, editingStaff, selectedRoles]);
 
-  const handleUpdateStaff = async () => {
-    if (
-      !editingStaff ||
-      !formData.firstName.trim() ||
-      !formData.lastName.trim() ||
-      !formData.contactNo.trim() ||
-      selectedRoles.length === 0
-    )
-      return;
-
+  const handleUpdateStaff = () => {
+    const errors: Partial<Record<keyof typeof emptyFormState, string>> = {};
+    if (!formData.firstName.trim()) errors.firstName = "First name is required";
+    if (!formData.lastName.trim()) errors.lastName = "Last name is required";
+    if (!formData.contactNo.trim()) errors.contactNo = "Contact number is required";
+    
     const email = formData.email.trim().toLowerCase();
     if (!email.endsWith("@deped.gov.ph")) {
-      setFormErrors({ email: "Staff email must be a @deped.gov.ph address" });
+      errors.email = "Staff email must be a @deped.gov.ph address";
+    }
+
+    if (Object.keys(errors).length > 0 || selectedRoles.length === 0) {
+      setFormErrors(errors);
       return;
     }
 
     setFormErrors({});
+    setIsEditConfirmOpen(true);
+  };
 
-    await usersApi.updateProfile(editingStaff.id, {
-      fname: formData.firstName.trim(),
-      lname: formData.lastName.trim(),
-      date_of_birth: formData.dateOfBirth.trim(),
-      contact_num: formData.contactNo.trim(),
-      address: formData.address.trim(),
-      email: formData.email.trim(),
-    });
-    await usersApi.updateAccountSettings(editingStaff.id, {
-      account_status: formData.status === "ACTIVE" ? "Active" : "Inactive",
-      roles: selectedRoles.map(toApiRole),
-    });
-    await fetchStaffAccounts();
-    setFormData(emptyFormState);
-    setSelectedRoles([]);
-    setEditingStaff(null);
-    setIsEditModalOpen(false);
+  const handleUpdateStaffConfirm = async () => {
+    setIsEditConfirmOpen(false);
+    setIsAddingStaff(true);
+    try {
+      await usersApi.updateProfile(editingStaff!.id, {
+        fname: formData.firstName.trim(),
+        lname: formData.lastName.trim(),
+        date_of_birth: formData.dateOfBirth.trim(),
+        contact_num: formData.contactNo.trim(),
+        address: formData.address.trim(),
+        email: formData.email.trim(),
+      });
+      await usersApi.updateAccountSettings(editingStaff!.id, {
+        account_status: formData.status === "ACTIVE" ? "Active" : "Inactive",
+        roles: selectedRoles.map(toApiRole),
+      });
+      await fetchStaffAccounts();
+      setFormData(emptyFormState);
+      setSelectedRoles([]);
+      setEditingStaff(null);
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update staff:", error);
+    } finally {
+      setIsAddingStaff(false);
+    }
   };
 
   const addFormIsValid =
@@ -516,7 +536,6 @@ export const ManageStaffAccounts = () => {
         selectedRoles={selectedRoles}
         availableRoles={availableRoles}
         onToggleRole={toggleRole}
-        disableSubmit={!addFormIsValid}
         temporaryPassword={generatedTemporaryPassword}
         showStatusField={false}
         isSubmitting={isAddingStaff}
@@ -542,9 +561,29 @@ export const ManageStaffAccounts = () => {
         onToggleRole={toggleRole}
         showStatusField
         useEditDisplayStyle
-        disableSubmit={!editFormHasChanges}
         isEditingSelf={editingStaff?.id === currentUserId}
+        isSubmitting={isAddingStaff}
         errors={formErrors}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isAddConfirmOpen}
+        onClose={() => setIsAddConfirmOpen(false)}
+        onConfirm={handleAddStaffConfirm}
+        title="Confirm Add Staff"
+        message={`Are you sure you want to add ${formData.firstName} ${formData.lastName} as a staff member?`}
+        confirmLabel="Add Staff"
+        isLoading={isAddingStaff}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isEditConfirmOpen}
+        onClose={() => setIsEditConfirmOpen(false)}
+        onConfirm={handleUpdateStaffConfirm}
+        title="Confirm Update Staff"
+        message={`Are you sure you want to update the account for ${formData.firstName} ${formData.lastName}?`}
+        confirmLabel="Update Staff"
+        isLoading={isAddingStaff}
       />
     </div>
   );

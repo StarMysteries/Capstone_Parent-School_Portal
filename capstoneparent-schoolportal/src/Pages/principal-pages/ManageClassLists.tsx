@@ -32,6 +32,7 @@ import { Subjects } from '@/Pages/principal-pages/Subjects';
 import { StudentList } from '@/Pages/principal-pages/StudentList';
 import { StudentAddModal } from '@/Pages/principal-pages/StudentAddModal';
 import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
+import { ActionConfirmationModal } from '@/components/general/ActionConfirmationModal';
 
 export const ManageClassLists = () => {
   const showError = useApiFeedbackStore((state) => state.showError);
@@ -49,6 +50,10 @@ export const ManageClassLists = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isAddConfirmOpen, setIsAddConfirmOpen] = useState(false);
+  const [isEditConfirmOpen, setIsEditConfirmOpen] = useState(false);
+  const [isRemoveStudentConfirmOpen, setIsRemoveStudentConfirmOpen] = useState(false);
+  const [studentToRemove, setStudentToRemove] = useState<Student | null>(null);
 
   // Form states for Add Class
   const [addFormData, setAddFormData] = useState({
@@ -234,7 +239,7 @@ export const ManageClassLists = () => {
   };
 
   // Handle Add Class submission
-  const handleAddClass = async () => {
+  const handleAddClass = () => {
     const selectedGradeLevel = gradeLevels.find((item) => item.name === addFormData.gradeLevel);
     const selectedSection = sections.find((item) => item.name === addFormData.section);
     const selectedTeacherId = addFormData.teacherId ? parseInt(addFormData.teacherId, 10) : undefined;
@@ -243,13 +248,21 @@ export const ManageClassLists = () => {
       showError('Please select a valid grade level, section, and class adviser.');
       return;
     }
+    setIsAddConfirmOpen(true);
+  };
+
+  const handleAddClassConfirm = async () => {
+    setIsAddConfirmOpen(false);
+    const selectedGradeLevel = gradeLevels.find((item) => item.name === addFormData.gradeLevel);
+    const selectedSection = sections.find((item) => item.name === addFormData.section);
+    const selectedTeacherId = addFormData.teacherId ? parseInt(addFormData.teacherId, 10) : undefined;
 
     setIsSubmitting(true);
     try {
       await addClass({
-        gl_id: selectedGradeLevel.id,
-        section_id: selectedSection.id,
-        class_adviser: selectedTeacherId,
+        gl_id: selectedGradeLevel!.id,
+        section_id: selectedSection!.id,
+        class_adviser: selectedTeacherId!,
         syear_start: parseInt(addFormData.schoolYearStart, 10),
         syear_end: parseInt(addFormData.schoolYearEnd, 10),
       });
@@ -264,7 +277,13 @@ export const ManageClassLists = () => {
   };
 
   // Handle Edit Class submission
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = () => {
+    if (!editingClass) return;
+    setIsEditConfirmOpen(true);
+  };
+
+  const handleEditClassConfirm = async () => {
+    setIsEditConfirmOpen(false);
     if (!editingClass) return;
 
     const selectedGradeLevel = gradeLevels.find((item) => item.name === editFormData.gradeLevel);
@@ -295,18 +314,26 @@ export const ManageClassLists = () => {
     handleAssignSubjectTeacher(subject, teacherId);
   };
 
-  const handleRemoveStudent = async (student: Student) => {
+  const handleRemoveStudent = (student: Student) => {
     if (!selectedClass) return;
-    if (!confirm(`Remove ${student.name} from this class?`)) return;
+    setStudentToRemove(student);
+    setIsRemoveStudentConfirmOpen(true);
+  };
+
+  const handleRemoveStudentConfirm = async () => {
+    setIsRemoveStudentConfirmOpen(false);
+    if (!selectedClass || !studentToRemove) return;
 
     try {
-      await removeStudentFromClass(selectedClass.id, student.id);
+      await removeStudentFromClass(selectedClass.id, studentToRemove.id);
       await Promise.all([
         reloadClasses(),
         loadStudents(1, selectedClass.id),
       ]);
     } catch (error) {
       console.error('Failed to remove student:', error);
+    } finally {
+      setStudentToRemove(null);
     }
   };
 
@@ -316,21 +343,21 @@ export const ManageClassLists = () => {
 
   // Generate year options (current year - 5 to current year + 5)
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+  const yearOptions = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+  const addStartYearNumber = Number.parseInt(addFormData.schoolYearStart, 10);
+  const editStartYearNumber = Number.parseInt(editFormData.schoolYearStart, 10);
+  const addEndYearOptions = Number.isNaN(addStartYearNumber)
+    ? yearOptions
+    : yearOptions.filter((year) => year > addStartYearNumber);
+  const editEndYearOptions = Number.isNaN(editStartYearNumber)
+    ? yearOptions
+    : yearOptions.filter((year) => year > editStartYearNumber);
   const selectedEditTeacher = teachers.find(
     (teacher) => teacher.id.toString() === editFormData.teacherId
   );
   const selectedAddTeacher = teachers.find(
     (teacher) => teacher.id.toString() === addFormData.teacherId
   );
-  const editFormHasChanges = editingClass
-    ? editFormData.gradeLevel !== editingClass.grade ||
-      editFormData.section !== editingClass.section ||
-      editFormData.schoolYearStart !== editingClass.start_year.toString() ||
-      editFormData.schoolYearEnd !== editingClass.end_year.toString() ||
-      editFormData.teacherId !== (editingClass.teacher_id?.toString() || '')
-    : false;
-
   const isDetailView = selectedClass !== null;
 
   // Dynamically change color of dropdown fields in modals
@@ -687,14 +714,20 @@ export const ManageClassLists = () => {
             {/* School Year End */}
             <Select 
               value={addFormData.schoolYearEnd} 
-              onValueChange={(value) => setAddFormData({...addFormData, schoolYearEnd: value})}
+              onValueChange={(value) => {
+                const selectedEndYear = Number.parseInt(value, 10);
+                if (!Number.isNaN(addStartYearNumber) && selectedEndYear <= addStartYearNumber) {
+                  return;
+                }
+                setAddFormData({ ...addFormData, schoolYearEnd: value });
+              }}
               disabled={isSubmitting}
             >
               <SelectTrigger className={`w-full h-12 bg-white ${getSelectColor(addFormData.schoolYearEnd)}`}>
                 <SelectValue placeholder="School Year End" />
               </SelectTrigger>
               <SelectContent className="bg-white font-semibold">
-                {yearOptions.map((year) => (
+                {addEndYearOptions.map((year) => (
                   <SelectItem className="hover:underline" key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -767,7 +800,7 @@ export const ManageClassLists = () => {
             {/* Add Button */}
             <Button
               onClick={handleAddClass}
-              disabled={isSubmitting || !addFormData.gradeLevel || !addFormData.section || !addFormData.schoolYearStart || !addFormData.teacherId}
+              disabled={isSubmitting}
               className="w-full h-12 bg-(--button-green) hover:bg-green-700 text-white text-lg font-semibold mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Adding...' : 'Add'}
@@ -863,14 +896,20 @@ export const ManageClassLists = () => {
             {/* School Year End */}
             <Select 
               value={editFormData.schoolYearEnd} 
-              onValueChange={(value) => setEditFormData({...editFormData, schoolYearEnd: value})}
+              onValueChange={(value) => {
+                const selectedEndYear = Number.parseInt(value, 10);
+                if (!Number.isNaN(editStartYearNumber) && selectedEndYear <= editStartYearNumber) {
+                  return;
+                }
+                setEditFormData({ ...editFormData, schoolYearEnd: value });
+              }}
               disabled={isSubmitting}
             >
               <SelectTrigger className="w-full h-12 bg-white border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white font-semibold">
-                {yearOptions.map((year) => (
+                {editEndYearOptions.map((year) => (
                   <SelectItem className="hover:underline" key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -944,7 +983,7 @@ export const ManageClassLists = () => {
             {/* Save Changes Button */}
             <Button
               onClick={handleSaveChanges}
-              disabled={isSubmitting || !editFormData.gradeLevel || !editFormData.section || !editFormData.teacherId || !editFormHasChanges}
+              disabled={isSubmitting}
               className="w-full h-12 bg-(--button-green) hover:bg-green-700 text-white text-lg font-semibold mt-2 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:text-white disabled:hover:bg-gray-400"
             >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
@@ -959,6 +998,36 @@ export const ManageClassLists = () => {
         selectedClass={selectedClass}
         existingStudents={classStudents}
         onStudentsChanged={handleStudentsChanged}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isAddConfirmOpen}
+        onClose={() => setIsAddConfirmOpen(false)}
+        onConfirm={handleAddClassConfirm}
+        title="Confirm Add Class"
+        message={`Are you sure you want to add the class ${addFormData.gradeLevel} - ${addFormData.section}?`}
+        confirmLabel="Add Class"
+        isLoading={isSubmitting}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isEditConfirmOpen}
+        onClose={() => setIsEditConfirmOpen(false)}
+        onConfirm={handleEditClassConfirm}
+        title="Confirm Save Changes"
+        message="Are you sure you want to save the changes to this class?"
+        confirmLabel="Save Changes"
+        isLoading={isSubmitting}
+      />
+
+      <ActionConfirmationModal
+        isOpen={isRemoveStudentConfirmOpen}
+        onClose={() => setIsRemoveStudentConfirmOpen(false)}
+        onConfirm={handleRemoveStudentConfirm}
+        title="Confirm Remove Student"
+        message={`Are you sure you want to remove ${studentToRemove?.name} from this class?`}
+        confirmLabel="Remove Student"
+        isLoading={isSubmitting}
       />
     </div>
   );

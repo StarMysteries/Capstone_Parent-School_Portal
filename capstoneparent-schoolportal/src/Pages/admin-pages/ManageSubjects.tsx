@@ -446,12 +446,15 @@ export const ManageSubjects = () => {
                 subjects.map((subject) => {
                   const isAssigned = assignedSubjectIds.has(subject.subject_id);
                   const isPendingAssignment = pendingAssignedSubjectIdSet.has(subject.subject_id);
+                  const isPendingUnassignment = pendingUnassignedSubjectIdSet.has(subject.subject_id);
 
                   return (
                     <div
                       key={subject.subject_id}
                       className={`flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 transition ${
-                        isAssigned
+                        isPendingUnassignment
+                          ? "border-red-200 bg-red-50"
+                          : isAssigned
                           ? "border-green-200 bg-green-50"
                           : isPendingAssignment
                             ? "border-blue-200 bg-blue-50"
