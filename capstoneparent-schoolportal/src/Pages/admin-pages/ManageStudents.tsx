@@ -494,7 +494,7 @@ export const ManageStudents = () => {
                       LRN
                     </th>
                     <th className="px-6 py-4 text-left font-semibold text-gray-700">
-                      Grade Level
+                      Grade - Section
                     </th>
                     <th className="px-6 py-4 text-left font-semibold text-gray-700">
                       School Year
