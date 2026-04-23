@@ -9,6 +9,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FormInputError } from '@/components/ui/FormInputError';
 import { Edit, X, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import {
   Dialog,
@@ -31,8 +32,9 @@ import { NavbarPrincipal } from '@/components/principal/NavbarPrincipal';
 import { Subjects } from '@/Pages/principal-pages/Subjects';
 import { StudentList } from '@/Pages/principal-pages/StudentList';
 import { StudentAddModal } from '@/Pages/principal-pages/StudentAddModal';
-import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
 import { ActionConfirmationModal } from '@/components/general/ActionConfirmationModal';
+import { downloadStudentListTemplate } from '@/Pages/principal-pages/services/fileService';
+import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
 
 export const ManageClassLists = () => {
   const showError = useApiFeedbackStore((state) => state.showError);
@@ -63,6 +65,7 @@ export const ManageClassLists = () => {
     schoolYearEnd: '',
     teacherId: '',
   });
+  const [addFormErrors, setAddFormErrors] = useState<Record<string, string>>({});
 
   // Form states for Edit Class
   const [editFormData, setEditFormData] = useState({
@@ -227,6 +230,7 @@ export const ManageClassLists = () => {
       schoolYearEnd: '',
       teacherId: '',
     });
+    setAddFormErrors({});
     setAddTeacherSearchQuery('');
     setIsAddModalOpen(true);
   };
@@ -248,14 +252,30 @@ export const ManageClassLists = () => {
 
   // Handle Add Class submission
   const handleAddClass = () => {
+    const errors: Record<string, string> = {};
     const selectedGradeLevel = gradeLevels.find((item) => item.name === addFormData.gradeLevel);
     const selectedSection = sections.find((item) => item.name === addFormData.section);
     const selectedTeacherId = addFormData.teacherId ? parseInt(addFormData.teacherId, 10) : undefined;
 
-    if (!selectedGradeLevel || !selectedSection || !selectedTeacherId) {
-      showError('Please select a valid grade level, section, and class adviser.');
+    if (!selectedGradeLevel) errors.gradeLevel = 'Please select a valid grade level.';
+    if (!selectedSection) errors.section = 'Please select a valid section.';
+    if (!addFormData.schoolYearStart) errors.schoolYearStart = 'Please select the school year start.';
+    if (!addFormData.schoolYearEnd) errors.schoolYearEnd = 'Please select the school year end.';
+    if (
+      addFormData.schoolYearStart &&
+      addFormData.schoolYearEnd &&
+      parseInt(addFormData.schoolYearEnd, 10) <= parseInt(addFormData.schoolYearStart, 10)
+    ) {
+      errors.schoolYearEnd = 'School year end must be later than the start year.';
+    }
+    if (!selectedTeacherId) errors.teacherId = 'Please choose a class adviser.';
+
+    if (Object.keys(errors).length > 0) {
+      setAddFormErrors(errors);
       return;
     }
+
+    setAddFormErrors({});
     setIsAddConfirmOpen(true);
   };
 
@@ -398,6 +418,18 @@ export const ManageClassLists = () => {
       reloadClasses(),
       loadStudents(1, selectedClass.id),
     ]);
+  };
+
+  const handleDownloadStudentTemplate = async () => {
+    try {
+      await downloadStudentListTemplate();
+    } catch (error) {
+      showError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to download student list template.'
+      );
+    }
   };
 
   return (
@@ -620,6 +652,7 @@ export const ManageClassLists = () => {
                     onBack={() => setSelectedClass(null)}
                     onRemoveStudent={handleRemoveStudent}
                     onAddStudent={handleOpenAddStudentModal}
+                    onDownloadTemplate={handleDownloadStudentTemplate}
                   />
                 </TabsContent>
               </Tabs>
@@ -635,7 +668,15 @@ export const ManageClassLists = () => {
       </div>
 
       {/* ADD CLASS MODAL */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+      <Dialog
+        open={isAddModalOpen}
+        onOpenChange={(open) => {
+          setIsAddModalOpen(open);
+          if (!open) {
+            setAddFormErrors({});
+          }
+        }}
+      >
         <DialogContent className="bg-[#FFFACD] border-none max-w-md p-0 gap-0" showCloseButton={false}>
           <DialogHeader className="p-6 pb-4">
             <div className="flex items-center justify-between">
@@ -643,6 +684,7 @@ export const ManageClassLists = () => {
               <button
                 onClick={() => {
                   setIsAddModalOpen(false);
+                  setAddFormErrors({});
                 }}
                 className="text-red-600 hover:text-red-700 transition-colors"
                 disabled={isSubmitting}
@@ -659,10 +701,13 @@ export const ManageClassLists = () => {
             {/* Grade Level */}
             <Select 
               value={addFormData.gradeLevel} 
-              onValueChange={(value) => setAddFormData({...addFormData, gradeLevel: value})}
+              onValueChange={(value) => {
+                setAddFormData({ ...addFormData, gradeLevel: value });
+                setAddFormErrors((current) => ({ ...current, gradeLevel: '' }));
+              }}
               disabled={isSubmitting || isLoadingGradeLevels}
             >
-              <SelectTrigger className={`w-full h-12 bg-white ${getSelectColor(addFormData.gradeLevel)}`}>
+              <SelectTrigger className={`w-full h-12 bg-white ${addFormErrors.gradeLevel ? 'border-red-500 focus:ring-red-500/50' : getSelectColor(addFormData.gradeLevel)}`}>
                 <SelectValue placeholder={isLoadingGradeLevels ? "Loading grade levels..." : "Grade Level"} />
               </SelectTrigger>
               <SelectContent className="bg-white font-semibold">
@@ -673,14 +718,18 @@ export const ManageClassLists = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FormInputError message={addFormErrors.gradeLevel} />
 
             {/* DYNAMIC SECTIONS */}
             <Select 
               value={addFormData.section} 
-              onValueChange={(value) => setAddFormData({...addFormData, section: value})}
+              onValueChange={(value) => {
+                setAddFormData({ ...addFormData, section: value });
+                setAddFormErrors((current) => ({ ...current, section: '' }));
+              }}
               disabled={isSubmitting || isLoadingSections}
             >
-              <SelectTrigger className={`w-full h-12 bg-white ${getSelectColor(addFormData.section)}`}>
+              <SelectTrigger className={`w-full h-12 bg-white ${addFormErrors.section ? 'border-red-500 focus:ring-red-500/50' : getSelectColor(addFormData.section)}`}>
                 <SelectValue placeholder={isLoadingSections ? "Loading sections..." : "Section"} />
               </SelectTrigger>
               <SelectContent className="bg-white font-semibold">
@@ -691,6 +740,7 @@ export const ManageClassLists = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FormInputError message={addFormErrors.section} />
 
             {/* School Year Start */}
             <Select 
@@ -702,10 +752,15 @@ export const ManageClassLists = () => {
                   schoolYearStart: value,
                   schoolYearEnd: (startYear + 1).toString(),
                 });
+                setAddFormErrors((current) => ({
+                  ...current,
+                  schoolYearStart: '',
+                  schoolYearEnd: '',
+                }));
               }}
               disabled={isSubmitting}
             >
-              <SelectTrigger className={`w-full h-12 bg-white ${getSelectColor(addFormData.schoolYearStart)}`}>
+              <SelectTrigger className={`w-full h-12 bg-white ${addFormErrors.schoolYearStart ? 'border-red-500 focus:ring-red-500/50' : getSelectColor(addFormData.schoolYearStart)}`}>
                 <SelectValue placeholder="School Year Start" />
               </SelectTrigger>
               <SelectContent className="bg-white font-semibold">
@@ -716,6 +771,7 @@ export const ManageClassLists = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FormInputError message={addFormErrors.schoolYearStart} />
 
             {/* School Year End */}
             <Select 
@@ -726,10 +782,11 @@ export const ManageClassLists = () => {
                   return;
                 }
                 setAddFormData({ ...addFormData, schoolYearEnd: value });
+                setAddFormErrors((current) => ({ ...current, schoolYearEnd: '' }));
               }}
               disabled={isSubmitting}
             >
-              <SelectTrigger className={`w-full h-12 bg-white ${getSelectColor(addFormData.schoolYearEnd)}`}>
+              <SelectTrigger className={`w-full h-12 bg-white ${addFormErrors.schoolYearEnd ? 'border-red-500 focus:ring-red-500/50' : getSelectColor(addFormData.schoolYearEnd)}`}>
                 <SelectValue placeholder="School Year End" />
               </SelectTrigger>
               <SelectContent className="bg-white font-semibold">
@@ -740,6 +797,7 @@ export const ManageClassLists = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FormInputError message={addFormErrors.schoolYearEnd} />
 
             <div className="space-y-3">
               <div className="relative">
@@ -753,8 +811,9 @@ export const ManageClassLists = () => {
                     const value = event.target.value;
                     setAddTeacherSearchQuery(value);
                     setAddFormData({ ...addFormData, teacherId: '' });
+                    setAddFormErrors((current) => ({ ...current, teacherId: '' }));
                   }}
-                  className="h-12 bg-white pl-10"
+                  className={`h-12 bg-white pl-10 ${addFormErrors.teacherId ? 'border-red-500 focus-visible:ring-red-500/50' : ''}`}
                 />
               </div>
 
@@ -768,6 +827,7 @@ export const ManageClassLists = () => {
                       onClick={() => {
                         setAddFormData({ ...addFormData, teacherId: '' });
                         setAddTeacherSearchQuery('');
+                        setAddFormErrors((current) => ({ ...current, teacherId: '' }));
                       }}
                       className="text-red-600 transition-colors hover:text-red-700"
                       disabled={isSubmitting}
@@ -787,6 +847,7 @@ export const ManageClassLists = () => {
                           onClick={() => {
                             setAddFormData({ ...addFormData, teacherId: teacher.id.toString() });
                             setAddTeacherSearchQuery(teacher.name);
+                            setAddFormErrors((current) => ({ ...current, teacherId: '' }));
                           }}
                           className="w-full px-4 py-3 text-left transition-colors hover:bg-gray-50"
                         >
@@ -801,6 +862,7 @@ export const ManageClassLists = () => {
               ) : (
                 <p className="text-sm text-gray-500">Search and choose the teacher who will be assigned as class adviser.</p>
               )}
+              <FormInputError message={addFormErrors.teacherId} />
             </div>
 
             {/* Add Button */}
