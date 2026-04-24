@@ -21,30 +21,6 @@ interface StudentAddModalProps {
   onBatchUpload: (classId: number, file: File) => Promise<{ data?: unknown[] } | void>;
 }
 
-const normalizeText = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
-
-const findLookupCandidate = (
-  rawEntry: string,
-  results: StudentLookupResult[]
-): StudentLookupResult | null => {
-  if (results.length === 0) return null;
-
-  const normalizedEntry = normalizeText(rawEntry);
-  const digitsOnly = rawEntry.replace(/\D/g, '');
-
-  if (digitsOnly) {
-    const exactLrn = results.find((student) => student.lrn === digitsOnly);
-    if (exactLrn) return exactLrn;
-  }
-
-  const exactName = results.find(
-    (student) => normalizeText(student.name) === normalizedEntry
-  );
-  if (exactName) return exactName;
-
-  return results.length === 1 ? results[0] : null;
-};
-
 const emptySummary: StudentAddSummary = {
   added: 0,
   unchanged: 0,
