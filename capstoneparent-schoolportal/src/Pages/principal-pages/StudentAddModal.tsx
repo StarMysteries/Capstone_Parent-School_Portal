@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, PlusCircle, Search, UserPlus, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, CheckCircle2, FileText, PlusCircle, Search, Upload, UserPlus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormInputError } from '@/components/ui/FormInputError';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { addStudentToClass, lookupStudents } from '@/Pages/principal-pages/services/api';
 import type { ClassItem, Student, StudentAddSummary, StudentLookupResult } from '@/Pages/principal-pages/types';
 import { ActionConfirmationModal } from '@/components/general/ActionConfirmationModal';
+import { validateFiles } from '@/lib/fileValidation';
+import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
 
 interface StudentAddModalProps {
   isOpen: boolean;
@@ -16,15 +18,10 @@ interface StudentAddModalProps {
   selectedClass: ClassItem | null;
   existingStudents: Student[];
   onStudentsChanged: () => Promise<void>;
+  onBatchUpload: (classId: number, file: File) => Promise<{ data?: unknown[] } | void>;
 }
 
 const normalizeText = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
-
-const parseBatchEntries = (value: string) =>
-  value
-    .split(/\r?\n/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
 
 const findLookupCandidate = (
   rawEntry: string,
@@ -62,13 +59,16 @@ export const StudentAddModal = ({
   selectedClass,
   existingStudents,
   onStudentsChanged,
+  onBatchUpload,
 }: StudentAddModalProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showError, clearFeedback } = useApiFeedbackStore();
   const [activeTab, setActiveTab] = useState('single');
   const [singleQuery, setSingleQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<StudentLookupResult[]>([]);
   const [lookupMessage, setLookupMessage] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
-  const [batchInput, setBatchInput] = useState('');
+  const [selectedBatchFile, setSelectedBatchFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<StudentAddSummary | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,10 +89,14 @@ export const StudentAddModal = ({
     setLookupResults([]);
     setLookupMessage('');
     setSelectedStudentId(null);
-    setBatchInput('');
+    setSelectedBatchFile(null);
     setSummary(null);
     setIsSearching(false);
     setIsSubmitting(false);
+    clearFeedback();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   useEffect(() => {
@@ -104,6 +108,30 @@ export const StudentAddModal = ({
   const handleClose = () => {
     resetState();
     onClose();
+  };
+
+  const handleBatchFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    clearFeedback();
+
+    if (!file) {
+      setSelectedBatchFile(null);
+      return;
+    }
+
+    const validation = validateFiles([file], {
+      acceptedTypes: ['.xlsx'],
+      label: 'student XLSX',
+    });
+
+    if (!validation.valid) {
+      setSelectedBatchFile(null);
+      showError(validation.error);
+      event.target.value = '';
+      return;
+    }
+
+    setSelectedBatchFile(file);
   };
 
   const handleLookup = async (queryOverride?: string) => {
@@ -187,77 +215,44 @@ export const StudentAddModal = ({
 
   const handleBatchAdd = () => {
     if (!selectedClass) return;
+    if (!selectedBatchFile) {
+      showError('Please choose an .xlsx file to upload.');
+      return;
+    }
     setShowBatchConfirm(true);
   };
 
   const handleBatchAddConfirm = async () => {
     setShowBatchConfirm(false);
-    if (!selectedClass) return;
+    if (!selectedClass || !selectedBatchFile) return;
 
-    const entries = parseBatchEntries(batchInput);
-    if (entries.length === 0) {
+    setIsSubmitting(true);
+    clearFeedback();
+
+    try {
+      const response = await onBatchUpload(selectedClass.id, selectedBatchFile);
+      await onStudentsChanged();
+      const added = Array.isArray(response?.data) ? response.data.length : 0;
+      setSummary({
+        ...emptySummary,
+        added,
+        totalProcessed: added,
+      });
+      setSelectedBatchFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
       setSummary({
         ...emptySummary,
         failed: 1,
         totalProcessed: 1,
-        failures: [{ input: 'Batch input', message: 'Please enter at least one LRN or student name.' }],
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    let added = 0;
-    let unchanged = 0;
-    let failed = 0;
-    const failures: StudentAddSummary['failures'] = [];
-    const workingEnrolledIds = new Set(enrolledStudentIds);
-
-    try {
-      for (const entry of entries) {
-        try {
-          const results = await lookupStudents(entry);
-          const candidate = findLookupCandidate(entry, results);
-
-          if (!candidate) {
-            failed += 1;
-            failures.push({
-              input: entry,
-              message:
-                results.length > 1
-                  ? 'Multiple students matched. Use a more exact LRN or full name.'
-                  : 'Student not found in the database.',
-            });
-            continue;
-          }
-
-          if (workingEnrolledIds.has(candidate.id)) {
-            unchanged += 1;
-            continue;
-          }
-
-          await addStudentToClass(selectedClass.id, { student_id: candidate.id });
-          workingEnrolledIds.add(candidate.id);
-          added += 1;
-        } catch (error) {
-          failed += 1;
-          failures.push({
-            input: entry,
-            message: error instanceof Error ? error.message : 'Failed to add student',
-          });
-        }
-      }
-
-      if (added > 0) {
-        await onStudentsChanged();
-      }
-
-      setSummary({
-        added,
-        unchanged,
-        failed,
-        totalProcessed: entries.length,
-        failures,
+        failures: [
+          {
+            input: selectedBatchFile.name,
+            message: error instanceof Error ? error.message : 'Failed to upload student XLSX.',
+          },
+        ],
       });
     } finally {
       setIsSubmitting(false);
@@ -448,20 +443,39 @@ export const StudentAddModal = ({
               </TabsContent>
 
               <TabsContent value="batch" className="space-y-4">
-                <div className="rounded-lg border border-gray-300 bg-white p-4">
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
-                    Enter one LRN or full student name per line
-                  </label>
-                  <textarea
-                    value={batchInput}
-                    onChange={(event) => setBatchInput(event.target.value)}
-                    placeholder={'123456789012\nJuan Dela Cruz\nMaria Santos'}
-                    className="min-h-48 w-full resize-y rounded-md border border-gray-300 p-3 text-sm outline-none focus:ring-2 focus:ring-green-600"
+                <p className="text-sm text-gray-700">
+                  Upload a student list XLSX file. The file should include a <strong>Grade Level</strong> column using Kindergarten or Grade 1 to Grade 6.
+                </p>
+
+                <div className="rounded-md border-2 border-dashed border-black bg-white p-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx"
+                    onChange={handleBatchFileChange}
                     disabled={isSubmitting}
+                    className="hidden"
                   />
-                  <p className="mt-2 text-sm text-gray-500">
-                    Each line is checked against the student database before being added to the class.
+
+                  <Button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSubmitting}
+                    className="w-full rounded-md border border-gray-300 bg-gray-100 text-black hover:bg-gray-200"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Select XLSX File
+                  </Button>
+                  <p className="mt-1 text-center text-xs text-gray-400">
+                    Accepted: XLSX only · No size limit
                   </p>
+
+                  <div className="mt-3 flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
+                    <FileText className="h-5 w-5 text-(--button-green)" />
+                    <span className="text-sm text-gray-700">
+                      {selectedBatchFile ? selectedBatchFile.name : 'No file selected'}
+                    </span>
+                  </div>
                 </div>
 
                 <Button
@@ -470,8 +484,8 @@ export const StudentAddModal = ({
                   disabled={isSubmitting}
                   className="h-12 w-full bg-(--button-green) text-lg font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <UserPlus className="mr-2 h-5 w-5" />
-                  {isSubmitting ? 'Checking and Adding...' : 'Add Students'}
+                  <Upload className="mr-2 h-5 w-5" />
+                  {isSubmitting ? 'Uploading...' : 'Upload XLSX'}
                 </Button>
               </TabsContent>
             </Tabs>
@@ -492,9 +506,9 @@ export const StudentAddModal = ({
           isOpen={showBatchConfirm}
           onClose={() => setShowBatchConfirm(false)}
           onConfirm={handleBatchAddConfirm}
-          title="Confirm Batch Add"
-          message={`Are you sure you want to process and add students from the batch list?`}
-          confirmLabel="Process and Add"
+          title="Confirm Batch Upload"
+          message={`Are you sure you want to upload the students from "${selectedBatchFile?.name}"?`}
+          confirmLabel="Upload"
           isLoading={isSubmitting}
         />
       </DialogContent>

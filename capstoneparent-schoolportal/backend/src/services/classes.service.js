@@ -118,7 +118,7 @@ const removeStudentFromClassSubjects = async (db, classId, studentId) => {
   });
 };
 
-const importGradesForSubjectRecord = async (srecord_id, rows) => {
+const importGradesForSubjectRecord = async (srecord_id, rows, options = {}) => {
   const normalizedRows = rows
     .map((row) => ({
       lrn: row?.lrn ? String(row.lrn).trim() : "",
@@ -132,6 +132,10 @@ const importGradesForSubjectRecord = async (srecord_id, rows) => {
   if (normalizedRows.length === 0) {
     return [];
   }
+
+  const allowedStudentIds = options.allowedStudentIds
+    ? new Set(options.allowedStudentIds)
+    : null;
 
   const uniqueLrns = [...new Set(normalizedRows.map((row) => row.lrn))];
   const students = await prisma.student.findMany({
@@ -170,6 +174,7 @@ const importGradesForSubjectRecord = async (srecord_id, rows) => {
   for (const row of normalizedRows) {
     const student_id = studentIdByLrn.get(row.lrn);
     if (!student_id) continue;
+    if (allowedStudentIds && !allowedStudentIds.has(student_id)) continue;
 
     const grades = [row.q1_grade, row.q2_grade, row.q3_grade, row.q4_grade].filter(
       (grade) => grade !== null,
@@ -1140,7 +1145,14 @@ const classesService = {
       throw new Error("Subject title does not match the selected subject");
     }
 
-    return importGradesForSubjectRecord(srecord_id, rows);
+    const subjectStudents = await prisma.subjectRecordStudent.findMany({
+      where: { srecord_id },
+      select: { student_id: true },
+    });
+
+    return importGradesForSubjectRecord(srecord_id, rows, {
+      allowedStudentIds: subjectStudents.map((student) => student.student_id),
+    });
   },
 
   async importClassGrades(classId, rows) {
@@ -1195,41 +1207,42 @@ const classesService = {
       throw new Error("Subject title is required for class grade imports");
     }
 
-    const hasNameBasedRows = normalizedRows.some((row) => row.name && !row.lrn);
-    let studentLrnByName = new Map();
-
-    if (hasNameBasedRows) {
-      const classStudents = await prisma.student.findMany({
-        where: {
-          class_lists: {
-            some: {
-              clist_id: classId,
-            },
+    const classStudents = await prisma.student.findMany({
+      where: {
+        class_lists: {
+          some: {
+            clist_id: classId,
           },
         },
-        select: {
-          student_id: true,
-          fname: true,
-          lname: true,
-          lrn_number: true,
-        },
-      });
+      },
+      select: {
+        student_id: true,
+        fname: true,
+        lname: true,
+        lrn_number: true,
+      },
+    });
+    const allowedStudentIds = classStudents.map((student) => student.student_id);
+    const allowedLrns = new Set(
+      classStudents
+        .map((student) => String(student.lrn_number ?? "").trim())
+        .filter(Boolean),
+    );
+    const studentLrnByName = new Map();
 
-      studentLrnByName = new Map();
-      classStudents.forEach((student) => {
-        buildAttendanceNameKeys(student).forEach((key) => {
-          const existingLrn = studentLrnByName.get(key);
-          if (existingLrn && existingLrn !== student.lrn_number) {
-            studentLrnByName.set(key, null);
-            return;
-          }
+    classStudents.forEach((student) => {
+      buildAttendanceNameKeys(student).forEach((key) => {
+        const existingLrn = studentLrnByName.get(key);
+        if (existingLrn && existingLrn !== student.lrn_number) {
+          studentLrnByName.set(key, null);
+          return;
+        }
 
-          if (!studentLrnByName.has(key)) {
-            studentLrnByName.set(key, student.lrn_number);
-          }
-        });
+        if (!studentLrnByName.has(key)) {
+          studentLrnByName.set(key, student.lrn_number);
+        }
       });
-    }
+    });
 
     const rowsBySubjectId = new Map();
 
@@ -1242,11 +1255,11 @@ const classesService = {
       }
 
       const resolvedLrn = row.lrn || studentLrnByName.get(normalizeAttendanceStudentName(row.name));
-      if (row.name && resolvedLrn === null) {
-        throw new Error(`Grade student name is ambiguous: ${row.name}`);
+      if (row.name && (resolvedLrn === null || !resolvedLrn)) {
+        continue;
       }
-      if (row.name && !resolvedLrn) {
-        throw new Error(`Grade student name not found in class: ${row.name}`);
+      if (resolvedLrn && !allowedLrns.has(String(resolvedLrn).trim())) {
+        continue;
       }
 
       const existingRows = rowsBySubjectId.get(subjectRecord.srecord_id) ?? [];
@@ -1259,7 +1272,9 @@ const classesService = {
 
     const importedGroups = await Promise.all(
       [...rowsBySubjectId.entries()].map(([srecord_id, subjectRows]) =>
-        importGradesForSubjectRecord(srecord_id, subjectRows),
+        importGradesForSubjectRecord(srecord_id, subjectRows, {
+          allowedStudentIds,
+        }),
       ),
     );
 
@@ -1286,10 +1301,10 @@ const classesService = {
       throw new Error("Class ID is required for attendance sheets that identify students by name");
     }
 
-    const studentsById = new Map();
+    let classStudents = [];
 
-    if (classId && hasNameBasedRows) {
-      const classStudents = await prisma.student.findMany({
+    if (classId) {
+      classStudents = await prisma.student.findMany({
         where: {
           class_lists: {
             some: {
@@ -1304,35 +1319,32 @@ const classesService = {
           lname: true,
         },
       });
+    }
 
-      classStudents.forEach((student) => {
+    const studentsById = new Map();
+
+    if (uniqueLrns.length > 0) {
+      const lrnMatchedStudents = classId
+        ? classStudents.filter((student) => uniqueLrns.includes(String(student.lrn_number)))
+        : await prisma.student.findMany({
+            where: {
+              lrn_number: { in: uniqueLrns },
+            },
+            select: {
+              student_id: true,
+              lrn_number: true,
+              fname: true,
+              lname: true,
+            },
+          });
+
+      lrnMatchedStudents.forEach((student) => {
         studentsById.set(student.student_id, student);
       });
     }
 
-    if (uniqueLrns.length > 0) {
-      const lrnMatchedStudents = await prisma.student.findMany({
-        where: {
-          lrn_number: { in: uniqueLrns },
-          ...(classId
-            ? {
-                class_lists: {
-                  some: {
-                    clist_id: classId,
-                  },
-                },
-              }
-            : {}),
-        },
-        select: {
-          student_id: true,
-          lrn_number: true,
-          fname: true,
-          lname: true,
-        },
-      });
-
-      lrnMatchedStudents.forEach((student) => {
+    if (classId && hasNameBasedRows) {
+      classStudents.forEach((student) => {
         studentsById.set(student.student_id, student);
       });
     }
@@ -1387,6 +1399,7 @@ const classesService = {
     const createPayloads = [];
     const updateOperations = [];
     const monthlyAttendanceMap = new Map();
+    const touchedStudentIds = new Set();
 
     for (const row of normalizedRows) {
       const normalizedLrn = String(row.lrn ?? "").trim();
@@ -1400,6 +1413,7 @@ const classesService = {
       }
 
       if (!studentId) continue;
+      touchedStudentIds.add(studentId);
 
       if (row.date !== undefined) {
         const parsedDate = parseAttendanceDate(row.date);
@@ -1500,9 +1514,13 @@ const classesService = {
       await prisma.$transaction(updateOperations);
     }
 
+    if (touchedStudentIds.size === 0) {
+      return [];
+    }
+
     return prisma.attendanceRecord.findMany({
       where: {
-        student_id: { in: studentIds },
+        student_id: { in: [...touchedStudentIds] },
         month: { in: ATTENDANCE_MONTHS },
       },
       orderBy: [

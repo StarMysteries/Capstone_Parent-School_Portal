@@ -33,7 +33,7 @@ import { Subjects } from '@/Pages/principal-pages/Subjects';
 import { StudentList } from '@/Pages/principal-pages/StudentList';
 import { StudentAddModal } from '@/Pages/principal-pages/StudentAddModal';
 import { ActionConfirmationModal } from '@/components/general/ActionConfirmationModal';
-import { downloadStudentListTemplate } from '@/Pages/principal-pages/services/fileService';
+import { downloadStudentListTemplate, uploadStudentList } from '@/Pages/principal-pages/services/fileService';
 import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
 
 export const ManageClassLists = () => {
@@ -1066,6 +1066,7 @@ export const ManageClassLists = () => {
         selectedClass={selectedClass}
         existingStudents={classStudents}
         onStudentsChanged={handleStudentsChanged}
+        onBatchUpload={uploadStudentList}
       />
 
       <ActionConfirmationModal

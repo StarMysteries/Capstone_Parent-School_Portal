@@ -1,27 +1,41 @@
 import { apiFetch, bearerHeaders } from '@/lib/api/base';
 
+interface TemplateDownloadResponse {
+  data: {
+    downloadUrl: string;
+    fileName: string;
+  };
+}
+
+const triggerBrowserDownload = (blob: Blob, fileName: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  window.URL.revokeObjectURL(url);
+};
+
 // Download functions
 export const downloadGradeSheetTemplate = async () => {
   try {
-    const response = await fetch('/api/classes/grade-sheet-template', {
+    const response = await apiFetch<TemplateDownloadResponse>('/classes/grade-sheet-template', {
       method: 'GET',
-      headers: {
-        ...bearerHeaders(),
-        'Accept': 'text/csv',
-      },
+      headers: bearerHeaders(),
     });
 
-    if (!response.ok) throw new Error('Failed to download template');
+    const fileName = response.data.fileName || 'ClassAdviser_Grades-Attendance_Template.xlsx';
+    const downloadResponse = await fetch(response.data.downloadUrl);
 
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Grade Template.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    if (!downloadResponse.ok) {
+      throw new Error('Failed to download template');
+    }
+
+    const blob = await downloadResponse.blob();
+    triggerBrowserDownload(blob, fileName);
   } catch (error) {
     console.error('Error downloading template:', error);
     throw error;
@@ -30,25 +44,20 @@ export const downloadGradeSheetTemplate = async () => {
 
 export const downloadAttendanceTemplate = async () => {
   try {
-    const response = await fetch('/api/classes/attendance-template', {
+    const response = await apiFetch<TemplateDownloadResponse>('/classes/attendance-template', {
       method: 'GET',
-      headers: {
-        ...bearerHeaders(),
-        'Accept': 'text/csv',
-      },
+      headers: bearerHeaders(),
     });
 
-    if (!response.ok) throw new Error('Failed to download template');
+    const fileName = response.data.fileName || 'ClassAdviser_Grades-Attendance_Template.xlsx';
+    const downloadResponse = await fetch(response.data.downloadUrl);
 
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `attendance-template.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    if (!downloadResponse.ok) {
+      throw new Error('Failed to download template');
+    }
+
+    const blob = await downloadResponse.blob();
+    triggerBrowserDownload(blob, fileName);
   } catch (error) {
     console.error('Error downloading template:', error);
     throw error;
@@ -157,4 +166,26 @@ export const uploadSubjectGradeSheet = async (srecord_id: number, file: File) =>
     headers: bearerHeaders(),
     body: formData,
   });
+};
+
+export const downloadSubjectGradeSheetTemplate = async () => {
+  try {
+    const response = await apiFetch<TemplateDownloadResponse>('/classes/subject-grade-sheet-template', {
+      method: 'GET',
+      headers: bearerHeaders(),
+    });
+
+    const fileName = response.data.fileName || 'SubjectTeacher_Grades-Attendance_Template.xlsx';
+    const downloadResponse = await fetch(response.data.downloadUrl);
+
+    if (!downloadResponse.ok) {
+      throw new Error('Failed to download template');
+    }
+
+    const blob = await downloadResponse.blob();
+    triggerBrowserDownload(blob, fileName);
+  } catch (error) {
+    console.error('Error downloading subject template:', error);
+    throw error;
+  }
 };
