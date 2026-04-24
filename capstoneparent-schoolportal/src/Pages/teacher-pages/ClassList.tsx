@@ -652,7 +652,7 @@ export const ClassList = () => {
                           Export Quarterly Grade Sheet (.zip)
                         </Button>
                         <Button 
-                          className="bg-(--button-green) hover:bg-green-700 text-white"
+                          className="bg-(--navbar-bg) hover:bg-yellow-300 text-black"
                           onClick={handleDownloadTemplate}
                         >
                           <Download className="mr-2 h-4 w-4" />
@@ -927,7 +927,7 @@ export const ClassList = () => {
         onClose={() => setIsImportGradeSheetModalOpen(false)}
         onUpload={handleImportGradeSheet}
         title="Import Class Grade Sheet"
-        acceptedFileTypes={['.csv']}
+        acceptedFileTypes={['.xlsx']}
         maxSizeMB={5}
       />
 
@@ -936,7 +936,7 @@ export const ClassList = () => {
         onClose={() => setIsImportAttendanceModalOpen(false)}
         onUpload={handleImportAttendance}
         title="Import Class Attendance Record"
-        acceptedFileTypes={['.csv']}
+        acceptedFileTypes={['.xlsx']}
         maxSizeMB={5}
       />
 
