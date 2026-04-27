@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 import type { StudentGradesProps } from '@/Pages/teacher-pages/types';
 import { exportStudentQuarterlyGrades } from './services/fileService';
 
@@ -14,11 +14,18 @@ export const StudentGrades = ({
   subjectFilter,
   isLoading = false,
 }: StudentGradesComponentProps) => {
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
   const handleExportStudentGrades = async () => {
     const fallbackName = `${student.lname}_${student.fname}_${student.lrn_number}_ReportCard.pdf`
       .replace(/\s+/g, '_');
 
-    await exportStudentQuarterlyGrades(student.student_id, fallbackName);
+    setIsExportingPdf(true);
+    try {
+      await exportStudentQuarterlyGrades(student.student_id, fallbackName);
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const getNumericGrade = (value: unknown) => {
@@ -120,10 +127,14 @@ export const StudentGrades = ({
             <Button
               className="bg-(--button-green) hover:bg-green-700 text-white"
               onClick={handleExportStudentGrades}
-              disabled={isLoading}
+              disabled={isLoading || isExportingPdf}
             >
-              <Download className="mr-2 h-4 w-4" />
-              Export Quarterly Grades (.pdf)
+              {isExportingPdf ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              {isExportingPdf ? 'Exporting PDF...' : 'Export Quarterly Grades (.pdf)'}
             </Button>
           ) : null}
         </div>

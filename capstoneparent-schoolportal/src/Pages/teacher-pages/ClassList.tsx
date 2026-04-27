@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, Download, Upload, Image } from 'lucide-react';
+import { ArrowLeft, Search, Download, Upload, Image, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ImportResultModal } from '@/components/general/ImportResultModal';
 import { useClassData } from '@/Pages/teacher-pages/hooks/useClassData';
@@ -64,6 +64,9 @@ export const ClassList = () => {
   const [isUploadScheduleModalOpen, setIsUploadScheduleModalOpen] = useState(false);
   const [isImportSubjectGradeSheetModalOpen, setIsImportSubjectGradeSheetModalOpen] = useState(false);
   const [importSummary, setImportSummary] = useState<ImportSummaryData | null>(null);
+  const [isDownloadingClassTemplate, setIsDownloadingClassTemplate] = useState(false);
+  const [isDownloadingSubjectTemplate, setIsDownloadingSubjectTemplate] = useState(false);
+  const [isExportingClassGrades, setIsExportingClassGrades] = useState(false);
 
   // Use custom hook for data management
   const {
@@ -182,28 +185,37 @@ export const ClassList = () => {
 
   // Download handlers
   const handleDownloadTemplate = async () => {
+    setIsDownloadingClassTemplate(true);
     try {
       await downloadGradeSheetTemplate();
     } catch (error) {
       showError('Failed to download template. Please try again.');
+    } finally {
+      setIsDownloadingClassTemplate(false);
     }
   };
 
   const handleDownloadSubjectTemplate = async () => {
+    setIsDownloadingSubjectTemplate(true);
     try {
       await downloadSubjectGradeSheetTemplate();
     } catch (error) {
       showError('Failed to download template. Please try again.');
+    } finally {
+      setIsDownloadingSubjectTemplate(false);
     }
   };
 
   const handleExportAllQuartersGrades = async () => {
     if (!selectedClass) return;
-    
+
+    setIsExportingClassGrades(true);
     try {
       await exportAllQuartersGradeSheet(selectedClass.clist_id);
     } catch (error) {
       showError('Failed to export grades. Please try again.');
+    } finally {
+      setIsExportingClassGrades(false);
     }
   };
 
@@ -654,16 +666,26 @@ export const ClassList = () => {
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={handleExportAllQuartersGrades}
+                          disabled={isExportingClassGrades}
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Export Quarterly Grade Sheet (.zip)
+                          {isExportingClassGrades ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="mr-2 h-4 w-4" />
+                          )}
+                          {isExportingClassGrades ? 'Exporting Grade Sheet...' : 'Export Quarterly Grade Sheet (.zip)'}
                         </Button>
                         <Button 
                           className="bg-(--navbar-bg) hover:bg-yellow-300 text-black"
                           onClick={handleDownloadTemplate}
+                          disabled={isDownloadingClassTemplate}
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Download Grade Sheet Template (.xlsx)
+                          {isDownloadingClassTemplate ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="mr-2 h-4 w-4" />
+                          )}
+                          {isDownloadingClassTemplate ? 'Downloading Template...' : 'Download Grade Sheet Template (.xlsx)'}
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
@@ -858,9 +880,14 @@ export const ClassList = () => {
                       <Button 
                         className="bg-(--navbar-bg) hover:bg-yellow-300 text-black"
                         onClick={handleDownloadSubjectTemplate}
+                        disabled={isDownloadingSubjectTemplate}
                       >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Grade Sheet Template (.csv)
+                        {isDownloadingSubjectTemplate ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="mr-2 h-4 w-4" />
+                        )}
+                        {isDownloadingSubjectTemplate ? 'Downloading Template...' : 'Download Grade Sheet Template (.csv)'}
                       </Button>
                     </div>
 
