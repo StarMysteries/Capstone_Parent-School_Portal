@@ -98,6 +98,7 @@ export const useClassData = () => {
     filterStudents,
     getStudentsForClass,
     loadStudents,
+    loadClasses,
   };
 };
 

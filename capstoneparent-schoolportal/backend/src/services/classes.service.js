@@ -1,6 +1,6 @@
 const prisma = require("../config/database");
 const { findOrThrow } = require("../utils/findOrThrow");
-const { replaceFile } = require("../utils/supabaseStorage");
+const { replaceFile, refreshSignedUrl } = require("../utils/supabaseStorage");
 const {
   createZipBuffer,
   sanitizeFileName,
@@ -441,8 +441,17 @@ const classesService = {
       prisma.classList.count({ where }),
     ]);
 
+    const classesWithRefreshedSched = await Promise.all(
+      classes.map(async (c) => {
+        if (c.class_sched) {
+          c.class_sched = await refreshSignedUrl(c.class_sched);
+        }
+        return c;
+      })
+    );
+
     return {
-      classes,
+      classes: classesWithRefreshedSched,
       pagination: {
         total,
         page: parseInt(page),
@@ -453,7 +462,7 @@ const classesService = {
   },
 
   async getTeacherClasses(teacherId) {
-    return prisma.classList.findMany({
+    const classes = await prisma.classList.findMany({
       where: { class_adviser: teacherId },
       include: {
         grade_level: true,
@@ -471,6 +480,15 @@ const classesService = {
         { syear_start: "desc" },
       ],
     });
+
+    return Promise.all(
+      classes.map(async (c) => {
+        if (c.class_sched) {
+          c.class_sched = await refreshSignedUrl(c.class_sched);
+        }
+        return c;
+      })
+    );
   },
 
   async getTeacherSubjects(teacherId) {
@@ -586,6 +604,15 @@ const classesService = {
     });
 
     if (!classData) throw new Error("Class not found");
+
+    if (classData.class_sched) {
+      try {
+        classData.class_sched = await refreshSignedUrl(classData.class_sched);
+      } catch (error) {
+        console.error(`Error refreshing signed URL for class ${classId}:`, error);
+      }
+    }
+
     return classData;
   },
 

@@ -309,11 +309,14 @@ const replaceFile = async (
 
   if (previousFileUrl && previousFileUrl !== nextFileUrl) {
     try {
+      console.log(`[${logContext}] Attempting to delete previous file: ${previousFileUrl}`);
       const deleted = await deleteFileByUrl(previousFileUrl);
       if (!deleted) {
         console.warn(
           `[${logContext}] Could not parse old file URL for deletion: ${previousFileUrl}`,
         );
+      } else {
+        console.log(`[${logContext}] Successfully deleted previous file.`);
       }
     } catch (error) {
       console.error(

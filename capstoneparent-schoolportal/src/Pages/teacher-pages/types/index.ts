@@ -11,6 +11,7 @@ export interface ClassItem {
   grade?: string; // Mapped from grade_level.grade_level
   section_name?: string; // Mapped from section.section_name
   student_count?: number;
+  class_sched?: string;
 }
 
 export interface SubjectItem {

@@ -19,6 +19,7 @@ import { ClassSummary } from "./ClassSummary";
 import { StudentGrades } from "./StudentGrades";
 import { SubjectSummary } from "./SubjectSummary";
 import { FileUploadModal } from './FileUploadModal';
+import { ViewScheduleModal } from '@/components/general/ViewScheduleModal';
 import {
   downloadGradeSheetTemplate,
   downloadSubjectGradeSheetTemplate,
@@ -60,6 +61,7 @@ export const ClassList = () => {
   // Modal states for file uploads
   const [isImportWorkbookModalOpen, setIsImportWorkbookModalOpen] = useState(false);
   const [isUploadScheduleModalOpen, setIsUploadScheduleModalOpen] = useState(false);
+  const [isViewScheduleModalOpen, setIsViewScheduleModalOpen] = useState(false);
   const [importSummary, setImportSummary] = useState<ImportSummaryData | null>(null);
   const [isDownloadingClassTemplate, setIsDownloadingClassTemplate] = useState(false);
   const [isExportingClassGrades, setIsExportingClassGrades] = useState(false);
@@ -78,6 +80,7 @@ export const ClassList = () => {
     filterStudents,
     getStudentsForClass,
     loadStudents,
+    loadClasses,
   } = useClassData();
 
   // Apply filters
@@ -213,7 +216,22 @@ export const ClassList = () => {
     if (!selectedClass) return;
     
     try {
-      await uploadClassSchedulePicture(selectedClass.clist_id, file);
+      const response = await uploadClassSchedulePicture(selectedClass.clist_id, file);
+      
+      // Refresh the classes list to get updated signed URLs for all classes
+      await loadClasses();
+      
+      // Update the selected class state with the new data
+      if (response && response.data) {
+        // Map the response data to match our ClassItem interface (similar to fetchClasses mapping)
+        const updatedClassData = {
+          ...response.data,
+          grade: response.data.grade_level?.grade_level,
+          section_name: response.data.section?.section_name,
+          student_count: response.data._count?.students || 0
+        };
+        setSelectedClass(updatedClassData);
+      }
     } catch (error) {
       throw error instanceof Error ? error : new Error('Failed to upload class schedule');
     }
@@ -631,6 +649,20 @@ export const ClassList = () => {
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
+                          onClick={() => setIsViewScheduleModalOpen(true)}
+                        >
+                          <Image className="mr-2 h-4 w-4" />
+                          View Current Class Schedule
+                        </Button>
+                        <Button 
+                          className="bg-(--button-green) hover:bg-green-700 text-white"
+                          onClick={() => setIsUploadScheduleModalOpen(true)}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Class Schedule Picture
+                        </Button>
+                        <Button 
+                          className="bg-(--button-green) hover:bg-green-700 text-white"
                           onClick={handleExportAllQuartersGrades}
                           disabled={isExportingClassGrades}
                         >
@@ -652,13 +684,6 @@ export const ClassList = () => {
                             <Download className="mr-2 h-4 w-4" />
                           )}
                           {isDownloadingClassTemplate ? 'Downloading Template...' : 'Download Grades & Attendance Template (.xlsx)'}
-                        </Button>
-                        <Button 
-                          className="bg-(--button-green) hover:bg-green-700 text-white"
-                          onClick={() => setIsUploadScheduleModalOpen(true)}
-                        >
-                          <Image className="mr-2 h-4 w-4" />
-                          Upload Class Schedule Picture
                         </Button>
                       </div>
 
@@ -971,6 +996,13 @@ export const ClassList = () => {
         isOpen={Boolean(importSummary)}
         onClose={() => setImportSummary(null)}
         summary={importSummary}
+      />
+
+      <ViewScheduleModal
+        isOpen={isViewScheduleModalOpen}
+        onClose={() => setIsViewScheduleModalOpen(false)}
+        scheduleUrl={selectedClass?.class_sched}
+        className={selectedClass ? `${selectedClass.grade} - ${selectedClass.section_name}` : undefined}
       />
     </div>
   );
