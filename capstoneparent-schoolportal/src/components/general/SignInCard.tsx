@@ -80,15 +80,12 @@ export const SignInCard = () => {
 
     try {
       const storedDeviceToken = getDeviceToken(normalizedEmail);
-
-      if (storedDeviceToken) {
-        const res = await authApi.login(normalizedEmail, password, storedDeviceToken);
-        finalise(res.data.token, res.data.user);
-      } else {
-        await authApi.sendOtp(normalizedEmail);
-        setEmail(normalizedEmail);
-        setStep("otp");
-      }
+      const res = await authApi.login(
+        normalizedEmail,
+        password,
+        storedDeviceToken || undefined,
+      );
+      finalise(res.data.token, res.data.user);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
 

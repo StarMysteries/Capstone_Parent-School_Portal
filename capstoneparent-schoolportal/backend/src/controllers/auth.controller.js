@@ -117,9 +117,6 @@ const authController = {
       if (error.message.startsWith("Account is inactive")) {
         return res.status(403).json({ message: error.message });
       }
-      if (error.message === "Device token is required") {
-        return res.status(400).json({ message: error.message });
-      }
       if (error.message.startsWith("Unrecognized device")) {
         return res.status(401).json({ message: error.message });
       }

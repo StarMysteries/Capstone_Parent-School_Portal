@@ -115,8 +115,7 @@ router.post(
       .normalizeEmail(),
     body("password").notEmpty().withMessage("Password is required"),
     body("deviceToken")
-      .notEmpty()
-      .withMessage("Device token is required")
+      .optional()
       .isString()
       .withMessage("Device token must be a string")
       .isLength({ min: 64, max: 64 })

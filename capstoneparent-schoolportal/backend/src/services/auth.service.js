@@ -359,7 +359,9 @@ const authService = {
     }
 
     if (!deviceToken) {
-      throw new Error("Device token is required");
+      throw new Error(
+        "Unrecognized device. Please complete OTP verification to register this device.",
+      );
     }
 
     const hashedToken = hashDeviceToken(deviceToken);
