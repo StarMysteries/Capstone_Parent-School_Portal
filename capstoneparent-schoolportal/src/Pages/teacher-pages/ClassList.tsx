@@ -23,8 +23,7 @@ import {
   downloadGradeSheetTemplate,
   downloadSubjectGradeSheetTemplate,
   exportAllQuartersGradeSheet,
-  uploadAttendanceSheet,
-  uploadGradeSheet,
+  uploadGradeAttendanceWorkbook,
   uploadClassSchedulePicture,
   uploadSubjectGradeSheet,
 } from './services/fileService';
@@ -59,13 +58,10 @@ export const ClassList = () => {
   const [isLoadingStudentDetail, setIsLoadingStudentDetail] = useState(false);
 
   // Modal states for file uploads
-  const [isImportGradeSheetModalOpen, setIsImportGradeSheetModalOpen] = useState(false);
-  const [isImportAttendanceModalOpen, setIsImportAttendanceModalOpen] = useState(false);
+  const [isImportWorkbookModalOpen, setIsImportWorkbookModalOpen] = useState(false);
   const [isUploadScheduleModalOpen, setIsUploadScheduleModalOpen] = useState(false);
-  const [isImportSubjectGradeSheetModalOpen, setIsImportSubjectGradeSheetModalOpen] = useState(false);
   const [importSummary, setImportSummary] = useState<ImportSummaryData | null>(null);
   const [isDownloadingClassTemplate, setIsDownloadingClassTemplate] = useState(false);
-  const [isDownloadingSubjectTemplate, setIsDownloadingSubjectTemplate] = useState(false);
   const [isExportingClassGrades, setIsExportingClassGrades] = useState(false);
 
   // Use custom hook for data management
@@ -187,22 +183,15 @@ export const ClassList = () => {
   const handleDownloadTemplate = async () => {
     setIsDownloadingClassTemplate(true);
     try {
-      await downloadGradeSheetTemplate();
+      if (activeTab === 'subject' && selectedSubject) {
+        await downloadSubjectGradeSheetTemplate();
+      } else {
+        await downloadGradeSheetTemplate();
+      }
     } catch (error) {
       showError('Failed to download template. Please try again.');
     } finally {
       setIsDownloadingClassTemplate(false);
-    }
-  };
-
-  const handleDownloadSubjectTemplate = async () => {
-    setIsDownloadingSubjectTemplate(true);
-    try {
-      await downloadSubjectGradeSheetTemplate();
-    } catch (error) {
-      showError('Failed to download template. Please try again.');
-    } finally {
-      setIsDownloadingSubjectTemplate(false);
     }
   };
 
@@ -220,18 +209,6 @@ export const ClassList = () => {
   };
 
   // Upload handlers
-  const handleImportGradeSheet = async (file: File) => {
-    if (!selectedClass) return;
-    
-    try {
-      const response = await uploadGradeSheet(selectedClass.clist_id, file);
-      setImportSummary(resolveImportSummary(response));
-      loadStudents(selectedClass.clist_id);
-    } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to upload grade sheet');
-    }
-  };
-
   const handleUploadSchedulePicture = async (file: File) => {
     if (!selectedClass) return;
     
@@ -242,27 +219,23 @@ export const ClassList = () => {
     }
   };
 
-  const handleImportAttendanceSheet = async (file: File) => {
-    const targetClassId = selectedClass?.clist_id ?? selectedSubject?.classListIds?.[0];
-    if (!targetClassId) return;
-
+  const handleImportWorkbook = async (file: File) => {
     try {
-      const response = await uploadAttendanceSheet(targetClassId, file);
-      setImportSummary(resolveImportSummary(response));
-      loadStudents(targetClassId);
-    } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to upload attendance sheet');
-    }
-  };
+      let response;
+      
+      if (activeTab === 'subject' && selectedSubject) {
+        response = await uploadSubjectGradeSheet(selectedSubject.srecord_id, file);
+        loadStudents(selectedSubject.classListIds?.[0]);
+      } else if (selectedClass) {
+        response = await uploadGradeAttendanceWorkbook(selectedClass.clist_id, file);
+        loadStudents(selectedClass.clist_id);
+      } else {
+        return;
+      }
 
-  const handleImportSubjectGradeSheet = async (file: File) => {
-    if (!selectedSubject) return;
-    
-    try {
-      const response = await uploadSubjectGradeSheet(selectedSubject.srecord_id, file);
       setImportSummary(resolveImportSummary(response));
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to upload grade sheet');
+      throw error instanceof Error ? error : new Error('Failed to upload grade and attendance data');
     }
   };
 
@@ -651,17 +624,10 @@ export const ClassList = () => {
                       <div className="flex gap-3 flex-wrap justify-center md:justify-start">
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
-                          onClick={() => setIsImportGradeSheetModalOpen(true)}
+                          onClick={() => setIsImportWorkbookModalOpen(true)}
                         >
                           <Upload className="mr-2 h-4 w-4" />
-                          Import Grade Sheets (.csv)
-                        </Button>
-                        <Button
-                          className="bg-(--button-green) hover:bg-green-700 text-white"
-                          onClick={() => setIsImportAttendanceModalOpen(true)}
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Import Attendance (.csv)
+                          Import Grades & Attendance (.xlsx)
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
@@ -685,7 +651,7 @@ export const ClassList = () => {
                           ) : (
                             <Download className="mr-2 h-4 w-4" />
                           )}
-                          {isDownloadingClassTemplate ? 'Downloading Template...' : 'Download Grade Sheet Template (.xlsx)'}
+                          {isDownloadingClassTemplate ? 'Downloading Template...' : 'Download Grades & Attendance Template (.xlsx)'}
                         </Button>
                         <Button 
                           className="bg-(--button-green) hover:bg-green-700 text-white"
@@ -865,29 +831,23 @@ export const ClassList = () => {
                     <div className="flex gap-3 flex-wrap justify-center md:justify-start">
                       <Button 
                         className="bg-(--button-green) hover:bg-green-700 text-white"
-                        onClick={() => setIsImportSubjectGradeSheetModalOpen(true)}
+                        onClick={() => setIsImportWorkbookModalOpen(true)}
+                        disabled={!selectedSubject?.classListIds?.[0]}
                       >
                         <Upload className="mr-2 h-4 w-4" />
-                        Import Grade Sheet (.csv)
-                      </Button>
-                      <Button
-                        className="bg-(--button-green) hover:bg-green-700 text-white"
-                        onClick={() => setIsImportAttendanceModalOpen(true)}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        Import Attendance (.csv)
+                        Import Subject Grades (.xlsx)
                       </Button>
                       <Button 
                         className="bg-(--navbar-bg) hover:bg-yellow-300 text-black"
-                        onClick={handleDownloadSubjectTemplate}
-                        disabled={isDownloadingSubjectTemplate}
+                        onClick={handleDownloadTemplate}
+                        disabled={isDownloadingClassTemplate}
                       >
-                        {isDownloadingSubjectTemplate ? (
+                        {isDownloadingClassTemplate ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
                           <Download className="mr-2 h-4 w-4" />
                         )}
-                        {isDownloadingSubjectTemplate ? 'Downloading Template...' : 'Download Grade Sheet Template (.csv)'}
+                        {isDownloadingClassTemplate ? 'Downloading Template...' : 'Download Grades & Attendance Template (.xlsx)'}
                       </Button>
                     </div>
 
@@ -991,20 +951,11 @@ export const ClassList = () => {
       {/* File Upload Modals */}
       {/* Class Grades */}
       <FileUploadModal
-        isOpen={isImportGradeSheetModalOpen}
-        onClose={() => setIsImportGradeSheetModalOpen(false)}
-        onUpload={handleImportGradeSheet}
-        title="Import Grade Sheets"
-        acceptedFileTypes={['.csv']}
-        maxSizeMB={5}
-      />
-
-      <FileUploadModal
-        isOpen={isImportAttendanceModalOpen}
-        onClose={() => setIsImportAttendanceModalOpen(false)}
-        onUpload={handleImportAttendanceSheet}
-        title="Import Attendance Sheet"
-        acceptedFileTypes={['.csv']}
+        isOpen={isImportWorkbookModalOpen}
+        onClose={() => setIsImportWorkbookModalOpen(false)}
+        onUpload={handleImportWorkbook}
+        title={`Import ${activeTab === 'subject' ? 'Subject Grades' : 'Grades and Attendance'}`}
+        acceptedFileTypes={['.xlsx']}
         maxSizeMB={5}
       />
 
@@ -1016,16 +967,6 @@ export const ClassList = () => {
         maxSizeMB={15}
         acceptedFileTypes={['.png', '.jpg', '.jpeg', '.webp']}
       />
-
-      <FileUploadModal
-        isOpen={isImportSubjectGradeSheetModalOpen}
-        onClose={() => setIsImportSubjectGradeSheetModalOpen(false)}
-        onUpload={handleImportSubjectGradeSheet}
-        title="Import Subject Grade Sheet"
-        acceptedFileTypes={['.csv']}
-        maxSizeMB={5}
-      />
-
       <ImportResultModal
         isOpen={Boolean(importSummary)}
         onClose={() => setImportSummary(null)}

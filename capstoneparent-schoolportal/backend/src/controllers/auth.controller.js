@@ -93,6 +93,25 @@ const authController = {
     }
   },
 
+  //http://localhost:5000/api/auth/resend-registration-otp
+  async resendRegistrationOTP(req, res, next) {
+    try {
+      const { email } = req.body;
+      await authService.resendRegistrationOTP(email);
+      res
+        .status(200)
+        .json({ message: "Verification code resent successfully" });
+    } catch (error) {
+      if (error.message.startsWith("No pending registration found")) {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Failed to send OTP email") {
+        return res.status(502).json({ message: error.message });
+      }
+      next(error);
+    }
+  },
+
   //http://localhost:5000/api/auth/login
   async login(req, res, next) {
     try {
@@ -116,9 +135,6 @@ const authController = {
       }
       if (error.message.startsWith("Account is inactive")) {
         return res.status(403).json({ message: error.message });
-      }
-      if (error.message === "Device token is required") {
-        return res.status(400).json({ message: error.message });
       }
       if (error.message.startsWith("Unrecognized device")) {
         return res.status(401).json({ message: error.message });

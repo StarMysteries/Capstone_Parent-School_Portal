@@ -105,6 +105,19 @@ router.post(
   authController.verifyRegistrationOTP,
 );
 
+//http://localhost:5000/api/auth/resend-registration-otp
+router.post(
+  "/resend-registration-otp",
+  [
+    body("email")
+      .isEmail()
+      .withMessage("A valid email address is required")
+      .normalizeEmail(),
+  ],
+  validate,
+  authController.resendRegistrationOTP,
+);
+
 //http://localhost:5000/api/auth/login
 router.post(
   "/login",
@@ -115,8 +128,7 @@ router.post(
       .normalizeEmail(),
     body("password").notEmpty().withMessage("Password is required"),
     body("deviceToken")
-      .notEmpty()
-      .withMessage("Device token is required")
+      .optional()
       .isString()
       .withMessage("Device token must be a string")
       .isLength({ min: 64, max: 64 })

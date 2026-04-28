@@ -43,28 +43,6 @@ export const downloadGradeSheetTemplate = async () => {
   }
 };
 
-export const downloadAttendanceTemplate = async () => {
-  try {
-    const response = await apiFetch<TemplateDownloadResponse>('/classes/attendance-template', {
-      method: 'GET',
-      headers: bearerHeaders(),
-    });
-
-    const fileName = response.data.fileName || 'ClassAdviser_Grades-Attendance_Template.xlsx';
-    const downloadResponse = await fetch(response.data.downloadUrl);
-
-    if (!downloadResponse.ok) {
-      throw new Error('Failed to download template');
-    }
-
-    const blob = await downloadResponse.blob();
-    triggerBrowserDownload(blob, fileName);
-  } catch (error) {
-    console.error('Error downloading template:', error);
-    throw error;
-  }
-};
-
 export const exportAllQuartersGradeSheet = async (clist_id: number) => {
   try {
     const response = await fetch(`/api/classes/${clist_id}/export-grades-all-quarters`, {
@@ -132,13 +110,13 @@ export const uploadGradeSheet = async (clist_id: number, file: File) => {
   });
 };
 
-export const uploadAttendanceSheet = async (clist_id: number, file: File) => {
+export const uploadGradeAttendanceWorkbook = async (clist_id: number, file: File) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  return apiFetch<ImportSummaryResponse>(`/classes/${clist_id}/import-attendance`, {
+  return apiFetch<ImportSummaryResponse>(`/classes/${clist_id}/import-grade-attendance`, {
     method: 'POST',
-    successMessage: 'Attendance sheet uploaded successfully.',
+    successMessage: 'Grade sheet and attendance uploaded successfully.',
     headers: bearerHeaders(),
     body: formData,
   });
@@ -176,7 +154,7 @@ export const downloadSubjectGradeSheetTemplate = async () => {
       headers: bearerHeaders(),
     });
 
-    const fileName = response.data.fileName || 'SubjectTeacher_Grades-Attendance_Template.csv';
+    const fileName = response.data.fileName || 'SubjectTeacher_Grades-Attendance_Template.xlsx';
     const downloadResponse = await fetch(response.data.downloadUrl);
 
     if (!downloadResponse.ok) {

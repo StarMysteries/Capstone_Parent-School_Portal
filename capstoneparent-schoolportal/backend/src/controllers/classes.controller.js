@@ -150,7 +150,7 @@ const readFirstWorksheetRows = (buffer) => {
   return XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
     header: 1,
     defval: "",
-    raw: false,
+    raw: true,
     blankrows: false,
   });
 };
@@ -495,21 +495,27 @@ const parseDateGridAttendanceRows = (parsedLines) => {
   return rows.length > 0 ? rows : null;
 };
 
-const findWorksheetByName = (workbook, expectedName) => {
-  const sheetName = workbook.SheetNames.find(
-    (name) => normalizeHeader(name) === normalizeHeader(expectedName),
+const readWorksheetRows = (workbook, sheetName) =>
+  XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+    header: 1,
+    defval: "",
+    raw: true,
+    blankrows: false,
+  });
+
+const findWorksheetByNames = (workbook, expectedNames) => {
+  const normalizedExpectedNames = expectedNames.map(normalizeHeader);
+  const sheetName = workbook.SheetNames.find((name) =>
+    normalizedExpectedNames.includes(normalizeHeader(name)),
   );
 
   if (!sheetName) {
-    throw new Error(`Invalid XLSX format: ${expectedName} worksheet not found.`);
+    throw new Error(
+      `Invalid XLSX format: ${expectedNames.join(" / ")} worksheet not found.`,
+    );
   }
 
-  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-    header: 1,
-    defval: "",
-    raw: false,
-    blankrows: false,
-  });
+  return readWorksheetRows(workbook, sheetName);
 };
 
 const readWorkbookSheets = (buffer) => {
@@ -520,8 +526,8 @@ const readWorkbookSheets = (buffer) => {
   }
 
   return {
-    gradesRows: findWorksheetByName(workbook, "Grades"),
-    attendanceRows: findWorksheetByName(workbook, "Attendance"),
+    gradesRows: findWorksheetByNames(workbook, ["Grades", "Grades Template"]),
+    attendanceRows: findWorksheetByNames(workbook, ["Attendance"]),
   };
 };
 
@@ -582,7 +588,7 @@ const extractWorksheetHeaderRow = (worksheetRows, requiredHeaderAlias) => {
 
 const parseClassAdviserGradeWorksheetRows = (worksheetRows) => {
   if (!worksheetRows.length) {
-    throw new Error("Invalid CSV format: The grade sheet is empty.");
+    throw new Error("Invalid XLSX format: The grade sheet is empty.");
   }
 
   const { headerRowIndex, headers } = extractWorksheetHeaderRow(
@@ -595,7 +601,7 @@ const parseClassAdviserGradeWorksheetRows = (worksheetRows) => {
   const studentNameIdx = normalizedHeaders.indexOf("student name");
 
   if (lrnIdx === -1) {
-    throw new Error("Invalid CSV format: LRN number column missing in the grade sheet.");
+    throw new Error("Invalid XLSX format: LRN number column missing in the grade sheet.");
   }
 
   const subjectColumns = [];
@@ -644,7 +650,7 @@ const parseClassAdviserGradeWorksheetRows = (worksheetRows) => {
   });
 
   if (subjectColumns.length === 0) {
-    throw new Error("Invalid CSV format: No subject columns found in the grade sheet.");
+    throw new Error("Invalid XLSX format: No subject columns found in the grade sheet.");
   }
 
   const rows = [];
@@ -672,7 +678,7 @@ const parseClassAdviserGradeWorksheetRows = (worksheetRows) => {
 
 const parseClassAdviserAttendanceWorksheetRows = (worksheetRows) => {
   if (!worksheetRows.length) {
-    throw new Error("Invalid CSV format: The attendance sheet is empty.");
+    throw new Error("Invalid XLSX format: The attendance sheet is empty.");
   }
 
   const { headerRowIndex, headers } = extractWorksheetHeaderRow(
@@ -684,7 +690,7 @@ const parseClassAdviserAttendanceWorksheetRows = (worksheetRows) => {
   const lrnIdx = normalizedHeaders.indexOf("lrn number");
 
   if (lrnIdx === -1) {
-    throw new Error("Invalid CSV format: LRN number column missing in the attendance sheet.");
+    throw new Error("Invalid XLSX format: LRN number column missing in the attendance sheet.");
   }
 
   const monthIndexes = headers.reduce((indexes, _header, index) => {
@@ -698,7 +704,7 @@ const parseClassAdviserAttendanceWorksheetRows = (worksheetRows) => {
   }, {});
 
   if (Object.keys(monthIndexes).length === 0) {
-    throw new Error("Invalid CSV format: No monthly attendance columns found.");
+    throw new Error("Invalid XLSX format: No monthly attendance columns found.");
   }
 
   return worksheetRows.slice(headerRowIndex + 1).reduce((rows, cols) => {
@@ -1213,29 +1219,29 @@ const classesController = {
   },
 
   async importSubjectGrades(req, res, next) {
-     try {
-       const { id } = req.params; // subjectId
-       if (!req.file) {
-         return res.status(400).json({ message: "No file uploaded" });
-       }
+    try {
+      const { id } = req.params; // subjectId
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
 
-       const fileName = String(req.file.originalname || "").toLowerCase();
-       if (!fileName.endsWith(".csv")) {
-         return res.status(400).json({
-           message: "Invalid file type. Only .csv files are allowed.",
-         });
-       }
+      const fileName = String(req.file.originalname || "").toLowerCase();
+      if (!fileName.endsWith(".xlsx")) {
+        return res.status(400).json({
+          message: "Invalid file type. Only .xlsx files are allowed.",
+        });
+      }
 
-       let rows = [];
-       try {
-         rows = parseSubjectGradeWorksheetRows(readCsvRows(req.file.buffer));
-       } catch (error) {
-         return res.status(400).json({
-           message:
-             error.message ||
-             "Invalid CSV file. Please upload a valid .csv subject grade sheet.",
-         });
-       }
+      let rows = [];
+      try {
+        rows = parseSubjectGradeWorksheetRows(readFirstWorksheetRows(req.file.buffer));
+      } catch (error) {
+        return res.status(400).json({
+          message:
+            error.message ||
+            "Invalid XLSX file. Please upload a valid .xlsx subject grade sheet.",
+        });
+      }
 
        const results = await classesService.importGrades(parseInt(id), rows);
        res.status(200).json({
@@ -1264,20 +1270,21 @@ const classesController = {
       }
 
       const fileName = String(req.file.originalname || "").toLowerCase();
-      if (!fileName.endsWith(".csv")) {
+      if (!fileName.endsWith(".xlsx")) {
         return res.status(400).json({
-          message: "Invalid file type. Only .csv files are allowed.",
+          message: "Invalid file type. Only .xlsx files are allowed.",
         });
       }
 
       let rows = [];
       try {
-        rows = parseClassAdviserGradeWorksheetRows(readCsvRows(req.file.buffer));
+        const { gradesRows } = readWorkbookSheets(req.file.buffer);
+        rows = parseClassAdviserGradeWorksheetRows(gradesRows);
       } catch (error) {
         return res.status(400).json({
           message:
             error.message ||
-            "Invalid CSV file. Please upload a valid .csv class grade sheet.",
+            "Invalid XLSX file. Please upload a valid .xlsx class grade sheet.",
         });
       }
 
@@ -1309,9 +1316,9 @@ const classesController = {
         process.env.SUPABASE_BUCKET_TEACHER ||
         "teacher-files";
       const filePath =
-        process.env.SUPABASE_CLASS_ADVISER_TEMPLATE_PATH ||
-        "class-adviser/ClassAdviser_Grades-Attendance_Template.xlsx";
-      const fallbackFileName = "ClassAdviser_Grades-Attendance_Template.xlsx";
+        process.env.SUPABASE_SUBJECT_TEACHER_TEMPLATE_PATH ||
+        "subject-teacher/SubjectTeacher_Grades-Attendance_Template.xlsx";
+      const fallbackFileName = "SubjectTeacher_Grades-Attendance_Template.xlsx";
 
       try {
         const downloadUrl = await createSignedUrlForPath(bucket, filePath, 60 * 10);
@@ -1342,12 +1349,10 @@ const classesController = {
         process.env.SUPABASE_BUCKET_TEMPLATES ||
         process.env.SUPABASE_BUCKET_TEACHER ||
         "teacher-files";
-      const configuredTemplatePath = process.env.SUPABASE_SUBJECT_TEACHER_TEMPLATE_PATH;
       const filePath =
-        configuredTemplatePath && configuredTemplatePath.toLowerCase().endsWith(".csv")
-          ? configuredTemplatePath
-          : "subject-teacher/SubjectTeacher_Grades-Attendance_Template.csv";
-      const fallbackFileName = "SubjectTeacher_Grades-Attendance_Template.csv";
+        process.env.SUPABASE_SUBJECT_TEACHER_TEMPLATE_PATH ||
+        "subject-teacher/SubjectTeacher_Grades-Attendance_Template.xlsx";
+      const fallbackFileName = "SubjectTeacher_Grades-Attendance_Template.xlsx";
 
       try {
         const downloadUrl = await createSignedUrlForPath(bucket, filePath, 60 * 10);
@@ -1379,9 +1384,9 @@ const classesController = {
         process.env.SUPABASE_BUCKET_TEACHER ||
         "teacher-files";
       const filePath =
-        process.env.SUPABASE_CLASS_ADVISER_TEMPLATE_PATH ||
-        "class-adviser/ClassAdviser_Grades-Attendance_Template.xlsx";
-      const fallbackFileName = "ClassAdviser_Grades-Attendance_Template.xlsx";
+        process.env.SUPABASE_SUBJECT_TEACHER_TEMPLATE_PATH ||
+        "subject-teacher/SubjectTeacher_Grades-Attendance_Template.xlsx";
+      const fallbackFileName = "SubjectTeacher_Grades-Attendance_Template.xlsx";
 
       try {
         const downloadUrl = await createSignedUrlForPath(bucket, filePath, 60 * 10);
@@ -1406,6 +1411,88 @@ const classesController = {
     }
   },
 
+  async importClassWorkbook(req, res, next) {
+    try {
+      const { id } = req.params;
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileName = String(req.file.originalname || "").toLowerCase();
+      if (!fileName.endsWith(".xlsx")) {
+        return res.status(400).json({
+          message: "Invalid file type. Only .xlsx files are allowed.",
+        });
+      }
+
+      let gradesRows = [];
+      let attendanceRows = [];
+
+      try {
+        ({ gradesRows, attendanceRows } = readWorkbookSheets(req.file.buffer));
+      } catch (error) {
+        return res.status(400).json({
+          message:
+            error.message ||
+            "Invalid XLSX file. Please upload a valid .xlsx grade and attendance workbook.",
+        });
+      }
+
+      const gradeRows = parseClassAdviserGradeWorksheetRows(gradesRows);
+      const attendanceImportRows =
+        parseClassAdviserAttendanceWorksheetRows(attendanceRows);
+
+      const [gradeResults, attendanceResults] = await Promise.all([
+        classesService.importClassGrades(parseInt(id, 10), gradeRows),
+        classesService.importAttendance(attendanceImportRows, parseInt(id, 10)),
+      ]);
+
+      return res.status(200).json({
+        message: "Grade sheet and attendance imported successfully",
+        data: {
+          grades: gradeResults.records,
+          attendance: attendanceResults.records,
+        },
+        summary: {
+          added: gradeResults.summary.added + attendanceResults.summary.added,
+          replaced:
+            gradeResults.summary.replaced + attendanceResults.summary.replaced,
+          unchanged:
+            gradeResults.summary.unchanged + attendanceResults.summary.unchanged,
+          failed: gradeResults.summary.failed + attendanceResults.summary.failed,
+          totalProcessed:
+            gradeResults.summary.totalProcessed +
+            attendanceResults.summary.totalProcessed,
+          failures: [
+            ...gradeResults.summary.failures,
+            ...attendanceResults.summary.failures,
+          ],
+        },
+      });
+    } catch (error) {
+      if (
+        error.message === "Class not found" ||
+        error.message === "No subjects found for this class" ||
+        error.message === "Subject title is required for class grade imports" ||
+        error.message.startsWith("Subject title not found in this class:") ||
+        error.message.startsWith("Grade student name is ambiguous:") ||
+        error.message.startsWith("Grade student name not found in class:") ||
+        error.message.startsWith("Invalid attendance date") ||
+        error.message.startsWith("Attendance date is outside supported school months") ||
+        error.message.startsWith("Invalid attendance status") ||
+        error.message.startsWith(
+          "Class ID is required for attendance sheets that identify students by name",
+        ) ||
+        error.message.startsWith("Attendance student name is ambiguous") ||
+        error.message ===
+          "Days present and days absent cannot exceed total school days"
+      ) {
+        return res.status(400).json({ message: error.message });
+      }
+      next(error);
+    }
+  },
+
    async importAttendance(req, res, next) {
      try {
        if (!req.file) {
@@ -1413,20 +1500,21 @@ const classesController = {
        }
 
        const fileName = String(req.file.originalname || "").toLowerCase();
-       if (!fileName.endsWith(".csv")) {
+       if (!fileName.endsWith(".xlsx")) {
          return res.status(400).json({
-           message: "Invalid file type. Only .csv files are allowed.",
+           message: "Invalid file type. Only .xlsx files are allowed.",
          });
        }
 
        let rows = [];
        try {
-         rows = parseClassAdviserAttendanceWorksheetRows(readCsvRows(req.file.buffer));
+         const { attendanceRows } = readWorkbookSheets(req.file.buffer);
+         rows = parseClassAdviserAttendanceWorksheetRows(attendanceRows);
        } catch (error) {
          return res.status(400).json({
            message:
              error.message ||
-             "Invalid CSV file. Please upload a valid .csv class attendance sheet.",
+             "Invalid XLSX file. Please upload a valid .xlsx class attendance sheet.",
          });
        }
  
