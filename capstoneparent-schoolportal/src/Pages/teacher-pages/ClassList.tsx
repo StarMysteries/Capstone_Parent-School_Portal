@@ -835,7 +835,7 @@ export const ClassList = () => {
                         disabled={!selectedSubject?.classListIds?.[0]}
                       >
                         <Upload className="mr-2 h-4 w-4" />
-                        Import Subject Grades (.xlsx)
+                        Import Subject Grades & Attendance (.xlsx)
                       </Button>
                       <Button 
                         className="bg-(--navbar-bg) hover:bg-yellow-300 text-black"
@@ -954,7 +954,7 @@ export const ClassList = () => {
         isOpen={isImportWorkbookModalOpen}
         onClose={() => setIsImportWorkbookModalOpen(false)}
         onUpload={handleImportWorkbook}
-        title={`Import ${activeTab === 'subject' ? 'Subject Grades' : 'Grades and Attendance'}`}
+        title={`Import ${activeTab === 'subject' ? 'Subject Grades & Attendance' : 'Grades and Attendance'}`}
         acceptedFileTypes={['.xlsx']}
         maxSizeMB={5}
       />
