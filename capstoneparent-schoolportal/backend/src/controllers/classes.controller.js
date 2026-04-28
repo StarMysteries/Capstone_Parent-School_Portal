@@ -1219,29 +1219,29 @@ const classesController = {
   },
 
   async importSubjectGrades(req, res, next) {
-     try {
-       const { id } = req.params; // subjectId
-       if (!req.file) {
-         return res.status(400).json({ message: "No file uploaded" });
-       }
+    try {
+      const { id } = req.params; // subjectId
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
 
-       const fileName = String(req.file.originalname || "").toLowerCase();
-       if (!fileName.endsWith(".csv")) {
-         return res.status(400).json({
-           message: "Invalid file type. Only .csv files are allowed.",
-         });
-       }
+      const fileName = String(req.file.originalname || "").toLowerCase();
+      if (!fileName.endsWith(".xlsx")) {
+        return res.status(400).json({
+          message: "Invalid file type. Only .xlsx files are allowed.",
+        });
+      }
 
-       let rows = [];
-       try {
-         rows = parseSubjectGradeWorksheetRows(readCsvRows(req.file.buffer));
-       } catch (error) {
-         return res.status(400).json({
-           message:
-             error.message ||
-             "Invalid CSV file. Please upload a valid .csv subject grade sheet.",
-         });
-       }
+      let rows = [];
+      try {
+        rows = parseSubjectGradeWorksheetRows(readFirstWorksheetRows(req.file.buffer));
+      } catch (error) {
+        return res.status(400).json({
+          message:
+            error.message ||
+            "Invalid XLSX file. Please upload a valid .xlsx subject grade sheet.",
+        });
+      }
 
        const results = await classesService.importGrades(parseInt(id), rows);
        res.status(200).json({

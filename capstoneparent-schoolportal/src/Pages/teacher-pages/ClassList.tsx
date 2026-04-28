@@ -25,6 +25,7 @@ import {
   exportAllQuartersGradeSheet,
   uploadGradeAttendanceWorkbook,
   uploadClassSchedulePicture,
+  uploadSubjectGradeSheet,
 } from './services/fileService';
 import { fetchStudentById } from './services/api';
 import { useApiFeedbackStore } from '@/lib/store/apiFeedbackStore';
@@ -219,15 +220,22 @@ export const ClassList = () => {
   };
 
   const handleImportWorkbook = async (file: File) => {
-    const targetClassId = selectedClass?.clist_id ?? selectedSubject?.classListIds?.[0];
-    if (!targetClassId) return;
-
     try {
-      const response = await uploadGradeAttendanceWorkbook(targetClassId, file);
+      let response;
+      
+      if (activeTab === 'subject' && selectedSubject) {
+        response = await uploadSubjectGradeSheet(selectedSubject.srecord_id, file);
+        loadStudents(selectedSubject.classListIds?.[0]);
+      } else if (selectedClass) {
+        response = await uploadGradeAttendanceWorkbook(selectedClass.clist_id, file);
+        loadStudents(selectedClass.clist_id);
+      } else {
+        return;
+      }
+
       setImportSummary(resolveImportSummary(response));
-      loadStudents(targetClassId);
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to upload grade and attendance workbook');
+      throw error instanceof Error ? error : new Error('Failed to upload grade and attendance data');
     }
   };
 
@@ -827,7 +835,7 @@ export const ClassList = () => {
                         disabled={!selectedSubject?.classListIds?.[0]}
                       >
                         <Upload className="mr-2 h-4 w-4" />
-                        Import Grades & Attendance (.xlsx)
+                        Import Subject Grades (.xlsx)
                       </Button>
                       <Button 
                         className="bg-(--navbar-bg) hover:bg-yellow-300 text-black"
@@ -946,7 +954,7 @@ export const ClassList = () => {
         isOpen={isImportWorkbookModalOpen}
         onClose={() => setIsImportWorkbookModalOpen(false)}
         onUpload={handleImportWorkbook}
-        title="Import Grades and Attendance"
+        title={`Import ${activeTab === 'subject' ? 'Subject Grades' : 'Grades and Attendance'}`}
         acceptedFileTypes={['.xlsx']}
         maxSizeMB={5}
       />
