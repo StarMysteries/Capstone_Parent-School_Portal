@@ -294,6 +294,15 @@ router.post('/:id/import-grades',
   classesController.importClassGrades
 );
 
+// Import class adviser workbook via XLSX
+router.post('/:id/import-grade-attendance',
+  authorize('Teacher', 'Admin', 'Principal'),
+  param('id').isInt(),
+  upload.single('file'),
+  validate,
+  classesController.importClassWorkbook
+);
+
 // Import subject grades via XLSX
 router.post('/subjects/:id/import-grades',
   authorize('Teacher', 'Admin', 'Principal'),
@@ -303,7 +312,7 @@ router.post('/subjects/:id/import-grades',
   classesController.importSubjectGrades
 );
 
-// Import class attendance via CSV
+// Import class attendance via XLSX
 router.post('/:id/import-attendance',
   authorize('Teacher', 'Admin', 'Principal'),
   param('id').isInt(),
@@ -312,7 +321,7 @@ router.post('/:id/import-attendance',
   classesController.importAttendance
 );
 
-// Backward-compatible import class attendance via CSV
+// Backward-compatible import class attendance via XLSX
 router.post('/import-attendance',
   authorize('Teacher', 'Admin', 'Principal'),
   upload.single('file'),
