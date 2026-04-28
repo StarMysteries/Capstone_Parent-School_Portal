@@ -8,6 +8,22 @@ interface TemplateDownloadResponse {
   };
 }
 
+export interface UploadScheduleResponse {
+  message: string;
+  data: {
+    clist_id: number;
+    gl_id: number;
+    section_id: number;
+    class_adviser: number;
+    syear_start: number;
+    syear_end: number;
+    class_sched: string;
+    grade_level?: { grade_level: string };
+    section?: { section_name: string };
+    _count?: { students: number };
+  };
+}
+
 const triggerBrowserDownload = (blob: Blob, fileName: string) => {
   const url = window.URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -150,7 +166,7 @@ export const uploadClassSchedulePicture = async (clist_id: number, file: File) =
   const formData = new FormData();
   formData.append('file', file);
 
-  return apiFetch(`/classes/${clist_id}/upload-schedule`, {
+  return apiFetch<UploadScheduleResponse>(`/classes/${clist_id}/upload-schedule`, {
     method: 'POST',
     successMessage: 'Class schedule uploaded successfully.',
     headers: bearerHeaders(),

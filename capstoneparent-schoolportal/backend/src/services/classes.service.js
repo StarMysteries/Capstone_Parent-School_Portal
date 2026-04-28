@@ -733,6 +733,9 @@ const classesService = {
         grade_level: true,
         section: true,
         adviser: { select: { user_id: true, fname: true, lname: true } },
+        _count: {
+          select: { students: true },
+        },
       },
     });
   },
