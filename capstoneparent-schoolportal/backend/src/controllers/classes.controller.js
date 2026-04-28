@@ -1319,9 +1319,9 @@ const classesController = {
         process.env.SUPABASE_BUCKET_TEACHER ||
         "teacher-files";
       const filePath =
-        process.env.SUPABASE_SUBJECT_TEACHER_TEMPLATE_PATH ||
-        "subject-teacher/SubjectTeacher_Grades-Attendance_Template.xlsx";
-      const fallbackFileName = "SubjectTeacher_Grades-Attendance_Template.xlsx";
+        process.env.SUPABASE_ADVISER_TEMPLATE_PATH ||
+        "class-adviser/ClassAdviser_Grades-Attendance_Template.xlsx";
+      const fallbackFileName = "ClassAdviser_Grades-Attendance_Template.xlsx";
 
       try {
         const downloadUrl = await createSignedUrlForPath(bucket, filePath, 60 * 10);
@@ -1387,9 +1387,9 @@ const classesController = {
         process.env.SUPABASE_BUCKET_TEACHER ||
         "teacher-files";
       const filePath =
-        process.env.SUPABASE_SUBJECT_TEACHER_TEMPLATE_PATH ||
-        "subject-teacher/SubjectTeacher_Grades-Attendance_Template.xlsx";
-      const fallbackFileName = "SubjectTeacher_Grades-Attendance_Template.xlsx";
+        process.env.SUPABASE_ADVISER_TEMPLATE_PATH ||
+        "class-adviser/ClassAdviser_Grades-Attendance_Template.xlsx";
+      const fallbackFileName = "ClassAdviser_Grades-Attendance_Template.xlsx";
 
       try {
         const downloadUrl = await createSignedUrlForPath(bucket, filePath, 60 * 10);
